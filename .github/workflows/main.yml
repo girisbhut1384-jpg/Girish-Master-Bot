@@ -1,0 +1,18 @@
+name: Girish Master Engine
+on:
+  schedule:
+    - cron: '0 * * * *' # हर घंटे खुद चलेगा
+  workflow_dispatch: # बटन दबाकर चलाने के लिए
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Start Engine
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          AMAZON_ID: ${{ secrets.AMAZON_ID }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python main.py
