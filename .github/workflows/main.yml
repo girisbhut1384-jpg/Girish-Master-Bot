@@ -1,8 +1,8 @@
 name: Girish Master Engine
 on:
   schedule:
-    - cron: '0 * * * *' # हर घंटे खुद चलेगा
-  workflow_dispatch: # बटन दबाकर चलाने के लिए
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   run-bot:
@@ -15,14 +15,16 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install System Software
+      - name: Setup System & Permissions
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick # यह वीडियो पर नाम लिखने के लिए जरूरी है
+          sudo apt-get install -y imagemagick
+          # ये लाइन परमिशन देगी (सबसे जरूरी)
+          sudo sed -i 's/policy domain="path" rights="none" pattern="@\*"/policy domain="path" rights="read|write" pattern="@\*"/g' /etc/ImageMagick-6/policy.xml
 
       - name: Install Libraries
         run: |
-          pip install -r requirements.txt
+          pip install requests moviepy==1.0.3 google-api-python-client
 
       - name: Start Engine
         env:
