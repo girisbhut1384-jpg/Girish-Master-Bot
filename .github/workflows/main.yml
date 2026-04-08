@@ -1,16 +1,29 @@
 name: Girish Master Engine
 on:
-  workflow_dispatch: # बटन दबाकर चलाने के लिए
   schedule:
     - cron: '0 * * * *' # हर घंटे खुद चलेगा
+  workflow_dispatch: # बटन दबाकर चलाने के लिए
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Tools
-        run: pip install requests google-api-python-client moviepy
+      
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install System Software
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick # यह वीडियो पर नाम लिखने के लिए जरूरी है
+
+      - name: Install Libraries
+        run: |
+          pip install -r requirements.txt
+
       - name: Start Engine
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
