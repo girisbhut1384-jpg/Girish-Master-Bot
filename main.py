@@ -1,24 +1,23 @@
-import os, json, requests, time
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+import os, requests
 
-def main_engine():
+def start_engine():
+    # गिरीश भाई, ये आपकी फिक्स आईडी और सीक्रेट है
+    cid = "768932543756-30vbto7a15hqosjmpnbh99bfkbf8ngj1.apps.googleusercontent.com"
+    
+    # यह जादुई लिंक आपको सीधा यूट्यूब के 'Allow' बटन पर ले जाएगा
+    auth_link = (
+        f"https://accounts.google.com/o/oauth2/auth?client_id={cid}"
+        "&redirect_uri=urn:ietf:wg:oauth:2.0:oob"
+        "&scope=https://www.googleapis.com/auth/youtube.upload"
+        "&response_type=code&access_type=offline&prompt=consent"
+    )
+    
     tg_token = os.getenv('TELEGRAM_TOKEN')
     chat_id = os.getenv('TELEGRAM_CHAT_ID')
-    client_secrets = json.loads(os.getenv('CLIENT_SECRETS_JSON'))
-
-    # १. यूट्यूब की चाबी चेक करना
-    scopes = ['https://www.googleapis.com/auth/youtube.upload']
     
-    # गिरीश भाई, यहाँ हम चाबी मांगने का जुगाड़ कर रहे हैं
-    flow = InstalledAppFlow.from_client_config(client_secrets, scopes=scopes)
-    flow.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob' # मोबाइल के लिए आसान तरीका
-
-    auth_url, _ = flow.authorization_url(prompt='consent')
-
-    # २. टेलीग्राम पर लिंक भेजना
-    msg = f"🔑 **गिरीश भाई, आख़िरी ताला खोलें!**\n\n1. इस लिंक पर क्लिक करें: {auth_url}\n\n2. 'Allow' दबाने के बाद जो **Code** मिले, उसे यहाँ टेलीग्राम पर मुझे भेज दें।"
+    msg = f"🚀 **गिरीश भाई, बस ये आखिरी बटन दबाएँ:**\n\n1. यहाँ क्लिक करें: {auth_link}\n\n2. 'Allow' दबाने के बाद जो **Code** मिले, उसे यहाँ चैट में मुझे भेज दें।"
+    
     requests.get(f"https://api.telegram.org/bot{tg_token}/sendMessage?chat_id={chat_id}&text={msg}&parse_mode=Markdown")
 
 if __name__ == "__main__":
-    main_engine()
+    start_engine()
