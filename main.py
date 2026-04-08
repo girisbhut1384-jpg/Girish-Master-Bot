@@ -1,23 +1,22 @@
 import os, requests
 
-def start_engine():
-    # गिरीश भाई, ये आपकी फिक्स आईडी और सीक्रेट है
-    cid = "768932543756-30vbto7a15hqosjmpnbh99bfkbf8ngj1.apps.googleusercontent.com"
+def finalize_setup():
+    # आपकी आईडी और सीक्रेट जो पहले से सेट है
+    cid = "768932543756-30vbto7a15hqosjmpnbh99bfkbfbngj1.apps.googleusercontent.com"
+    secret = "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"
     
-    # यह जादुई लिंक आपको सीधा यूट्यूब के 'Allow' बटन पर ले जाएगा
-    auth_link = (
-        f"https://accounts.google.com/o/oauth2/auth?client_id={cid}"
-        "&redirect_uri=urn:ietf:wg:oauth:2.0:oob"
-        "&scope=https://www.googleapis.com/auth/youtube.upload"
-        "&response_type=code&access_type=offline&prompt=consent"
-    )
+    # यह लिंक आपको सीधा 'Allow' बटन पर ले जाएगा
+    url = f"https://accounts.google.com/o/oauth2/auth?client_id={cid}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&scope=https://www.googleapis.com/auth/youtube.upload&response_type=code&access_type=offline&prompt=consent"
     
+    print("--------------------------------------------------")
+    print("गिरीश भाई, बस इस आखरी लिंक को खोलकर 'Allow' दबा दें:")
+    print(url)
+    print("--------------------------------------------------")
+    
+    # टेलीग्राम पर भी भेज रहा हूँ ताकि आपको आसानी रहे
     tg_token = os.getenv('TELEGRAM_TOKEN')
     chat_id = os.getenv('TELEGRAM_CHAT_ID')
-    
-    msg = f"🚀 **गिरीश भाई, बस ये आखिरी बटन दबाएँ:**\n\n1. यहाँ क्लिक करें: {auth_link}\n\n2. 'Allow' दबाने के बाद जो **Code** मिले, उसे यहाँ चैट में मुझे भेज दें।"
-    
-    requests.get(f"https://api.telegram.org/bot{tg_token}/sendMessage?chat_id={chat_id}&text={msg}&parse_mode=Markdown")
+    requests.get(f"https://api.telegram.org/bot{tg_token}/sendMessage?chat_id={chat_id}&text=आखरी लिंक: {url}")
 
 if __name__ == "__main__":
-    start_engine()
+    finalize_setup()
