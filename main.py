@@ -4,6 +4,7 @@ import random
 import requests
 import asyncio
 import edge_tts
+import time  # <-- नया पुर्जा (आवाज़ को पूरी तरह सेव होने का टाइम देने के लिए)
 from moviepy.editor import VideoFileClip, AudioFileClip
 from moviepy.video.fx.all import loop
 import google.generativeai as genai
@@ -11,7 +12,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# 1. तिजोरी से आपकी चाबियाँ (PEXELS_KEY को पक्के तौर पर जोड़ दिया गया है)
+# 1. तिजोरी से आपकी चाबियाँ
 PEXELS_KEY = os.environ.get("PEXELS_API_KEY")
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
@@ -20,11 +21,12 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI - शानदार स्क्रिप्ट (हाई लिमिट वाले 1.5-flash मॉडल के साथ)
+# 2. Gemini AI - शानदार स्क्रिप्ट
 def get_ai_script(topic):
     print(f"Gemini AI '{topic}' पर सोच रहा है...")
     genai.configure(api_key=GEMINI_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash') 
+    # सदाबहार मॉडल: इसमें कभी 404 एरर नहीं आएगा
+    model = genai.GenerativeModel('gemini-pro') 
     prompt = f"Write a 30-second highly engaging YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags."
     
     try:
@@ -34,13 +36,12 @@ def get_ai_script(topic):
         return clean_text
     except Exception as e:
         print(f"AI स्क्रिप्ट में दिक्कत: {e}")
-        return "यह एक बहुत ही शानदार जानकारी है, इसे आखिर तक जरूर देखें।"
+        return "यह एक बहुत ही शानदार जानकारी है, इसे आखिर तक जरूर देखें और लाइक करें।"
 
 # 3. असली इंसानों जैसी Neural आवाज़ बनाना
 def create_human_voice(text, filename="voice.mp3"):
     print("असली इंसानों जैसी Neural आवाज़ बनाई जा रही है...")
     async def _generate():
-        # 'Madhur' एक भारी और दमदार भारतीय इंसानी आवाज़ है
         communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural")
         await communicate.save(filename)
     asyncio.run(_generate())
@@ -61,10 +62,9 @@ def get_hd_video(query, filename):
     if not valid_links:
         raise Exception("Pexels पर सही वीडियो नहीं मिला!")
         
-    # करप्ट फाइल को इग्नोर करने वाला जादुई स्कैनर
     for video_url in valid_links:
         video_content = requests.get(video_url).content
-        if len(video_content) > 100000: # अगर फाइल सही साइज़ की है
+        if len(video_content) > 100000:
             with open(filename, "wb") as f:
                 f.write(video_content)
             print("✅ एकदम सही और साफ वीडियो डाउनलोड हो गया!")
@@ -72,15 +72,17 @@ def get_hd_video(query, filename):
             
     raise Exception("सारे वीडियो करप्ट निकले!")
 
-# 5. वीडियो और आवाज़ को जोड़ना (बिना कटे)
+# 5. वीडियो और आवाज़ को जोड़ना (सेफ्टी लॉक के साथ)
 def make_video(script_text, raw_vid, final_vid):
     create_human_voice(script_text, "voice.mp3")
+    
+    # जादुई फिक्स: फाइल को हार्ड-डिस्क में पूरी तरह सेव होने के लिए 2 सेकंड का ब्रेक
+    time.sleep(2)
     
     print("वीडियो और आवाज़ को जोड़ा जा रहा है...")
     video = VideoFileClip(raw_vid)
     audio = AudioFileClip("voice.mp3")
     
-    # अगर Pexels का वीडियो छोटा है, तो उसे आवाज़ के बराबर गोल-गोल घुमाएं (Loop)
     if video.duration < audio.duration:
         video = loop(video, duration=audio.duration)
         
