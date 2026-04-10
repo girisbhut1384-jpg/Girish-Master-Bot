@@ -18,15 +18,20 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI से स्क्रिप्ट लिखवाना (सबसे नया दिमाग - 2.5 Flash)
+# 2. Gemini AI से स्क्रिप्ट लिखवाना (सख्त नियमों के साथ)
 def get_ai_script(topic):
     print(f"Gemini AI '{topic}' पर स्क्रिप्ट लिख रहा है...")
     genai.configure(api_key=GEMINI_KEY)
-    # यहाँ हमने गूगल का सबसे नया और तेज़ 'gemini-2.5-flash' मॉडल लगा दिया है
-    model = genai.GenerativeModel('gemini-2.5-flash') 
-    prompt = f"Write a 30-second highly engaging YouTube short script in Hindi about {topic}. Only give the voiceover text, no brackets or extra instructions."
+    # सबसे स्टेबल और फास्ट दिमाग
+    model = genai.GenerativeModel('gemini-1.5-flash') 
+    
+    prompt = f"Write a 30-second YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, DO NOT use asterisks (*), brackets [], or hashtags. Just plain Hindi text."
     response = model.generate_content(prompt)
-    return response.text
+    
+    # टेक्स्ट की सफाई ताकि आवाज़ वाली मशीन न अटके
+    clean_text = response.text.replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
+    print(f"\n📝 [AI की लिखी स्क्रिप्ट]: {clean_text}\n")
+    return clean_text
 
 # 3. Pexels से असली HD वीडियो लाना
 def get_hd_video(query, filename):
@@ -40,18 +45,24 @@ def get_hd_video(query, filename):
     with open(filename, "wb") as f:
         f.write(video_content)
 
-# 4. वीडियो और AI आवाज़ को जोड़ना
+# 4. वीडियो और AI आवाज़ को जोड़ना (बुलेटप्रूफ सिस्टम)
 def make_video(script_text, raw_vid, final_vid):
-    print("AI आवाज़ और वीडियो को जोड़ा जा रहा है...")
+    print("AI आवाज़ बनाई जा रही है...")
+    
+    # अगर स्क्रिप्ट खाली आ जाए, तो बैकअप आवाज़
+    if not script_text or len(script_text) < 5:
+        script_text = "यह एक बहुत ही शानदार वीडियो है, इसे आखिर तक जरूर देखें और लाइक करें।"
+        
     tts = gTTS(text=script_text, lang='hi', slow=False)
     tts.save("voice.mp3")
     
+    print("वीडियो और आवाज़ को जोड़ा जा रहा है...")
     video = VideoFileClip(raw_vid)
     audio = AudioFileClip("voice.mp3")
     final = video.set_audio(audio).subclip(0, audio.duration)
     final.write_videofile(final_vid, codec="libx264", audio_codec="aac", fps=24, preset="ultrafast")
 
-# 5. यूट्यूब पर डायरेक्ट अपलोड (बिना परमिशन के)
+# 5. यूट्यूब पर डायरेक्ट अपलोड
 def upload_video(token, filename, title, description, tags, category):
     print(f"यूट्यूब चैनल पर '{title}' अपलोड हो रहा है...")
     credentials = Credentials(
@@ -88,7 +99,7 @@ def run_mystic_channel():
     desc = script + "\n\n#space #universe #mystery #shorts"
     upload_video(TOKEN_MYSTIC, "final_mystic.mp4", "Mind-Blowing Space Fact! 🌌 #shorts #space", desc, ["shorts", "space", "universe"], "28")
 
-# 6. मेन स्विच (दोनों चैनल एक साथ)
+# 6. मेन स्विच
 if __name__ == "__main__":
     try:
         run_gadgets_channel()
