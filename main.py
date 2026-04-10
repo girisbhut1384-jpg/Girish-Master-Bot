@@ -1,4 +1,4 @@
-# गिरीश भाई का 100% परफेक्ट गोल ऑटोमेशन (Strict Mode + Double Engine AI)
+# गिरीश भाई का 100% परफेक्ट गोल ऑटोमेशन (Strict Mode + Smart Error Reader + No File-Lock)
 import os
 import random
 import requests
@@ -20,28 +20,28 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI - (डबल इंजन और स्मार्ट एरर रीडर के साथ)
+# 2. Gemini AI - (सिर्फ 1.5-Flash मॉडल और स्मार्ट एरर चेकर)
 def get_ai_script(topic):
     print(f"Gemini AI '{topic}' पर सोच रहा है...")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
     prompt = f"Write a 40-second highly engaging YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags. Tell a complete story."
+    
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    response = requests.post(url, json=payload).json()
     
-    # इंजन 1: सबसे नया 1.5-flash
-    url_1 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
-    response = requests.post(url_1, json=payload).json()
-    
-    # अगर इंजन 1 फेल हो जाए (लिमिट या एरर की वजह से), तो इंजन 2 (gemini-pro) चालू करें
-    if 'error' in response or 'candidates' not in response:
-        print(f"⚠️ पहला AI इंजन फेल हुआ, दूसरा इंजन चालू कर रहे हैं...")
-        url_2 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_KEY}"
-        response = requests.post(url_2, json=payload).json()
-        
-        # अगर दूसरा भी फेल हो जाए
-        if 'error' in response:
-            error_msg = response['error'].get('message', 'Unknown Error')
-            raise Exception(f"Google API ने साफ़ मना कर दिया: {error_msg}")
-        if 'candidates' not in response:
-            raise Exception(f"Google से अजीब जवाब मिला: {response}")
+    # 🛑 स्मार्ट एरर रीडर: गूगल की बात को हिंदी में बताना
+    if 'error' in response:
+        error_msg = response['error'].get('message', 'Unknown Error')
+        if "Quota" in error_msg or "429" in str(response):
+            raise Exception("Google API की फ्री लिमिट (Quota) अभी खत्म हो गई है। कृपया 15-20 मिनट इंतज़ार करें।")
+        else:
+            raise Exception(f"Google API एरर: {error_msg}")
+            
+    if 'promptFeedback' in response and 'candidates' not in response:
+         raise Exception("Google ने इस टॉपिक को लिखने से मना कर दिया (Safety Block)।")
+         
+    if 'candidates' not in response:
+        raise Exception(f"Google से कोई स्क्रिप्ट नहीं मिली: {response}")
 
     # स्क्रिप्ट निकालना और साफ करना
     raw_text = response['candidates'][0]['content']['parts'][0]['text']
@@ -49,14 +49,14 @@ def get_ai_script(topic):
     
     # 🛑 सख्त पहरेदार
     if len(clean_text) < 100:
-        raise Exception(f"AI ने बहुत छोटी स्क्रिप्ट दी ({len(clean_text)} अक्षर)। कचरा वीडियो अपलोड नहीं किया जाएगा!")
+        raise Exception(f"AI ने बहुत छोटी स्क्रिप्ट दी ({len(clean_text)} अक्षर)। कचरा वीडियो अपलोड नहीं होगा।")
         
     print(f"\n📝 [AI स्क्रिप्ट पास हो गई]: {clean_text[:100]}...\n")
     return clean_text
 
 # 3. असली इंसानों जैसी Neural आवाज़ बनाना
-def create_human_voice(text, filename="voice.mp3"):
-    print("असली इंसानों जैसी Neural आवाज़ बनाई जा रही है...")
+def create_human_voice(text, filename):
+    print(f"असली इंसानों जैसी Neural आवाज़ ({filename}) बनाई जा रही है...")
     async def _generate():
         communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural")
         await communicate.save(filename)
@@ -97,14 +97,15 @@ def get_hd_video(query, filename):
             
     raise Exception("Pexels के सारे वीडियो करप्ट निकले, मशीन को रोक दिया गया है!")
 
-# 5. वीडियो और आवाज़ को जोड़ना
-def make_video(script_text, raw_vid, final_vid):
-    create_human_voice(script_text, "voice.mp3")
+# 5. वीडियो और आवाज़ को जोड़ना (100% क्लैश-फ्री और म्यूट सिस्टम के साथ)
+def make_video(script_text, raw_vid, final_vid, audio_file):
+    create_human_voice(script_text, audio_file)
     time.sleep(2) # फाइल सेव होने के लिए सेफ्टी ब्रेक
     
     print("वीडियो और आवाज़ को जोड़ा जा रहा है...")
-    video = VideoFileClip(raw_vid)
-    audio = AudioFileClip("voice.mp3")
+    # .without_audio() लगाने से Pexels की खराब आवाज़ हट जाएगी और क्रैश नहीं होगा
+    video = VideoFileClip(raw_vid).without_audio()
+    audio = AudioFileClip(audio_file)
     
     if video.duration < audio.duration:
         video = loop(video, duration=audio.duration)
@@ -112,6 +113,7 @@ def make_video(script_text, raw_vid, final_vid):
     final = video.set_audio(audio).subclip(0, audio.duration)
     final.write_videofile(final_vid, codec="libx264", audio_codec="aac", fps=24, preset="ultrafast", logger=None)
     
+    # मेमोरी पूरी तरह से खाली करना ताकि अगली मशीन न अटके
     video.close()
     audio.close()
     final.close()
@@ -138,7 +140,8 @@ def run_gadgets_channel():
         print("--- 📱 Girish AI Gadgets (Strict Goal Mode) ---")
         script = get_ai_script("a highly advanced futuristic AI tech gadget")
         get_hd_video("tech gadget", "raw_gadget.mp4")
-        make_video(script, "raw_gadget.mp4", "final_gadget.mp4")
+        # यहाँ अलग आवाज़ की फाइल का नाम (voice_gadget.mp3) दिया गया है
+        make_video(script, "raw_gadget.mp4", "final_gadget.mp4", "voice_gadget.mp3")
         desc = script + f"\n\n👉 Buy Now (Amazon Link): {AMAZON_ID}\n#gadgets #tech #shorts"
         upload_video(TOKEN_GADGETS, "final_gadget.mp4", "Future Tech is Here! 🤯 #shorts #tech", desc, ["shorts", "tech", "gadgets"], "28")
     except Exception as e:
@@ -151,7 +154,8 @@ def run_mystic_channel():
         print("--- 🌌 Mystic Universe (Strict Goal Mode) ---")
         script = get_ai_script("a mind-blowing dark secret of the universe or black hole")
         get_hd_video("space universe", "raw_mystic.mp4")
-        make_video(script, "raw_mystic.mp4", "final_mystic.mp4")
+        # यहाँ अलग आवाज़ की फाइल का नाम (voice_mystic.mp3) दिया गया है
+        make_video(script, "raw_mystic.mp4", "final_mystic.mp4", "voice_mystic.mp3")
         desc = script + "\n\n#space #universe #mystery #shorts"
         upload_video(TOKEN_MYSTIC, "final_mystic.mp4", "Universe Secret Revealed! 🌌 #shorts #space", desc, ["shorts", "space", "universe"], "28")
     except Exception as e:
