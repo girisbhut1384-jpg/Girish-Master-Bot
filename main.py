@@ -1,4 +1,4 @@
-# गिरीश भाई का 100% परफेक्ट गोल ऑटोमेशन (Strict Mode - No Garbage Video)
+# गिरीश भाई का 100% परफेक्ट गोल ऑटोमेशन (Strict Mode + Double Engine AI)
 import os
 import random
 import requests
@@ -20,27 +20,39 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI - डायरेक्ट API (सख्त चेकिंग के साथ)
+# 2. Gemini AI - (डबल इंजन और स्मार्ट एरर रीडर के साथ)
 def get_ai_script(topic):
     print(f"Gemini AI '{topic}' पर सोच रहा है...")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_KEY}"
     prompt = f"Write a 40-second highly engaging YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags. Tell a complete story."
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
     
-    try:
-        payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        response = requests.post(url, json=payload).json()
-        raw_text = response['candidates'][0]['content']['parts'][0]['text']
-        clean_text = raw_text.replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
+    # इंजन 1: सबसे नया 1.5-flash
+    url_1 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
+    response = requests.post(url_1, json=payload).json()
+    
+    # अगर इंजन 1 फेल हो जाए (लिमिट या एरर की वजह से), तो इंजन 2 (gemini-pro) चालू करें
+    if 'error' in response or 'candidates' not in response:
+        print(f"⚠️ पहला AI इंजन फेल हुआ, दूसरा इंजन चालू कर रहे हैं...")
+        url_2 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_KEY}"
+        response = requests.post(url_2, json=payload).json()
         
-        # 🛑 सख्त पहरेदार: अगर स्क्रिप्ट बहुत छोटी है, तो कचरा वीडियो नहीं बनेगा!
-        if len(clean_text) < 100:
-            raise Exception(f"AI ने बहुत छोटी स्क्रिप्ट दी ({len(clean_text)} अक्षर)। कचरा वीडियो अपलोड नहीं किया जाएगा!")
-            
-        print(f"\n📝 [AI स्क्रिप्ट पास हो गई]: {clean_text[:100]}...\n")
-        return clean_text
-    except Exception as e:
-        # यहाँ मशीन रुक जाएगी और एरर बता देगी, कोई बैकअप डायलॉग नहीं!
-        raise Exception(f"AI स्क्रिप्ट फेल हो गई: {e}")
+        # अगर दूसरा भी फेल हो जाए
+        if 'error' in response:
+            error_msg = response['error'].get('message', 'Unknown Error')
+            raise Exception(f"Google API ने साफ़ मना कर दिया: {error_msg}")
+        if 'candidates' not in response:
+            raise Exception(f"Google से अजीब जवाब मिला: {response}")
+
+    # स्क्रिप्ट निकालना और साफ करना
+    raw_text = response['candidates'][0]['content']['parts'][0]['text']
+    clean_text = raw_text.replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
+    
+    # 🛑 सख्त पहरेदार
+    if len(clean_text) < 100:
+        raise Exception(f"AI ने बहुत छोटी स्क्रिप्ट दी ({len(clean_text)} अक्षर)। कचरा वीडियो अपलोड नहीं किया जाएगा!")
+        
+    print(f"\n📝 [AI स्क्रिप्ट पास हो गई]: {clean_text[:100]}...\n")
+    return clean_text
 
 # 3. असली इंसानों जैसी Neural आवाज़ बनाना
 def create_human_voice(text, filename="voice.mp3"):
@@ -66,11 +78,11 @@ def get_hd_video(query, filename):
     if not valid_links:
         raise Exception("Pexels पर सही वीडियो नहीं मिला!")
         
-    # 🛑 सख्त पहरेदार: सिर्फ सही और बिना करप्ट हुआ वीडियो ही डाउनलोड होगा
+    # 🛑 सख्त पहरेदार: करप्ट वीडियो को रोकना
     for video_url in valid_links:
         try:
             video_content = requests.get(video_url).content
-            if len(video_content) < 200000: # 200KB से छोटा वीडियो कचरा होता है
+            if len(video_content) < 200000: 
                 continue
                 
             with open(filename, "wb") as f:
