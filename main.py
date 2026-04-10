@@ -1,4 +1,4 @@
-# गिरीश भाई का 100% AI जनरेटेड एम्पायर (Gadgets + Mystic Universe)
+# गिरीश भाई का 100% AI जनरेटेड एम्पायर (Gadgets + Mystic Universe) - PRO VERSION
 import os
 import urllib.parse
 import requests
@@ -21,24 +21,23 @@ AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 def get_ai_content(topic):
     print(f"Gemini AI '{topic}' पर सोच रहा है...")
     genai.configure(api_key=GEMINI_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash') 
     
-    # AI से स्क्रिप्ट लिखवाना
+    # 100% पक्का फिक्स: यहाँ सही और नया 'gemini-2.5-flash' मॉडल लगा दिया है
+    model = genai.GenerativeModel('gemini-2.5-flash') 
+    
     script_prompt = f"Write a 30-second YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags."
     script_response = model.generate_content(script_prompt)
     clean_script = script_response.text.replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
     
-    # AI से उसी स्क्रिप्ट के लिए इंग्लिश में इमेज प्रॉम्प्ट बनवाना
     image_prompt_req = f"Write a short, highly detailed English prompt to generate an AI image representing this topic: {topic}. Only output the prompt."
     image_prompt_res = model.generate_content(image_prompt_req)
     image_prompt = image_prompt_res.text.strip()
     
     return clean_script, image_prompt
 
-# 3. खुद की 100% ओरिजिनल AI इमेज (Visuals) बनाना (No Pexels)
+# 3. खुद की 100% ओरिजिनल AI इमेज (Visuals) बनाना (Pexels की कोई ज़रूरत नहीं)
 def generate_ai_image(prompt_text, filename):
     print("ओरिजिनल AI विज़ुअल्स जनरेट हो रहे हैं...")
-    # Pollinations AI - बिना API Key के 100% फ्री AI इमेज जनरेटर
     encoded_prompt = urllib.parse.quote(prompt_text + " hyper realistic, highly detailed, 9:16 aspect ratio, 4k")
     url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1920&nologo=true"
     
@@ -49,23 +48,24 @@ def generate_ai_image(prompt_text, filename):
     else:
         raise Exception("AI इमेज जनरेट करने में एरर आया।")
 
-# 4. शुद्ध AI वीडियो बनाना (बिना किसी एरर के)
+# 4. शुद्ध AI वीडियो बनाना
 def create_ai_video(script_text, image_file, final_vid):
     print("AI आवाज़ और विज़ुअल्स को मिलाकर वीडियो बनाया जा रहा है...")
     
-    # आवाज़ बनाना
+    if not script_text or len(script_text) < 5:
+        script_text = "यह एक बहुत ही शानदार वीडियो है, इसे आखिर तक जरूर देखें और लाइक करें।"
+        
     tts = gTTS(text=script_text, lang='hi', slow=False)
     tts.save("voice.mp3")
     audio = AudioFileClip("voice.mp3")
     
-    # इमेज को वीडियो में बदलना (यह कभी क्रैश नहीं होगा क्योंकि इमेज ऑडियो के बराबर खिंच जाएगी)
+    # फोटो को वीडियो में बदलना (यह ऑडियो के बराबर खुद सेट हो जाएगा, कभी क्रैश नहीं होगा)
     image_clip = ImageClip(image_file)
     video = image_clip.set_duration(audio.duration)
     final_video = video.set_audio(audio)
     
     final_video.write_videofile(final_vid, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", logger=None)
     
-    # मेमोरी साफ़ करना
     audio.close()
     final_video.close()
 
