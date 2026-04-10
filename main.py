@@ -18,20 +18,25 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI से स्क्रिप्ट लिखवाना (सख्त नियमों के साथ)
+# 2. Gemini AI से स्क्रिप्ट लिखवाना (नया 2.5 दिमाग + सख्त नियम)
 def get_ai_script(topic):
     print(f"Gemini AI '{topic}' पर स्क्रिप्ट लिख रहा है...")
     genai.configure(api_key=GEMINI_KEY)
-    # सबसे स्टेबल और फास्ट दिमाग
-    model = genai.GenerativeModel('gemini-1.5-flash') 
+    
+    # यहाँ मैंने पक्के तौर पर नया 'gemini-2.5-flash' मॉडल लगा दिया है
+    model = genai.GenerativeModel('gemini-2.5-flash') 
     
     prompt = f"Write a 30-second YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, DO NOT use asterisks (*), brackets [], or hashtags. Just plain Hindi text."
-    response = model.generate_content(prompt)
     
-    # टेक्स्ट की सफाई ताकि आवाज़ वाली मशीन न अटके
-    clean_text = response.text.replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
-    print(f"\n📝 [AI की लिखी स्क्रिप्ट]: {clean_text}\n")
-    return clean_text
+    try:
+        response = model.generate_content(prompt)
+        # टेक्स्ट की सफाई ताकि आवाज़ वाली मशीन (MoviePy) न अटके
+        clean_text = response.text.replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
+        print(f"\n📝 [AI की लिखी स्क्रिप्ट]: {clean_text}\n")
+        return clean_text
+    except Exception as e:
+        print(f"AI स्क्रिप्ट में दिक्कत: {e}")
+        return ""
 
 # 3. Pexels से असली HD वीडियो लाना
 def get_hd_video(query, filename):
@@ -49,7 +54,7 @@ def get_hd_video(query, filename):
 def make_video(script_text, raw_vid, final_vid):
     print("AI आवाज़ बनाई जा रही है...")
     
-    # अगर स्क्रिप्ट खाली आ जाए, तो बैकअप आवाज़
+    # अगर स्क्रिप्ट खाली आ जाए या AI फेल हो जाए, तो बैकअप आवाज़
     if not script_text or len(script_text) < 5:
         script_text = "यह एक बहुत ही शानदार वीडियो है, इसे आखिर तक जरूर देखें और लाइक करें।"
         
