@@ -18,12 +18,12 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI से स्क्रिप्ट लिखवाना (नया और तेज़ दिमाग)
+# 2. Gemini AI से स्क्रिप्ट लिखवाना (सबसे नया दिमाग - 2.5 Flash)
 def get_ai_script(topic):
     print(f"Gemini AI '{topic}' पर स्क्रिप्ट लिख रहा है...")
     genai.configure(api_key=GEMINI_KEY)
-    # यहाँ हमने नया 'gemini-1.5-flash' मॉडल लगा दिया है
-    model = genai.GenerativeModel('gemini-1.5-flash') 
+    # यहाँ हमने गूगल का सबसे नया और तेज़ 'gemini-2.5-flash' मॉडल लगा दिया है
+    model = genai.GenerativeModel('gemini-2.5-flash') 
     prompt = f"Write a 30-second highly engaging YouTube short script in Hindi about {topic}. Only give the voiceover text, no brackets or extra instructions."
     response = model.generate_content(prompt)
     return response.text
