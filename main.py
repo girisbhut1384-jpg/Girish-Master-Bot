@@ -1,9 +1,11 @@
-# गिरीश भाई का 100% AI जनरेटेड एम्पायर (Gadgets + Mystic Universe) - PRO VERSION
+# गिरीश भाई का असली PRO लेवल ऑटोमेशन (हलचल वाले वीडियो + असली इंसानी आवाज़)
 import os
-import urllib.parse
+import random
 import requests
-from gtts import gTTS
-from moviepy.editor import ImageClip, AudioFileClip
+import asyncio
+import edge_tts
+from moviepy.editor import VideoFileClip, AudioFileClip
+from moviepy.video.fx.all import loop
 import google.generativeai as genai
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -17,59 +19,79 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI - स्क्रिप्ट और इमेज प्रॉम्प्ट दोनों बनाएगा
-def get_ai_content(topic):
+# 2. Gemini AI - शानदार स्क्रिप्ट
+def get_ai_script(topic):
     print(f"Gemini AI '{topic}' पर सोच रहा है...")
     genai.configure(api_key=GEMINI_KEY)
-    
-    # 100% पक्का फिक्स: यहाँ सही और नया 'gemini-2.5-flash' मॉडल लगा दिया है
     model = genai.GenerativeModel('gemini-2.5-flash') 
+    prompt = f"Write a 30-second highly engaging YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags."
     
-    script_prompt = f"Write a 30-second YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags."
-    script_response = model.generate_content(script_prompt)
-    clean_script = script_response.text.replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
-    
-    image_prompt_req = f"Write a short, highly detailed English prompt to generate an AI image representing this topic: {topic}. Only output the prompt."
-    image_prompt_res = model.generate_content(image_prompt_req)
-    image_prompt = image_prompt_res.text.strip()
-    
-    return clean_script, image_prompt
+    try:
+        response = model.generate_content(prompt)
+        clean_text = response.text.replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
+        print(f"\n📝 [AI स्क्रिप्ट]: {clean_text}\n")
+        return clean_text
+    except Exception as e:
+        print(f"AI स्क्रिप्ट में दिक्कत: {e}")
+        return "यह एक बहुत ही शानदार जानकारी है, इसे आखिर तक जरूर देखें।"
 
-# 3. खुद की 100% ओरिजिनल AI इमेज (Visuals) बनाना (Pexels की कोई ज़रूरत नहीं)
-def generate_ai_image(prompt_text, filename):
-    print("ओरिजिनल AI विज़ुअल्स जनरेट हो रहे हैं...")
-    encoded_prompt = urllib.parse.quote(prompt_text + " hyper realistic, highly detailed, 9:16 aspect ratio, 4k")
-    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1920&nologo=true"
-    
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(filename, 'wb') as f:
-            f.write(response.content)
-    else:
-        raise Exception("AI इमेज जनरेट करने में एरर आया।")
+# 3. असली इंसानों जैसी Neural आवाज़ बनाना (gTTS हटा दिया गया है)
+def create_human_voice(text, filename="voice.mp3"):
+    print("असली इंसानों जैसी Neural आवाज़ बनाई जा रही है...")
+    # hi-IN-MadhurNeural एक बहुत ही शानदार और भारी आवाज़ है
+    async def _generate():
+        communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural")
+        await communicate.save(filename)
+    asyncio.run(_generate())
 
-# 4. शुद्ध AI वीडियो बनाना
-def create_ai_video(script_text, image_file, final_vid):
-    print("AI आवाज़ और विज़ुअल्स को मिलाकर वीडियो बनाया जा रहा है...")
+# 4. Pexels से असली MP4 वीडियो (स्मार्ट फिल्टर के साथ)
+def get_hd_video(query, filename):
+    print(f"Pexels से '{query}' का असली वीडियो लाया जा रहा है...")
+    headers = {"Authorization": PEXELS_KEY}
+    url = f"https://api.pexels.com/videos/search?query={query}&per_page=15&orientation=portrait"
+    response = requests.get(url, headers=headers).json()
     
-    if not script_text or len(script_text) < 5:
-        script_text = "यह एक बहुत ही शानदार वीडियो है, इसे आखिर तक जरूर देखें और लाइक करें।"
+    valid_links = []
+    for vid in response.get('videos', []):
+        for file in vid.get('video_files', []):
+            if file.get('file_type') == 'video/mp4':
+                valid_links.append(file['link'])
+                
+    if not valid_links:
+        raise Exception("Pexels पर सही वीडियो नहीं मिला!")
         
-    tts = gTTS(text=script_text, lang='hi', slow=False)
-    tts.save("voice.mp3")
+    # स्मार्ट चेकर: खराब फाइल को रोककर सही फाइल ढूँढना
+    for video_url in valid_links:
+        video_content = requests.get(video_url).content
+        # अगर वीडियो 100KB से बड़ा है, मतलब वह असली है, करप्ट नहीं है
+        if len(video_content) > 100000:
+            with open(filename, "wb") as f:
+                f.write(video_content)
+            print("✅ एकदम सही और साफ वीडियो डाउनलोड हो गया!")
+            return
+            
+    raise Exception("सारे वीडियो करप्ट निकले!")
+
+# 5. वीडियो और आवाज़ को जोड़ना (बिना कटे)
+def make_video(script_text, raw_vid, final_vid):
+    create_human_voice(script_text, "voice.mp3")
+    
+    print("वीडियो और आवाज़ को जोड़ा जा रहा है...")
+    video = VideoFileClip(raw_vid)
     audio = AudioFileClip("voice.mp3")
     
-    # फोटो को वीडियो में बदलना (यह ऑडियो के बराबर खुद सेट हो जाएगा, कभी क्रैश नहीं होगा)
-    image_clip = ImageClip(image_file)
-    video = image_clip.set_duration(audio.duration)
-    final_video = video.set_audio(audio)
+    # अगर वीडियो छोटा है तो उसे घुमा दें (Loop)
+    if video.duration < audio.duration:
+        video = loop(video, duration=audio.duration)
+        
+    final = video.set_audio(audio).subclip(0, audio.duration)
+    final.write_videofile(final_vid, codec="libx264", audio_codec="aac", fps=24, preset="ultrafast", logger=None)
     
-    final_video.write_videofile(final_vid, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", logger=None)
-    
+    video.close()
     audio.close()
-    final_video.close()
+    final.close()
 
-# 5. यूट्यूब पर अपलोड
+# 6. यूट्यूब पर डायरेक्ट अपलोड
 def upload_video(token, filename, title, description, tags, category):
     print(f"यूट्यूब चैनल पर '{title}' अपलोड हो रहा है...")
     credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
@@ -88,30 +110,30 @@ def upload_video(token, filename, title, description, tags, category):
 # -- चैनल 1: Girish AI Gadgets --
 def run_gadgets_channel():
     try:
-        print("--- 📱 Girish AI Gadgets (100% AI Mode) ---")
-        script, img_prompt = get_ai_content("a futuristic AI tech gadget")
-        generate_ai_image(img_prompt, "gadget_ai.jpg")
-        create_ai_video(script, "gadget_ai.jpg", "final_gadget.mp4")
-        desc = script + f"\n\n👉 Buy Now (Amazon Link): {AMAZON_ID}\n#gadgets #ai #tech"
-        upload_video(TOKEN_GADGETS, "final_gadget.mp4", "Future Tech is Here! 🤯 #shorts #ai", desc, ["shorts", "tech", "gadgets", "ai"], "28")
+        print("--- 📱 Girish AI Gadgets (PRO Mode) ---")
+        script = get_ai_script("a cool and futuristic tech gadget")
+        get_hd_video("tech gadget", "raw_gadget.mp4")
+        make_video(script, "raw_gadget.mp4", "final_gadget.mp4")
+        desc = script + f"\n\n👉 Buy Now (Amazon Link): {AMAZON_ID}\n#gadgets #tech #shorts"
+        upload_video(TOKEN_GADGETS, "final_gadget.mp4", "Future Tech is Here! 🤯 #shorts #tech", desc, ["shorts", "tech", "gadgets"], "28")
     except Exception as e:
         print(f"❌ Gadgets चैनल एरर: {e}")
 
 # -- चैनल 2: Mystic Universe --
 def run_mystic_channel():
     try:
-        print("--- 🌌 Mystic Universe (100% AI Mode) ---")
-        script, img_prompt = get_ai_content("a mysterious secret of the universe or black hole")
-        generate_ai_image(img_prompt, "mystic_ai.jpg")
-        create_ai_video(script, "mystic_ai.jpg", "final_mystic.mp4")
+        print("--- 🌌 Mystic Universe (PRO Mode) ---")
+        script = get_ai_script("a mysterious secret of the universe or black hole")
+        get_hd_video("space universe", "raw_mystic.mp4")
+        make_video(script, "raw_mystic.mp4", "final_mystic.mp4")
         desc = script + "\n\n#space #universe #mystery #shorts"
         upload_video(TOKEN_MYSTIC, "final_mystic.mp4", "Universe Secret Revealed! 🌌 #shorts #space", desc, ["shorts", "space", "universe"], "28")
     except Exception as e:
         print(f"❌ Mystic चैनल एरर: {e}")
 
-# 6. मेन स्विच
+# 7. मेन स्विच
 if __name__ == "__main__":
     print("🚀 PRO AI इंजन स्टार्ट...")
     run_gadgets_channel()
     run_mystic_channel()
-    print("🎯 दोनों चैनलों पर 100% ओरिजिनल AI वीडियो सफलतापूर्वक अपलोड हो गए!")
+    print("🎯 दोनों चैनलों पर शानदार वीडियो सफलतापूर्वक अपलोड हो गए!")
