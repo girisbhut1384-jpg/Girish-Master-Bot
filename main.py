@@ -4,6 +4,7 @@ import random
 import requests
 from gtts import gTTS
 from moviepy.editor import VideoFileClip, AudioFileClip
+from moviepy.video.fx.all import loop  # <-- नया लूप इंजन जो वीडियो फटने नहीं देगा
 import google.generativeai as genai
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -18,25 +19,22 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI से स्क्रिप्ट लिखवाना (नया 2.5 दिमाग + सख्त नियम)
+# 2. Gemini AI से स्क्रिप्ट लिखवाना 
 def get_ai_script(topic):
     print(f"Gemini AI '{topic}' पर स्क्रिप्ट लिख रहा है...")
     genai.configure(api_key=GEMINI_KEY)
-    
-    # यहाँ मैंने पक्के तौर पर नया 'gemini-2.5-flash' मॉडल लगा दिया है
     model = genai.GenerativeModel('gemini-2.5-flash') 
     
     prompt = f"Write a 30-second YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, DO NOT use asterisks (*), brackets [], or hashtags. Just plain Hindi text."
     
     try:
         response = model.generate_content(prompt)
-        # टेक्स्ट की सफाई ताकि आवाज़ वाली मशीन (MoviePy) न अटके
         clean_text = response.text.replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
         print(f"\n📝 [AI की लिखी स्क्रिप्ट]: {clean_text}\n")
         return clean_text
     except Exception as e:
         print(f"AI स्क्रिप्ट में दिक्कत: {e}")
-        return ""
+        return "यह एक बहुत ही शानदार वीडियो है, इसे आखिर तक जरूर देखें और लाइक करें।"
 
 # 3. Pexels से असली HD वीडियो लाना
 def get_hd_video(query, filename):
@@ -50,11 +48,10 @@ def get_hd_video(query, filename):
     with open(filename, "wb") as f:
         f.write(video_content)
 
-# 4. वीडियो और AI आवाज़ को जोड़ना (बुलेटप्रूफ सिस्टम)
+# 4. वीडियो और AI आवाज़ को जोड़ना (लूप इंजन के साथ)
 def make_video(script_text, raw_vid, final_vid):
     print("AI आवाज़ बनाई जा रही है...")
     
-    # अगर स्क्रिप्ट खाली आ जाए या AI फेल हो जाए, तो बैकअप आवाज़
     if not script_text or len(script_text) < 5:
         script_text = "यह एक बहुत ही शानदार वीडियो है, इसे आखिर तक जरूर देखें और लाइक करें।"
         
@@ -64,8 +61,14 @@ def make_video(script_text, raw_vid, final_vid):
     print("वीडियो और आवाज़ को जोड़ा जा रहा है...")
     video = VideoFileClip(raw_vid)
     audio = AudioFileClip("voice.mp3")
+    
+    # जादुई फिक्स: अगर वीडियो छोटा है और आवाज़ लंबी है, तो वीडियो को गोल-गोल घुमा दो (Loop)
+    if video.duration < audio.duration:
+        video = loop(video, duration=audio.duration)
+        
     final = video.set_audio(audio).subclip(0, audio.duration)
-    final.write_videofile(final_vid, codec="libx264", audio_codec="aac", fps=24, preset="ultrafast")
+    # logger=None लगाने से गिटहब क्रैश नहीं होगा
+    final.write_videofile(final_vid, codec="libx264", audio_codec="aac", fps=24, preset="ultrafast", logger=None)
 
 # 5. यूट्यूब पर डायरेक्ट अपलोड
 def upload_video(token, filename, title, description, tags, category):
