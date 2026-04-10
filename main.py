@@ -1,4 +1,4 @@
-# गिरीश भाई का अल्टीमेट 100% PRO ऑटोमेशन (Triple Gemini Engine + Background Music + HD Pexels)
+# गिरीश भाई का अल्टीमेट 100% PRO ऑटोमेशन (Background Music + Pro AI + Smart Timer)
 import os
 import requests
 import asyncio
@@ -21,35 +21,34 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini Triple Engine (3.1 Pro -> 2.5 Pro -> 1.5 Pro)
+# 2. Gemini AI - (हाई एंगेजमेंट PRO स्क्रिप्ट)
 def get_ai_script(topic):
-    print(f"Gemini AI '{topic}' पर हाई-एंगेजमेंट स्क्रिप्ट लिख रहा है...")
+    print(f"\nGemini AI '{topic}' पर हाई-एंगेजमेंट स्क्रिप्ट लिख रहा है...")
     prompt = f"Write a 40-second highly engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook to grab attention. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags."
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     
-    # 🛑 महा-सुरक्षा कवच: 3 सबसे ताक़तवर मॉडल की लिस्ट
-    models = ["gemini-3.1-pro", "gemini-2.5-pro", "gemini-1.5-pro"]
+    # सबसे स्टेबल और ताकतवर PRO मॉडल, और बैकअप में तेज़ Flash मॉडल
+    models = ["gemini-1.5-pro", "gemini-1.5-flash"]
     clean_text = ""
     
     for model in models:
         try:
-            print(f"[{model}] इंजन ट्राई कर रहे हैं...")
+            print(f"[{model}] इंजन से रिक्वेस्ट कर रहे हैं...")
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_KEY}"
             response = requests.post(url, json=payload).json()
             
             if 'candidates' in response:
                 clean_text = response['candidates'][0]['content']['parts'][0]['text'].replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
                 if len(clean_text) >= 100:
-                    print(f"✅ [{model}] ने स्क्रिप्ट सफलतापूर्वक लिख दी!")
-                    break # सफलता मिल गई, लूप से बाहर आएं
-        except Exception as e:
-            print(f"⚠️ [{model}] बिज़ी है, अगला इंजन ट्राई कर रहे हैं...")
-            continue # एक फेल हुआ तो दूसरा ट्राई करो
+                    print(f"✅ [{model}] ने शानदार स्क्रिप्ट लिख दी!")
+                    break 
+        except Exception:
+            continue
             
     if not clean_text or len(clean_text) < 100:
-        raise Exception("तीनों Gemini इंजन (3.1, 2.5, 1.5) इस वक़्त बिज़ी हैं या लिमिट खत्म हो गई। 15 मिनट बाद मशीन अपने आप फिर कोशिश करेगी।")
+        raise Exception("API की लिमिट अभी खत्म है। मशीन बाद में कोशिश करेगी।")
         
-    print(f"\n📝 [PRO स्क्रिप्ट तैयार]: {clean_text[:100]}...\n")
+    print(f"📝 [स्क्रिप्ट]: {clean_text[:100]}...\n")
     return clean_text
 
 # 3. असली इंसानों जैसी Neural आवाज़ बनाना
@@ -163,7 +162,12 @@ def run_mystic_channel():
 
 # 7. मेन स्विच
 if __name__ == "__main__":
-    print("🚀 ULTIMATE PRO AI इंजन स्टार्ट... (Background Music के साथ)")
+    print("🚀 ULTIMATE PRO AI इंजन स्टार्ट... (Background Music + Smart Timer)")
     run_gadgets_channel()
+    
+    # 🛑 गूगल की लिमिट रीसेट करने के लिए 60 सेकंड का ब्रेक (यही सबसे ज़रूरी है!)
+    print("\n⏳ गूगल API की लिमिट को रीसेट करने के लिए 60 सेकंड का ब्रेक ले रहे हैं...\n")
+    time.sleep(60)
+    
     run_mystic_channel()
     print("🎯 दोनों चैनलों पर 100% परफेक्ट वीडियो अपलोड हो गए!")
