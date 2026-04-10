@@ -1,35 +1,32 @@
-name: Girish Master Engine
+name: Girish 24/7 Automation
+
 on:
   schedule:
-    - cron: '0 */2 * * *'
-  workflow_dispatch:
+    # यह मशीन को हर 8 घंटे में चलाएगा (दिन में 3 बार) जिससे YouTube Limit Error नहीं आएगा
+    - cron: '0 */8 * * *'
+  workflow_dispatch: # आपको खुद बटन दबाकर चलाने की सुविधा देता है
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
-      
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
+    - name: Checkout Code
+      uses: actions/checkout@v2
 
-      - name: Setup System & Permissions
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick
-          # ये लाइन परमिशन देगी (सबसे जरूरी)
-          sudo sed -i 's/policy domain="path" rights="none" pattern="@\*"/policy domain="path" rights="read|write" pattern="@\*"/g' /etc/ImageMagick-6/policy.xml
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
 
-      - name: Install Libraries
-        run: |
-          pip install requests moviepy==1.0.3 google-api-python-client
+    - name: Install Requirements
+      run: pip install -r requirements.txt
 
-      - name: Start Engine
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          AMAZON_ID: ${{ secrets.AMAZON_ID }}
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: python main.py
+    - name: Run Master Engine
+      env:
+        YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
+        PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        AMAZON_ID: ${{ secrets.AMAZON_ID }}
+      run: python main.py
