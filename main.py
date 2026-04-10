@@ -11,7 +11,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# 1. तिजोरी से आपकी चाबियाँ
+# 1. तिजोरी से आपकी चाबियाँ (PEXELS_KEY को पक्के तौर पर जोड़ दिया गया है)
+PEXELS_KEY = os.environ.get("PEXELS_API_KEY")
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
 CLIENT_SECRET = "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"
@@ -19,11 +20,11 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI - शानदार स्क्रिप्ट
+# 2. Gemini AI - शानदार स्क्रिप्ट (हाई लिमिट वाले 1.5-flash मॉडल के साथ)
 def get_ai_script(topic):
     print(f"Gemini AI '{topic}' पर सोच रहा है...")
     genai.configure(api_key=GEMINI_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash') 
+    model = genai.GenerativeModel('gemini-1.5-flash') 
     prompt = f"Write a 30-second highly engaging YouTube short script in Hindi about {topic}. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags."
     
     try:
@@ -35,11 +36,11 @@ def get_ai_script(topic):
         print(f"AI स्क्रिप्ट में दिक्कत: {e}")
         return "यह एक बहुत ही शानदार जानकारी है, इसे आखिर तक जरूर देखें।"
 
-# 3. असली इंसानों जैसी Neural आवाज़ बनाना (gTTS हटा दिया गया है)
+# 3. असली इंसानों जैसी Neural आवाज़ बनाना
 def create_human_voice(text, filename="voice.mp3"):
     print("असली इंसानों जैसी Neural आवाज़ बनाई जा रही है...")
-    # hi-IN-MadhurNeural एक बहुत ही शानदार और भारी आवाज़ है
     async def _generate():
+        # 'Madhur' एक भारी और दमदार भारतीय इंसानी आवाज़ है
         communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural")
         await communicate.save(filename)
     asyncio.run(_generate())
@@ -60,11 +61,10 @@ def get_hd_video(query, filename):
     if not valid_links:
         raise Exception("Pexels पर सही वीडियो नहीं मिला!")
         
-    # स्मार्ट चेकर: खराब फाइल को रोककर सही फाइल ढूँढना
+    # करप्ट फाइल को इग्नोर करने वाला जादुई स्कैनर
     for video_url in valid_links:
         video_content = requests.get(video_url).content
-        # अगर वीडियो 100KB से बड़ा है, मतलब वह असली है, करप्ट नहीं है
-        if len(video_content) > 100000:
+        if len(video_content) > 100000: # अगर फाइल सही साइज़ की है
             with open(filename, "wb") as f:
                 f.write(video_content)
             print("✅ एकदम सही और साफ वीडियो डाउनलोड हो गया!")
@@ -80,7 +80,7 @@ def make_video(script_text, raw_vid, final_vid):
     video = VideoFileClip(raw_vid)
     audio = AudioFileClip("voice.mp3")
     
-    # अगर वीडियो छोटा है तो उसे घुमा दें (Loop)
+    # अगर Pexels का वीडियो छोटा है, तो उसे आवाज़ के बराबर गोल-गोल घुमाएं (Loop)
     if video.duration < audio.duration:
         video = loop(video, duration=audio.duration)
         
