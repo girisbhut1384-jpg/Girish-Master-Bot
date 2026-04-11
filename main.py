@@ -1,10 +1,12 @@
-# गिरीश भाई का प्रो ऑटोमेशन (Pollinations AI Images + Amazon Auto-Fix + API Safe Mode)
+# गिरीश भाई का प्रो ऑटोमेशन V2.0 (Bulletproof JSON + Auto-Retry + Amazon CTA)
 import os
 import requests
 import asyncio
 import edge_tts
 import time
 import urllib.parse
+import json
+import random
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips
 from moviepy.audio.fx.volumex import volumex
 from moviepy.audio.fx.audio_loop import audio_loop
@@ -24,64 +26,80 @@ AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 if not AMAZON_ID.startswith("http"):
     AMAZON_ID = "https://" + AMAZON_ID
 
-# 2. Gemini AI - (स्मार्ट स्क्रिप्ट और AI इमेज प्रॉम्प्ट मेकर)
+# 2. Gemini AI - (JSON Mode के साथ बुलेटप्रूफ स्क्रिप्ट)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट और AI इमेज की कमांड सोच रहा है...")
     
     active_model = "models/gemini-1.5-flash-latest" 
     url = f"https://generativelanguage.googleapis.com/v1beta/{active_model}:generateContent?key={GEMINI_KEY}"
     
-    prompt = f"""Write a 40-second engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook. 
-    """
+    prompt = f"Write a 40-second engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook. "
     if is_gadget:
         prompt += "End the Hindi script EXACTLY with: 'इसे खरीदने का लिंक नीचे कमेंट और डिस्क्रिप्शन में दिया गया है।'. "
     
     prompt += """
-    IMPORTANT FORMATTING:
-    First, write ONLY the spoken Hindi text.
-    Then, write '|||' on a new line.
-    Then, write 4 highly detailed English prompts for an AI image generator to match the story (1 prompt per line). Focus on realistic, 4k, cinematic style.
+    IMPORTANT: You must return ONLY a raw JSON format. No markdown formatting, no extra text.
+    {
+      "script": "Your full spoken Hindi voiceover text here...",
+      "prompts": [
+        "A highly realistic 4k cinematic image of...",
+        "A detailed 3D render of...",
+        "A hyper-realistic scene of...",
+        "A beautiful cinematic lighting shot of..."
+      ]
+    }
     """
     
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     response = requests.post(url, json=payload).json()
     
     try:
-        full_text = response['candidates'][0]['content']['parts'][0]['text']
-        parts = full_text.split('|||')
-        hindi_script = parts[0].replace("*", "").replace("#", "").strip()
-        image_prompts = [p.strip() for p in parts[1].strip().split('\n') if len(p.strip()) > 10][:4]
+        clean_text = response['candidates'][0]['content']['parts'][0]['text'].strip()
+        if clean_text.startswith("```json"):
+            clean_text = clean_text[7:-3].strip()
+        elif clean_text.startswith("```"):
+             clean_text = clean_text[3:-3].strip()
+             
+        data = json.loads(clean_text)
+        hindi_script = data['script'].replace("*", "").replace("#", "")
+        image_prompts = data['prompts'][:4]
+        print(f"✅ [AI स्क्रिप्ट 100% सही तैयार]: {hindi_script[:80]}...")
+        return hindi_script, image_prompts
     except Exception as e:
-        print("⚠️ Gemini ने सही फॉर्मेट नहीं दिया, बैकअप प्रॉम्प्ट लगा रहे हैं...")
-        hindi_script = "क्या आपने कभी ऐसी जादुई तकनीक देखी है? जो आपके होश उड़ा दे! आगे जानने के लिए सब्सक्राइब करें।"
-        image_prompts = ["A futuristic sci-fi city 4k resolution", "A high tech glowing smart gadget close up", "A mysterious space nebula dark cinematic", "A futuristic AI robot looking at camera"]
-        
-    print(f"📝 [AI स्क्रिप्ट तैयार]: {hindi_script[:80]}...")
-    return hindi_script, image_prompts
+        raise Exception(f"❌ Gemini JSON एरर: {e} - डेटा: {response}")
 
-# 3. Pollinations AI (100% Free AI 3D Image Generator)
+# 3. Pollinations AI (Auto-Retry और Size Check के साथ)
 def fetch_ai_images(prompts):
-    print("🎨 Pollinations AI से 100% नई 4K तस्वीरें बनाई जा रही हैं (No API Key Required)...")
+    print("🎨 Pollinations AI से 100% नई 4K तस्वीरें बनाई जा रही हैं...")
     image_files = []
+    seed = random.randint(1000, 99999) # हर बार बिलकुल नई तस्वीर के लिए
     
     for i, p in enumerate(prompts):
-        # वर्टिकल (Shorts) साइज़ के लिए width=1080&height=1920
         safe_prompt = urllib.parse.quote(p)
-        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true"
-        
+        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
-        print(f"   ⏳ सीन {i+1} की तस्वीर डाउनलोड हो रही है...")
-        try:
-            response = requests.get(url, timeout=20)
-            with open(filename, "wb") as f:
-                f.write(response.content)
-            image_files.append(filename)
-            time.sleep(2) # सर्वर को ओवरलोड न करने के लिए छोटा ब्रेक
-        except Exception as e:
-            print(f"   ❌ सीन {i+1} फेल हुआ: {e}")
-            
-    if not image_files:
-        raise Exception("कोई भी तस्वीर जनरेट नहीं हो पाई!")
+        
+        for attempt in range(3): # 🛑 3 बार कोशिश करने वाला सिस्टम
+            print(f"   ⏳ सीन {i+1} डाउनलोड हो रहा है... (प्रयास {attempt+1}/3)")
+            try:
+                res = requests.get(url, timeout=45) # 45 सेकंड का इंतज़ार
+                # चेक करें कि फोटो सही है और 20KB से बड़ी है (करप्ट नहीं है)
+                if res.status_code == 200 and len(res.content) > 20000: 
+                    with open(filename, "wb") as f:
+                        f.write(res.content)
+                    image_files.append(filename)
+                    print(f"   ✅ सीन {i+1} सफल!")
+                    time.sleep(2)
+                    break # काम हो गया, अगला सीन लाओ
+                else:
+                    print("   ⚠️ खराब फाइल मिली, दोबारा कोशिश कर रहे हैं...")
+                    time.sleep(3)
+            except Exception as e:
+                print(f"   ❌ सर्वर टाइमआउट, दोबारा कोशिश कर रहे हैं...")
+                time.sleep(3)
+                
+    if len(image_files) < 2:
+        raise Exception("इंटरनेट या सर्वर एरर: 2 तस्वीरें भी नहीं बन पाईं, वीडियो कैंसल!")
     return image_files
 
 # 4. असली इंसानों जैसी Neural आवाज़ बनाना
@@ -99,19 +117,16 @@ def make_video(image_files, final_vid, audio_file):
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
     
-    # हर तस्वीर को कितनी देर दिखाना है (कुल समय / तस्वीरों की संख्या)
+    # हर तस्वीर को कितनी देर दिखाना है (कुल समय / असली तस्वीरों की संख्या)
     time_per_image = audio_duration / len(image_files)
     
     clips = []
     for img in image_files:
-        # तस्वीर को वीडियो क्लिप में बदलना
         clip = ImageClip(img).set_duration(time_per_image)
         clips.append(clip)
         
-    # सभी क्लिप्स को जोड़ना
     video = concatenate_videoclips(clips, method="compose")
     
-    # बैकग्राउंड म्यूजिक सेटअप
     final_audio = main_audio
     if os.path.exists("bg_music.mp3"):
         print("🎵 बैकग्राउंड म्यूजिक जोड़ा जा रहा है...")
@@ -123,7 +138,6 @@ def make_video(image_files, final_vid, audio_file):
         final_audio = CompositeAudioClip([main_audio, bg_music])
         
     final = video.set_audio(final_audio).subclip(0, audio_duration)
-    # गिटहब सर्वर पर बिना क्रैश हुए रेंडर करने के लिए सेफ सेटिंग्स
     final.write_videofile(final_vid, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", logger=None)
     
     main_audio.close()
@@ -153,7 +167,7 @@ def run_gadgets_channel():
         script, prompts = get_script_and_prompts("a completely mind-blowing futuristic tech gadget", is_gadget=True)
         image_files = fetch_ai_images(prompts)
         create_human_voice(script, "voice_gadget.mp3")
-        time.sleep(3) # ऑडियो सेफ-ब्रेक
+        time.sleep(3)
         make_video(image_files, "final_gadget.mp4", "voice_gadget.mp3")
         
         desc = f"🔥 👉 इसे यहाँ से खरीदें (Buy Now): {AMAZON_ID}\n\n{script}\n\n#gadgets #tech #shorts #ai"
@@ -178,11 +192,10 @@ def run_mystic_channel():
 
 # 7. मेन स्विच
 if __name__ == "__main__":
-    print("🚀 PRO-LEVEL AI इंजन स्टार्ट... (Pollinations 3D + Safe Limits)")
+    print("🚀 PRO-LEVEL V2.0 AI इंजन स्टार्ट... (Bulletproof Safe Limits)")
     
     run_gadgets_channel()
     
-    # 🛑 सबसे ज़रूरी: API लिमिट से बचने के लिए 60 सेकंड का ब्रेक
     print("\n⏳ API लिमिट बचाने के लिए 60 सेकंड का सेफ्टी ब्रेक ले रहे हैं...\n")
     time.sleep(60)
     
