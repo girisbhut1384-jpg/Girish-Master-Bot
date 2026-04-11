@@ -1,4 +1,4 @@
-# गिरीश भाई का अल्टीमेट 100% PRO ऑटोमेशन (Background Music + Pro AI + Smart Timer)
+# गिरीश भाई का 100% फ्री और अनलिमिटेड ऑटोमेशन (Lifetime Free 1.5-Flash + Music)
 import os
 import requests
 import asyncio
@@ -21,34 +21,27 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI - (हाई एंगेजमेंट PRO स्क्रिप्ट)
+# 2. Gemini 1.5 FLASH - (100% लाइफटाइम फ्री और 1500 लिमिट वाला इंजन)
 def get_ai_script(topic):
-    print(f"\nGemini AI '{topic}' पर हाई-एंगेजमेंट स्क्रिप्ट लिख रहा है...")
-    prompt = f"Write a 40-second highly engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook to grab attention. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags."
+    print(f"\nGemini AI '{topic}' पर फ्री और शानदार स्क्रिप्ट लिख रहा है...")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
+    prompt = f"Write a 40-second highly engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook to grab attention. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags. Tell a complete story."
+    
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    response = requests.post(url, json=payload).json()
     
-    # सबसे स्टेबल और ताकतवर PRO मॉडल, और बैकअप में तेज़ Flash मॉडल
-    models = ["gemini-1.5-pro", "gemini-1.5-flash"]
-    clean_text = ""
+    if 'error' in response:
+        raise Exception(f"Google API एरर: {response['error'].get('message', 'Unknown Error')}")
+    if 'candidates' not in response:
+        raise Exception("Google से कोई स्क्रिप्ट नहीं मिली।")
+
+    clean_text = response['candidates'][0]['content']['parts'][0]['text'].replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
     
-    for model in models:
-        try:
-            print(f"[{model}] इंजन से रिक्वेस्ट कर रहे हैं...")
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_KEY}"
-            response = requests.post(url, json=payload).json()
-            
-            if 'candidates' in response:
-                clean_text = response['candidates'][0]['content']['parts'][0]['text'].replace("*", "").replace("#", "").replace("[", "").replace("]", "").strip()
-                if len(clean_text) >= 100:
-                    print(f"✅ [{model}] ने शानदार स्क्रिप्ट लिख दी!")
-                    break 
-        except Exception:
-            continue
-            
-    if not clean_text or len(clean_text) < 100:
-        raise Exception("API की लिमिट अभी खत्म है। मशीन बाद में कोशिश करेगी।")
+    # 🛑 कचरा रोकने वाला पहरेदार
+    if len(clean_text) < 100:
+        raise Exception("स्क्रिप्ट बहुत छोटी है, कचरा वीडियो अपलोड नहीं होगा।")
         
-    print(f"📝 [स्क्रिप्ट]: {clean_text[:100]}...\n")
+    print(f"📝 [फ्री AI स्क्रिप्ट तैयार]: {clean_text[:100]}...\n")
     return clean_text
 
 # 3. असली इंसानों जैसी Neural आवाज़ बनाना
@@ -97,9 +90,10 @@ def make_video(script_text, raw_vid, final_vid, audio_file):
     main_audio = AudioFileClip(audio_file)
     
     final_audio = main_audio
+    # बैकग्राउंड म्यूजिक का सेटअप
     if os.path.exists("bg_music.mp3"):
         print("🎵 बैकग्राउंड म्यूजिक जोड़ा जा रहा है...")
-        bg_music = AudioFileClip("bg_music.mp3").fx(volumex, 0.1)
+        bg_music = AudioFileClip("bg_music.mp3").fx(volumex, 0.1) # म्यूजिक की आवाज़ 10%
         if bg_music.duration < main_audio.duration:
             bg_music = bg_music.fx(audio_loop, duration=main_audio.duration)
         else:
@@ -139,7 +133,7 @@ def upload_video(token, filename, title, description, tags, category):
 # -- चैनल 1: Girish AI Gadgets --
 def run_gadgets_channel():
     try:
-        print("--- 📱 Girish AI Gadgets (Ultimate PRO Mode) ---")
+        print("--- 📱 Girish AI Gadgets (100% Free Mode) ---")
         script = get_ai_script("a completely mind-blowing futuristic tech gadget")
         get_hd_video("tech gadget", "raw_gadget.mp4")
         make_video(script, "raw_gadget.mp4", "final_gadget.mp4", "voice_gadget.mp3")
@@ -151,7 +145,7 @@ def run_gadgets_channel():
 # -- चैनल 2: Mystic Universe --
 def run_mystic_channel():
     try:
-        print("--- 🌌 Mystic Universe (Ultimate PRO Mode) ---")
+        print("--- 🌌 Mystic Universe (100% Free Mode) ---")
         script = get_ai_script("a highly mysterious and shocking secret of the universe")
         get_hd_video("space universe", "raw_mystic.mp4")
         make_video(script, "raw_mystic.mp4", "final_mystic.mp4", "voice_mystic.mp3")
@@ -162,11 +156,11 @@ def run_mystic_channel():
 
 # 7. मेन स्विच
 if __name__ == "__main__":
-    print("🚀 ULTIMATE PRO AI इंजन स्टार्ट... (Background Music + Smart Timer)")
+    print("🚀 100% FREE AI इंजन स्टार्ट... (1500 Videos/Day Limit)")
     run_gadgets_channel()
     
-    # 🛑 गूगल की लिमिट रीसेट करने के लिए 60 सेकंड का ब्रेक (यही सबसे ज़रूरी है!)
-    print("\n⏳ गूगल API की लिमिट को रीसेट करने के लिए 60 सेकंड का ब्रेक ले रहे हैं...\n")
+    # 🛑 1-मिनट वाली स्पीड लिमिट को बैलेंस करने के लिए 60 सेकंड का ब्रेक
+    print("\n⏳ गूगल API की स्पीड लिमिट को बैलेंस करने के लिए 60 सेकंड का ब्रेक ले रहे हैं...\n")
     time.sleep(60)
     
     run_mystic_channel()
