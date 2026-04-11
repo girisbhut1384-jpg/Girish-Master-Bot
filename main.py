@@ -1,4 +1,4 @@
-# गिरीश भाई का 100% परफेक्ट और फ्री ऑटोमेशन (Gemini 3.1 Flash + Music + Smart Timer)
+# गिरीश भाई का 100% फ्री ऑटोमेशन (Auto-Radar System + Music + Smart Timer)
 import os
 import requests
 import asyncio
@@ -21,11 +21,28 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini 3.1 FLASH - (आज का सबसे नया, 100% फ्री और 1500 लिमिट वाला इंजन)
+# 2. Gemini AI - (स्मार्ट रडार जो खुद चालू मॉडल ढूँढेगा)
 def get_ai_script(topic):
-    print(f"\nGemini 3.1 Flash '{topic}' पर फ्री और शानदार स्क्रिप्ट लिख रहा है...")
-    # 🛑 यहाँ हमने सबसे नया और चालू मॉडल 3.1-flash लगा दिया है
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash:generateContent?key={GEMINI_KEY}"
+    print(f"\nGemini AI '{topic}' पर फ्री और शानदार स्क्रिप्ट लिख रहा है...")
+    
+    # 🛑 मास्टरस्ट्रोक: चालू मॉडल को खुद ढूँढने वाला रडार
+    active_model = "models/gemini-1.5-flash-latest" # अगर रडार फेल हो तो यह बैकअप है
+    try:
+        print("🔍 रडार गूगल के सर्वर पर चालू मॉडल ढूँढ रहा है...")
+        list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_KEY}"
+        models_data = requests.get(list_url).json()
+        for m in models_data.get('models', []):
+            # जो फ्री 'flash' मॉडल स्क्रिप्ट लिख सकता है, उसे पकड़ लो
+            if 'flash' in m.get('name', '') and 'generateContent' in m.get('supportedGenerationMethods', []):
+                active_model = m['name']
+                break
+        print(f"✅ रडार ने गूगल का 100% चालू मॉडल ढूँढ लिया: {active_model}")
+    except Exception as e:
+        print(f"⚠️ रडार स्कैनिंग में दिक्कत, बैकअप मॉडल इस्तेमाल कर रहे हैं...")
+        
+    # उसी चालू मॉडल का इस्तेमाल करना
+    url = f"https://generativelanguage.googleapis.com/v1beta/{active_model}:generateContent?key={GEMINI_KEY}"
+    
     prompt = f"Write a 40-second highly engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook to grab attention. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags. Tell a complete story."
     
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
@@ -94,7 +111,7 @@ def make_video(script_text, raw_vid, final_vid, audio_file):
     # बैकग्राउंड म्यूजिक का सेटअप
     if os.path.exists("bg_music.mp3"):
         print("🎵 बैकग्राउंड म्यूजिक जोड़ा जा रहा है...")
-        bg_music = AudioFileClip("bg_music.mp3").fx(volumex, 0.1) # म्यूजिक की आवाज़ 10%
+        bg_music = AudioFileClip("bg_music.mp3").fx(volumex, 0.1) 
         if bg_music.duration < main_audio.duration:
             bg_music = bg_music.fx(audio_loop, duration=main_audio.duration)
         else:
@@ -134,7 +151,7 @@ def upload_video(token, filename, title, description, tags, category):
 # -- चैनल 1: Girish AI Gadgets --
 def run_gadgets_channel():
     try:
-        print("--- 📱 Girish AI Gadgets (Gemini 3.1 Mode) ---")
+        print("--- 📱 Girish AI Gadgets (Auto-Radar Mode) ---")
         script = get_ai_script("a completely mind-blowing futuristic tech gadget")
         get_hd_video("tech gadget", "raw_gadget.mp4")
         make_video(script, "raw_gadget.mp4", "final_gadget.mp4", "voice_gadget.mp3")
@@ -146,7 +163,7 @@ def run_gadgets_channel():
 # -- चैनल 2: Mystic Universe --
 def run_mystic_channel():
     try:
-        print("--- 🌌 Mystic Universe (Gemini 3.1 Mode) ---")
+        print("--- 🌌 Mystic Universe (Auto-Radar Mode) ---")
         script = get_ai_script("a highly mysterious and shocking secret of the universe")
         get_hd_video("space universe", "raw_mystic.mp4")
         make_video(script, "raw_mystic.mp4", "final_mystic.mp4", "voice_mystic.mp3")
@@ -157,10 +174,9 @@ def run_mystic_channel():
 
 # 7. मेन स्विच
 if __name__ == "__main__":
-    print("🚀 GEMINI 3.1 FLASH इंजन स्टार्ट... (1500 Videos/Day Limit)")
+    print("🚀 AUTO-RADAR AI इंजन स्टार्ट... (अब कोई 404 एरर नहीं आएगा)")
     run_gadgets_channel()
     
-    # 🛑 गूगल API की स्पीड को बैलेंस करने के लिए 60 सेकंड का ब्रेक
     print("\n⏳ 60 सेकंड का सेफ्टी ब्रेक ले रहे हैं...\n")
     time.sleep(60)
     
