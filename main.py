@@ -1,4 +1,4 @@
-# गिरीश भाई का 100% फ्री ऑटोमेशन (Auto-Radar System + Music + Smart Timer)
+# गिरीश भाई का 100% फ्री ऑटोमेशन (Auto-Radar + Amazon CTA + Music + Smart Timer)
 import os
 import requests
 import asyncio
@@ -21,18 +21,17 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 2. Gemini AI - (स्मार्ट रडार जो खुद चालू मॉडल ढूँढेगा)
-def get_ai_script(topic):
+# 2. Gemini AI - (स्मार्ट रडार और अमेज़न CTA के साथ)
+def get_ai_script(topic, is_gadget=False):
     print(f"\nGemini AI '{topic}' पर फ्री और शानदार स्क्रिप्ट लिख रहा है...")
     
     # 🛑 मास्टरस्ट्रोक: चालू मॉडल को खुद ढूँढने वाला रडार
-    active_model = "models/gemini-1.5-flash-latest" # अगर रडार फेल हो तो यह बैकअप है
+    active_model = "models/gemini-1.5-flash-latest" 
     try:
         print("🔍 रडार गूगल के सर्वर पर चालू मॉडल ढूँढ रहा है...")
         list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_KEY}"
         models_data = requests.get(list_url).json()
         for m in models_data.get('models', []):
-            # जो फ्री 'flash' मॉडल स्क्रिप्ट लिख सकता है, उसे पकड़ लो
             if 'flash' in m.get('name', '') and 'generateContent' in m.get('supportedGenerationMethods', []):
                 active_model = m['name']
                 break
@@ -40,10 +39,16 @@ def get_ai_script(topic):
     except Exception as e:
         print(f"⚠️ रडार स्कैनिंग में दिक्कत, बैकअप मॉडल इस्तेमाल कर रहे हैं...")
         
-    # उसी चालू मॉडल का इस्तेमाल करना
     url = f"https://generativelanguage.googleapis.com/v1beta/{active_model}:generateContent?key={GEMINI_KEY}"
     
-    prompt = f"Write a 40-second highly engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook to grab attention. ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags. Tell a complete story."
+    # स्क्रिप्ट की कमांड
+    prompt = f"Write a 40-second highly engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook to grab attention. "
+    
+    # अगर चैनल गैजेट का है, तो अमेज़न लिंक के बारे में बोलने का कमांड दें
+    if is_gadget:
+        prompt += "End the script EXACTLY with this Hindi sentence: 'इसे खरीदने का लिंक नीचे कमेंट और डिस्क्रिप्शन में दिया गया है।'. "
+        
+    prompt += "ONLY provide the spoken Hindi voiceover text. DO NOT use English words, brackets, or hashtags. Tell a complete story."
     
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     response = requests.post(url, json=payload).json()
@@ -151,11 +156,14 @@ def upload_video(token, filename, title, description, tags, category):
 # -- चैनल 1: Girish AI Gadgets --
 def run_gadgets_channel():
     try:
-        print("--- 📱 Girish AI Gadgets (Auto-Radar Mode) ---")
-        script = get_ai_script("a completely mind-blowing futuristic tech gadget")
+        print("--- 📱 Girish AI Gadgets (Amazon CTA Mode) ---")
+        # is_gadget=True भेजने से AI आख़िर में अमेज़न लिंक के बारे में बोलेगा
+        script = get_ai_script("a completely mind-blowing futuristic tech gadget", is_gadget=True)
         get_hd_video("tech gadget", "raw_gadget.mp4")
         make_video(script, "raw_gadget.mp4", "final_gadget.mp4", "voice_gadget.mp3")
-        desc = script + f"\n\n👉 Buy Now (Amazon Link): {AMAZON_ID}\n#gadgets #tech #shorts"
+        
+        # 🛑 डिस्क्रिप्शन में अमेज़न लिंक सबसे ऊपर सेट कर दिया गया है
+        desc = f"🔥 👉 इसे यहाँ से खरीदें (Buy Now Amazon Link): {AMAZON_ID}\n\n{script}\n\n#gadgets #tech #shorts"
         upload_video(TOKEN_GADGETS, "final_gadget.mp4", "You Won't Believe This Gadget! 🤯 #shorts #tech", desc, ["shorts", "tech", "gadgets"], "28")
     except Exception as e:
         print(f"❌ Gadgets चैनल एरर: {e}")
@@ -164,17 +172,19 @@ def run_gadgets_channel():
 def run_mystic_channel():
     try:
         print("--- 🌌 Mystic Universe (Auto-Radar Mode) ---")
+        # मिस्टिक वाले में कोई अमेज़न लिंक नहीं बोलना है, इसलिए is_gadget=False
         script = get_ai_script("a highly mysterious and shocking secret of the universe")
         get_hd_video("space universe", "raw_mystic.mp4")
         make_video(script, "raw_mystic.mp4", "final_mystic.mp4", "voice_mystic.mp3")
-        desc = script + "\n\n#space #universe #mystery #shorts"
+        
+        desc = f"{script}\n\n#space #universe #mystery #shorts"
         upload_video(TOKEN_MYSTIC, "final_mystic.mp4", "The Biggest Space Secret! 🌌 #shorts #space", desc, ["shorts", "space", "universe"], "28")
     except Exception as e:
         print(f"❌ Mystic चैनल एरर: {e}")
 
 # 7. मेन स्विच
 if __name__ == "__main__":
-    print("🚀 AUTO-RADAR AI इंजन स्टार्ट... (अब कोई 404 एरर नहीं आएगा)")
+    print("🚀 AUTO-RADAR AI इंजन स्टार्ट... (Amazon Link Setup)")
     run_gadgets_channel()
     
     print("\n⏳ 60 सेकंड का सेफ्टी ब्रेक ले रहे हैं...\n")
