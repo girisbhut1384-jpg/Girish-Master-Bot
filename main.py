@@ -1,4 +1,4 @@
-# गिरीश भाई का मास्टर कोड V3.0 (पुराना Auto-Radar + नया Pollinations 3D AI)
+# गिरीश भाई का मास्टर कोड V3.1 (जिद्दी Auto-Retry + Never Give Up Mode)
 import os
 import requests
 import asyncio
@@ -14,7 +14,6 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# 1. तिजोरी से आपकी चाबियाँ
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
 CLIENT_SECRET = "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"
@@ -22,15 +21,12 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 
-# 🛑 लिंक ऑटो-फिक्सर: यूट्यूब पर लिंक को 'नीला' और क्लिकेबल बनाने के लिए
 if not AMAZON_ID.startswith("http"):
     AMAZON_ID = "https://" + AMAZON_ID
 
-# 2. Gemini AI - (पुराना Auto-Radar + नया JSON Mode)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट और AI इमेज की कमांड सोच रहा है...")
     
-    # 🛑 मास्टरस्ट्रोक: पुराना चालू मॉडल को खुद ढूँढने वाला रडार वापस आ गया
     active_model = "models/gemini-1.5-flash" 
     try:
         print("🔍 रडार गूगल के सर्वर पर चालू मॉडल ढूँढ रहा है...")
@@ -86,7 +82,6 @@ def get_script_and_prompts(topic, is_gadget=False):
     except Exception as e:
         raise Exception(f"❌ Gemini JSON एरर: {e} - डेटा: {clean_text}")
 
-# 3. Pollinations AI (Auto-Retry के साथ)
 def fetch_ai_images(prompts):
     print("🎨 Pollinations AI से 100% नई 4K तस्वीरें बनाई जा रही हैं...")
     image_files = []
@@ -97,10 +92,11 @@ def fetch_ai_images(prompts):
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         
-        for attempt in range(3): 
-            print(f"   ⏳ सीन {i+1} डाउनलोड हो रहा है... (प्रयास {attempt+1}/3)")
+        # 🛑 अब 5 बार टक्कर लेगा और 60 सेकंड इंतज़ार करेगा
+        for attempt in range(5): 
+            print(f"   ⏳ सीन {i+1} डाउनलोड हो रहा है... (प्रयास {attempt+1}/5)")
             try:
-                res = requests.get(url, timeout=45) 
+                res = requests.get(url, timeout=60) 
                 if res.status_code == 200 and len(res.content) > 20000: 
                     with open(filename, "wb") as f:
                         f.write(res.content)
@@ -109,17 +105,19 @@ def fetch_ai_images(prompts):
                     time.sleep(2)
                     break 
                 else:
-                    print("   ⚠️ खराब फाइल मिली, दोबारा कोशिश कर रहे हैं...")
-                    time.sleep(3)
+                    print("   ⚠️ सर्वर बिज़ी (खराब फाइल), 5 सेकंड रुककर दोबारा कोशिश...")
+                    time.sleep(5)
             except Exception as e:
-                print(f"   ❌ सर्वर टाइमआउट, दोबारा कोशिश कर रहे हैं...")
-                time.sleep(3)
+                print(f"   ❌ सर्वर टाइमआउट, 5 सेकंड रुककर दोबारा कोशिश...")
+                time.sleep(5)
                 
-    if len(image_files) < 2:
-        raise Exception("इंटरनेट या सर्वर एरर: 2 तस्वीरें भी नहीं बन पाईं, वीडियो कैंसल!")
+    # 🛑 मास्टरस्ट्रोक: अगर 1 भी फोटो मिली तो वीडियो कैंसल नहीं होगा!
+    if len(image_files) == 0:
+        raise Exception("भयंकर सर्वर एरर: 5 कोशिशों के बाद भी एक भी तस्वीर नहीं बन पाई!")
+    
+    print(f"✅ कुल {len(image_files)} तस्वीरें कामयाबी से डाउनलोड हुईं!")
     return image_files
 
-# 4. असली इंसानों जैसी Neural आवाज़ बनाना
 def create_human_voice(text, filename):
     print(f"🎙️ दमदार इंसानी आवाज़ ({filename}) बनाई जा रही है...")
     async def _generate():
@@ -127,7 +125,6 @@ def create_human_voice(text, filename):
         await communicate.save(filename)
     asyncio.run(_generate())
 
-# 5. वीडियो, आवाज़ और तस्वीरों का शानदार मिक्स
 def make_video(image_files, final_vid, audio_file):
     print("🎬 प्रो-लेवल एडिटिंग चालू (AI तस्वीरें + आवाज़ + म्यूजिक)...")
     
@@ -159,7 +156,6 @@ def make_video(image_files, final_vid, audio_file):
     video.close()
     final.close()
 
-# 6. यूट्यूब अपलोड
 def upload_video(token, filename, title, description, tags, category):
     print(f"🚀 यूट्यूब चैनल पर '{title}' अपलोड हो रहा है...")
     credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
@@ -175,7 +171,6 @@ def upload_video(token, filename, title, description, tags, category):
     response = request.execute()
     print(f"✅ सफलता! शानदार AI शार्ट वीडियो लाइव है: https://www.youtube.com/watch?v={response['id']}\n")
 
-# -- चैनल 1: Girish AI Gadgets --
 def run_gadgets_channel():
     try:
         print("--- 📱 Girish AI Gadgets (Pro AI Image Mode) ---")
@@ -190,7 +185,6 @@ def run_gadgets_channel():
     except Exception as e:
         print(f"❌ Gadgets चैनल एरर: {e}")
 
-# -- चैनल 2: Mystic Universe --
 def run_mystic_channel():
     try:
         print("--- 🌌 Mystic Universe (Pro AI Image Mode) ---")
@@ -205,9 +199,8 @@ def run_mystic_channel():
     except Exception as e:
         print(f"❌ Mystic चैनल एरर: {e}")
 
-# 7. मेन स्विच
 if __name__ == "__main__":
-    print("🚀 PRO-LEVEL V3.0 AI इंजन स्टार्ट... (Bulletproof Safe Limits)")
+    print("🚀 PRO-LEVEL V3.1 AI इंजन स्टार्ट... (Never Give Up Mode)")
     
     run_gadgets_channel()
     
@@ -216,4 +209,4 @@ if __name__ == "__main__":
     
     run_mystic_channel()
     
-    print("🎯 दोनों चैनलों पर 100% ओरिजिनल AI वीडियो अपलोड हो गए!")
+    print("🎯 दोनों चैनलों का काम पूरा हो गया!")
