@@ -1,4 +1,4 @@
-# गिरीश भाई का प्रो ऑटोमेशन V2.0 (Bulletproof JSON + Auto-Retry + Amazon CTA)
+# गिरीश भाई का मास्टर कोड V3.0 (पुराना Auto-Radar + नया Pollinations 3D AI)
 import os
 import requests
 import asyncio
@@ -26,11 +26,24 @@ AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 if not AMAZON_ID.startswith("http"):
     AMAZON_ID = "https://" + AMAZON_ID
 
-# 2. Gemini AI - (JSON Mode के साथ बुलेटप्रूफ स्क्रिप्ट)
+# 2. Gemini AI - (पुराना Auto-Radar + नया JSON Mode)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट और AI इमेज की कमांड सोच रहा है...")
     
-    active_model = "models/gemini-1.5-flash-latest" 
+    # 🛑 मास्टरस्ट्रोक: पुराना चालू मॉडल को खुद ढूँढने वाला रडार वापस आ गया
+    active_model = "models/gemini-1.5-flash" 
+    try:
+        print("🔍 रडार गूगल के सर्वर पर चालू मॉडल ढूँढ रहा है...")
+        list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_KEY}"
+        models_data = requests.get(list_url).json()
+        for m in models_data.get('models', []):
+            if 'flash' in m.get('name', '') and 'generateContent' in m.get('supportedGenerationMethods', []):
+                active_model = m['name']
+                break
+        print(f"✅ रडार ने गूगल का 100% चालू मॉडल ढूँढ लिया: {active_model}")
+    except Exception as e:
+        print(f"⚠️ रडार स्कैनिंग में दिक्कत, बैकअप मॉडल इस्तेमाल कर रहे हैं...")
+        
     url = f"https://generativelanguage.googleapis.com/v1beta/{active_model}:generateContent?key={GEMINI_KEY}"
     
     prompt = f"Write a 40-second engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook. "
@@ -53,6 +66,11 @@ def get_script_and_prompts(topic, is_gadget=False):
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     response = requests.post(url, json=payload).json()
     
+    if 'error' in response:
+        raise Exception(f"Google API एरर: {response['error'].get('message', 'Unknown Error')}")
+    if 'candidates' not in response:
+        raise Exception(f"Google से कोई स्क्रिप्ट नहीं मिली: {response}")
+    
     try:
         clean_text = response['candidates'][0]['content']['parts'][0]['text'].strip()
         if clean_text.startswith("```json"):
@@ -66,31 +84,30 @@ def get_script_and_prompts(topic, is_gadget=False):
         print(f"✅ [AI स्क्रिप्ट 100% सही तैयार]: {hindi_script[:80]}...")
         return hindi_script, image_prompts
     except Exception as e:
-        raise Exception(f"❌ Gemini JSON एरर: {e} - डेटा: {response}")
+        raise Exception(f"❌ Gemini JSON एरर: {e} - डेटा: {clean_text}")
 
-# 3. Pollinations AI (Auto-Retry और Size Check के साथ)
+# 3. Pollinations AI (Auto-Retry के साथ)
 def fetch_ai_images(prompts):
     print("🎨 Pollinations AI से 100% नई 4K तस्वीरें बनाई जा रही हैं...")
     image_files = []
-    seed = random.randint(1000, 99999) # हर बार बिलकुल नई तस्वीर के लिए
+    seed = random.randint(1000, 99999) 
     
     for i, p in enumerate(prompts):
         safe_prompt = urllib.parse.quote(p)
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         
-        for attempt in range(3): # 🛑 3 बार कोशिश करने वाला सिस्टम
+        for attempt in range(3): 
             print(f"   ⏳ सीन {i+1} डाउनलोड हो रहा है... (प्रयास {attempt+1}/3)")
             try:
-                res = requests.get(url, timeout=45) # 45 सेकंड का इंतज़ार
-                # चेक करें कि फोटो सही है और 20KB से बड़ी है (करप्ट नहीं है)
+                res = requests.get(url, timeout=45) 
                 if res.status_code == 200 and len(res.content) > 20000: 
                     with open(filename, "wb") as f:
                         f.write(res.content)
                     image_files.append(filename)
                     print(f"   ✅ सीन {i+1} सफल!")
                     time.sleep(2)
-                    break # काम हो गया, अगला सीन लाओ
+                    break 
                 else:
                     print("   ⚠️ खराब फाइल मिली, दोबारा कोशिश कर रहे हैं...")
                     time.sleep(3)
@@ -110,14 +127,12 @@ def create_human_voice(text, filename):
         await communicate.save(filename)
     asyncio.run(_generate())
 
-# 5. वीडियो, आवाज़ और तस्वीरों का शानदार मिक्स (Pro Editing)
+# 5. वीडियो, आवाज़ और तस्वीरों का शानदार मिक्स
 def make_video(image_files, final_vid, audio_file):
     print("🎬 प्रो-लेवल एडिटिंग चालू (AI तस्वीरें + आवाज़ + म्यूजिक)...")
     
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
-    
-    # हर तस्वीर को कितनी देर दिखाना है (कुल समय / असली तस्वीरों की संख्या)
     time_per_image = audio_duration / len(image_files)
     
     clips = []
@@ -192,7 +207,7 @@ def run_mystic_channel():
 
 # 7. मेन स्विच
 if __name__ == "__main__":
-    print("🚀 PRO-LEVEL V2.0 AI इंजन स्टार्ट... (Bulletproof Safe Limits)")
+    print("🚀 PRO-LEVEL V3.0 AI इंजन स्टार्ट... (Bulletproof Safe Limits)")
     
     run_gadgets_channel()
     
