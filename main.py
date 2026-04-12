@@ -1,4 +1,4 @@
-# गिरीश भाई का मास्टर कोड V3.1 (जिद्दी Auto-Retry + Never Give Up Mode)
+# गिरीश भाई का मास्टर कोड V3.2 (Zoom-in Effect + Real Amazon Gadgets)
 import os
 import requests
 import asyncio
@@ -7,7 +7,8 @@ import time
 import urllib.parse
 import json
 import random
-from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips
+# 🛑 बदलाव 1: ज़ूम-इन के लिए CompositeVideoClip को जोड़ा गया
+from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip
 from moviepy.audio.fx.volumex import volumex
 from moviepy.audio.fx.audio_loop import audio_loop
 from google.oauth2.credentials import Credentials
@@ -92,7 +93,6 @@ def fetch_ai_images(prompts):
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         
-        # 🛑 अब 5 बार टक्कर लेगा और 60 सेकंड इंतज़ार करेगा
         for attempt in range(5): 
             print(f"   ⏳ सीन {i+1} डाउनलोड हो रहा है... (प्रयास {attempt+1}/5)")
             try:
@@ -111,7 +111,6 @@ def fetch_ai_images(prompts):
                 print(f"   ❌ सर्वर टाइमआउट, 5 सेकंड रुककर दोबारा कोशिश...")
                 time.sleep(5)
                 
-    # 🛑 मास्टरस्ट्रोक: अगर 1 भी फोटो मिली तो वीडियो कैंसल नहीं होगा!
     if len(image_files) == 0:
         raise Exception("भयंकर सर्वर एरर: 5 कोशिशों के बाद भी एक भी तस्वीर नहीं बन पाई!")
     
@@ -126,7 +125,7 @@ def create_human_voice(text, filename):
     asyncio.run(_generate())
 
 def make_video(image_files, final_vid, audio_file):
-    print("🎬 प्रो-लेवल एडिटिंग चालू (AI तस्वीरें + आवाज़ + म्यूजिक)...")
+    print("🎬 प्रो-लेवल एडिटिंग चालू (AI तस्वीरें + ज़ूम इफ़ेक्ट + आवाज़ + म्यूजिक)...")
     
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
@@ -134,8 +133,13 @@ def make_video(image_files, final_vid, audio_file):
     
     clips = []
     for img in image_files:
-        clip = ImageClip(img).set_duration(time_per_image)
-        clips.append(clip)
+        base_clip = ImageClip(img).set_duration(time_per_image)
+        # 🛑 बदलाव 1: 10% का धीरे-धीरे ज़ूम-इन इफ़ेक्ट लगाना
+        zoomed_clip = base_clip.resize(lambda t: 1 + 0.1 * (t / time_per_image))
+        # 🛑 फ्रेम को 1080x1920 पर फिक्स करना ताकि वीडियो का साइज़ न बिगड़े
+        final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center'))], size=(1080, 1920))
+        final_clip = final_clip.set_duration(time_per_image)
+        clips.append(final_clip)
         
     video = concatenate_videoclips(clips, method="compose")
     
@@ -173,21 +177,22 @@ def upload_video(token, filename, title, description, tags, category):
 
 def run_gadgets_channel():
     try:
-        print("--- 📱 Girish AI Gadgets (Pro AI Image Mode) ---")
-        script, prompts = get_script_and_prompts("a completely mind-blowing futuristic tech gadget", is_gadget=True)
+        print("--- 📱 Girish AI Gadgets (Real Amazon Gadget Mode) ---")
+        # 🛑 बदलाव 2: असली, सस्ते और अमेज़न पर बिकने वाले गैजेट्स की पक्की कमांड
+        script, prompts = get_script_and_prompts("a real, highly useful, and trending smart home gadget available on Amazon India for under 1000 rupees (like a smart bulb, mini camera, or sensor)", is_gadget=True)
         image_files = fetch_ai_images(prompts)
         create_human_voice(script, "voice_gadget.mp3")
         time.sleep(3)
         make_video(image_files, "final_gadget.mp4", "voice_gadget.mp3")
         
-        desc = f"🔥 👉 इसे यहाँ से खरीदें (Buy Now): {AMAZON_ID}\n\n{script}\n\n#gadgets #tech #shorts #ai"
-        upload_video(TOKEN_GADGETS, "final_gadget.mp4", "You Won't Believe This Gadget! 🤯 #shorts #tech", desc, ["shorts", "tech", "gadgets"], "28")
+        desc = f"🔥 👉 इसे यहाँ से खरीदें (Buy Now): {AMAZON_ID}\n\n{script}\n\n#gadgets #smarthome #tech #shorts #amazonfinds"
+        upload_video(TOKEN_GADGETS, "final_gadget.mp4", "Useful Amazon Gadget Under ₹1000! 🤯 #shorts #gadgets", desc, ["shorts", "tech", "gadgets", "amazon finds"], "28")
     except Exception as e:
         print(f"❌ Gadgets चैनल एरर: {e}")
 
 def run_mystic_channel():
     try:
-        print("--- 🌌 Mystic Universe (Pro AI Image Mode) ---")
+        print("--- 🌌 Mystic Universe (Zoom-in Image Mode) ---")
         script, prompts = get_script_and_prompts("a highly mysterious and shocking secret of the universe", is_gadget=False)
         image_files = fetch_ai_images(prompts)
         create_human_voice(script, "voice_mystic.mp3")
@@ -200,7 +205,7 @@ def run_mystic_channel():
         print(f"❌ Mystic चैनल एरर: {e}")
 
 if __name__ == "__main__":
-    print("🚀 PRO-LEVEL V3.1 AI इंजन स्टार्ट... (Never Give Up Mode)")
+    print("🚀 PRO-LEVEL V3.2 AI इंजन स्टार्ट... (Real Gadgets + Zoom FX)")
     
     run_gadgets_channel()
     
