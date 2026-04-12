@@ -1,4 +1,4 @@
-# गिरीश भाई का अल्टीमेट मास्टर कोड V3.3 (Full Screen + Zoom In + Smart Amazon SEO)
+# गिरीश भाई का मास्टर कोड V3.5 (Double Channel Amazon Monetization + 30-Sec Viral)
 import os
 import requests
 import asyncio
@@ -25,9 +25,9 @@ AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 if not AMAZON_ID.startswith("http"):
     AMAZON_ID = "https://" + AMAZON_ID
 
-# 2. Gemini AI - (JSON Mode + Gadget Name Extractor)
+# 2. Gemini AI - (Smart Amazon CTA for BOTH Channels)
 def get_script_and_prompts(topic, is_gadget=False):
-    print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट सोच रहा है...")
+    print(f"\n🧠 Gemini AI '{topic}' पर वायरल स्क्रिप्ट सोच रहा है...")
     
     active_model = "models/gemini-1.5-flash" 
     try:
@@ -42,21 +42,25 @@ def get_script_and_prompts(topic, is_gadget=False):
         
     url = f"https://generativelanguage.googleapis.com/v1beta/{active_model}:generateContent?key={GEMINI_KEY}"
     
-    prompt = f"Write a 40-second engaging YouTube short script in Hindi about {topic}. Start with a mind-blowing hook. "
+    prompt = f"Write a HIGHLY VIRAL YouTube short script in Hindi about {topic}. Start with a shocking hook. MUST be strictly between 50 to 60 words, no more. Use commas (,) and exclamation marks (!) frequently so the TTS voice sounds natural. "
+    
+    # 🛑 मास्टर फिक्स: मिस्ट्री चैनल में भी अमेज़न सेल का बुलावा
     if is_gadget:
-        prompt += "End the Hindi script EXACTLY with: 'इसे खरीदने का लिंक नीचे कमेंट और डिस्क्रिप्शन में दिया गया है।'. "
+        prompt += "End EXACTLY with: 'इसे खरीदने का लिंक नीचे डिस्क्रिप्शन में है।'. "
+    else:
+        prompt += "End EXACTLY with: 'रहस्यमयी किताबें और गैजेट्स के लिंक डिस्क्रिप्शन में हैं।'. "
     
     prompt += """
     IMPORTANT: You must return ONLY a raw JSON format.
     {
-      "script": "Your full spoken Hindi voiceover text here...",
+      "script": "Your spoken Hindi voiceover text here...",
       "prompts": [
         "A highly realistic 4k cinematic image of...",
         "A detailed 3D render of...",
         "A hyper-realistic scene of...",
         "A beautiful cinematic lighting shot of..."
       ],
-      "gadget_name": "Write the exact short product name here (e.g., Wipro Smart Bulb). If not a gadget, leave empty."
+      "gadget_name": "Exact short product name here. Leave empty if not a gadget."
     }
     """
     
@@ -129,7 +133,6 @@ def make_video(image_files, final_vid, audio_file):
     for img in image_files:
         base_clip = ImageClip(img)
         
-        # 🛑 बॉक्स को हटाकर 100% फुल स्क्रीन करना
         w, h = base_clip.size
         if w / h > 1080 / 1920:
             base_clip = base_clip.resize(height=1920)
@@ -139,7 +142,6 @@ def make_video(image_files, final_vid, audio_file):
         base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
         base_clip = base_clip.set_duration(time_per_image)
         
-        # 🛑 10% का धीरे-धीरे ज़ूम-इन इफ़ेक्ट
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.1 * (t / time_per_image))
         
         final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center'))], size=(1080, 1920))
@@ -190,34 +192,34 @@ def run_gadgets_channel():
         time.sleep(3)
         make_video(image_files, "final_gadget.mp4", "voice_gadget.mp3")
         
-        # 🛑 डिस्क्रिप्शन में पक्का प्रोडक्ट का नाम
         if gadget_name:
             desc = f"🔥 👉 मेरी अमेज़न दुकान का लिंक: {AMAZON_ID}\n🔍 अमेज़न पर यह नाम सर्च करें: {gadget_name}\n\n{script}\n\n#gadgets #smarthome #amazonfinds"
         else:
             desc = f"🔥 👉 इसे यहाँ से खरीदें: {AMAZON_ID}\n\n{script}\n\n#gadgets #smarthome #amazonfinds"
             
-        upload_video(TOKEN_GADGETS, "final_gadget.mp4", "Useful Amazon Gadget Under ₹1000! 🤯 #shorts", desc, ["shorts", "gadgets", "amazon finds"], "28")
+        upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"Amazing Gadget: {gadget_name}! 🤯 #shorts", desc, ["shorts", "gadgets", "amazon finds"], "28")
     except Exception as e:
         print(f"❌ Gadgets चैनल एरर: {e}")
 
 # -- चैनल 2: Mystic Universe --
 def run_mystic_channel():
     try:
-        print("--- 🌌 Mystic Universe ---")
+        print("--- 🌌 Mystic Universe (Monetized Mode) ---")
         script, prompts, _ = get_script_and_prompts("a highly mysterious secret of the universe", is_gadget=False)
         image_files = fetch_ai_images(prompts)
         create_human_voice(script, "voice_mystic.mp3")
         time.sleep(3)
         make_video(image_files, "final_mystic.mp4", "voice_mystic.mp3")
         
-        desc = f"{script}\n\n#space #universe #mystery #shorts"
+        # 🛑 मास्टर फिक्स: मिस्ट्री चैनल में अमेज़न का लिंक जुड़ गया
+        desc = f"🔥 👉 ब्रह्मांड की रहस्यमयी किताबें और बेस्ट गैजेट्स यहाँ देखें: {AMAZON_ID}\n\n{script}\n\n#space #universe #mystery #shorts"
         upload_video(TOKEN_MYSTIC, "final_mystic.mp4", "The Biggest Space Secret! 🌌 #shorts", desc, ["shorts", "space", "universe"], "28")
     except Exception as e:
         print(f"❌ Mystic चैनल एरर: {e}")
 
 # 7. मेन स्विच
 if __name__ == "__main__":
-    print("🚀 V3.3 AI इंजन स्टार्ट...")
+    print("🚀 V3.5 Double-Income AI इंजन स्टार्ट...")
     run_gadgets_channel()
     print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
