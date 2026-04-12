@@ -1,4 +1,4 @@
-# गिरीश भाई का मास्टर कोड V3.2 (Zoom-in Effect + Real Amazon Gadgets)
+# गिरीश भाई का अल्टीमेट मास्टर कोड V3.3 (Full Screen + Zoom In + Smart Amazon SEO)
 import os
 import requests
 import asyncio
@@ -7,7 +7,6 @@ import time
 import urllib.parse
 import json
 import random
-# 🛑 बदलाव 1: ज़ूम-इन के लिए CompositeVideoClip को जोड़ा गया
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip
 from moviepy.audio.fx.volumex import volumex
 from moviepy.audio.fx.audio_loop import audio_loop
@@ -15,6 +14,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+# 1. तिजोरी से चाबियाँ
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
 CLIENT_SECRET = "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"
@@ -25,21 +25,20 @@ AMAZON_ID = os.environ.get("AMAZON_ID", "YOUR_AMAZON_LINK_HERE")
 if not AMAZON_ID.startswith("http"):
     AMAZON_ID = "https://" + AMAZON_ID
 
+# 2. Gemini AI - (JSON Mode + Gadget Name Extractor)
 def get_script_and_prompts(topic, is_gadget=False):
-    print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट और AI इमेज की कमांड सोच रहा है...")
+    print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट सोच रहा है...")
     
     active_model = "models/gemini-1.5-flash" 
     try:
-        print("🔍 रडार गूगल के सर्वर पर चालू मॉडल ढूँढ रहा है...")
         list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_KEY}"
         models_data = requests.get(list_url).json()
         for m in models_data.get('models', []):
             if 'flash' in m.get('name', '') and 'generateContent' in m.get('supportedGenerationMethods', []):
                 active_model = m['name']
                 break
-        print(f"✅ रडार ने गूगल का 100% चालू मॉडल ढूँढ लिया: {active_model}")
-    except Exception as e:
-        print(f"⚠️ रडार स्कैनिंग में दिक्कत, बैकअप मॉडल इस्तेमाल कर रहे हैं...")
+    except Exception:
+        pass
         
     url = f"https://generativelanguage.googleapis.com/v1beta/{active_model}:generateContent?key={GEMINI_KEY}"
     
@@ -48,7 +47,7 @@ def get_script_and_prompts(topic, is_gadget=False):
         prompt += "End the Hindi script EXACTLY with: 'इसे खरीदने का लिंक नीचे कमेंट और डिस्क्रिप्शन में दिया गया है।'. "
     
     prompt += """
-    IMPORTANT: You must return ONLY a raw JSON format. No markdown formatting, no extra text.
+    IMPORTANT: You must return ONLY a raw JSON format.
     {
       "script": "Your full spoken Hindi voiceover text here...",
       "prompts": [
@@ -56,17 +55,13 @@ def get_script_and_prompts(topic, is_gadget=False):
         "A detailed 3D render of...",
         "A hyper-realistic scene of...",
         "A beautiful cinematic lighting shot of..."
-      ]
+      ],
+      "gadget_name": "Write the exact short product name here (e.g., Wipro Smart Bulb). If not a gadget, leave empty."
     }
     """
     
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     response = requests.post(url, json=payload).json()
-    
-    if 'error' in response:
-        raise Exception(f"Google API एरर: {response['error'].get('message', 'Unknown Error')}")
-    if 'candidates' not in response:
-        raise Exception(f"Google से कोई स्क्रिप्ट नहीं मिली: {response}")
     
     try:
         clean_text = response['candidates'][0]['content']['parts'][0]['text'].strip()
@@ -78,13 +73,15 @@ def get_script_and_prompts(topic, is_gadget=False):
         data = json.loads(clean_text)
         hindi_script = data['script'].replace("*", "").replace("#", "")
         image_prompts = data['prompts'][:4]
-        print(f"✅ [AI स्क्रिप्ट 100% सही तैयार]: {hindi_script[:80]}...")
-        return hindi_script, image_prompts
+        gadget_name = data.get('gadget_name', '')
+        print(f"✅ [AI स्क्रिप्ट तैयार]: {hindi_script[:60]}...")
+        return hindi_script, image_prompts, gadget_name
     except Exception as e:
-        raise Exception(f"❌ Gemini JSON एरर: {e} - डेटा: {clean_text}")
+        raise Exception(f"❌ Gemini JSON एरर: {e}")
 
+# 3. Pollinations AI (जिद्दी डाउनलोडर)
 def fetch_ai_images(prompts):
-    print("🎨 Pollinations AI से 100% नई 4K तस्वीरें बनाई जा रही हैं...")
+    print("🎨 Pollinations AI से तस्वीरें बनाई जा रही हैं...")
     image_files = []
     seed = random.randint(1000, 99999) 
     
@@ -94,7 +91,6 @@ def fetch_ai_images(prompts):
         filename = f"ai_scene_{i}.jpg"
         
         for attempt in range(5): 
-            print(f"   ⏳ सीन {i+1} डाउनलोड हो रहा है... (प्रयास {attempt+1}/5)")
             try:
                 res = requests.get(url, timeout=60) 
                 if res.status_code == 200 and len(res.content) > 20000: 
@@ -105,27 +101,25 @@ def fetch_ai_images(prompts):
                     time.sleep(2)
                     break 
                 else:
-                    print("   ⚠️ सर्वर बिज़ी (खराब फाइल), 5 सेकंड रुककर दोबारा कोशिश...")
                     time.sleep(5)
-            except Exception as e:
-                print(f"   ❌ सर्वर टाइमआउट, 5 सेकंड रुककर दोबारा कोशिश...")
+            except Exception:
                 time.sleep(5)
                 
     if len(image_files) == 0:
-        raise Exception("भयंकर सर्वर एरर: 5 कोशिशों के बाद भी एक भी तस्वीर नहीं बन पाई!")
-    
-    print(f"✅ कुल {len(image_files)} तस्वीरें कामयाबी से डाउनलोड हुईं!")
+        raise Exception("भयंकर एरर: एक भी तस्वीर नहीं बन पाई!")
     return image_files
 
+# 4. असली इंसानों जैसी आवाज़ 
 def create_human_voice(text, filename):
-    print(f"🎙️ दमदार इंसानी आवाज़ ({filename}) बनाई जा रही है...")
+    print("🎙️ आवाज़ बनाई जा रही है...")
     async def _generate():
         communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural")
         await communicate.save(filename)
     asyncio.run(_generate())
 
+# 5. मास्टर एडिटिंग (100% Full Screen + Zoom in)
 def make_video(image_files, final_vid, audio_file):
-    print("🎬 प्रो-लेवल एडिटिंग चालू (AI तस्वीरें + ज़ूम इफ़ेक्ट + आवाज़ + म्यूजिक)...")
+    print("🎬 प्रो-लेवल एडिटिंग (Full Screen + Zoom)...")
     
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
@@ -133,10 +127,21 @@ def make_video(image_files, final_vid, audio_file):
     
     clips = []
     for img in image_files:
-        base_clip = ImageClip(img).set_duration(time_per_image)
-        # 🛑 बदलाव 1: 10% का धीरे-धीरे ज़ूम-इन इफ़ेक्ट लगाना
+        base_clip = ImageClip(img)
+        
+        # 🛑 बॉक्स को हटाकर 100% फुल स्क्रीन करना
+        w, h = base_clip.size
+        if w / h > 1080 / 1920:
+            base_clip = base_clip.resize(height=1920)
+        else:
+            base_clip = base_clip.resize(width=1080)
+            
+        base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
+        base_clip = base_clip.set_duration(time_per_image)
+        
+        # 🛑 10% का धीरे-धीरे ज़ूम-इन इफ़ेक्ट
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.1 * (t / time_per_image))
-        # 🛑 फ्रेम को 1080x1920 पर फिक्स करना ताकि वीडियो का साइज़ न बिगड़े
+        
         final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center'))], size=(1080, 1920))
         final_clip = final_clip.set_duration(time_per_image)
         clips.append(final_clip)
@@ -145,7 +150,6 @@ def make_video(image_files, final_vid, audio_file):
     
     final_audio = main_audio
     if os.path.exists("bg_music.mp3"):
-        print("🎵 बैकग्राउंड म्यूजिक जोड़ा जा रहा है...")
         bg_music = AudioFileClip("bg_music.mp3").fx(volumex, 0.1) 
         if bg_music.duration < main_audio.duration:
             bg_music = bg_music.fx(audio_loop, duration=main_audio.duration)
@@ -160,8 +164,9 @@ def make_video(image_files, final_vid, audio_file):
     video.close()
     final.close()
 
+# 6. यूट्यूब अपलोड
 def upload_video(token, filename, title, description, tags, category):
-    print(f"🚀 यूट्यूब चैनल पर '{title}' अपलोड हो रहा है...")
+    print(f"🚀 यूट्यूब पर वीडियो अपलोड हो रहा है...")
     credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
     youtube = build("youtube", "v3", credentials=credentials)
     request = youtube.videos().insert(
@@ -173,45 +178,48 @@ def upload_video(token, filename, title, description, tags, category):
         media_body=MediaFileUpload(filename, chunksize=-1, resumable=True)
     )
     response = request.execute()
-    print(f"✅ सफलता! शानदार AI शार्ट वीडियो लाइव है: https://www.youtube.com/watch?v={response['id']}\n")
+    print(f"✅ वीडियो लाइव है: https://www.youtube.com/watch?v={response['id']}\n")
 
+# -- चैनल 1: Girish AI Gadgets --
 def run_gadgets_channel():
     try:
-        print("--- 📱 Girish AI Gadgets (Real Amazon Gadget Mode) ---")
-        # 🛑 बदलाव 2: असली, सस्ते और अमेज़न पर बिकने वाले गैजेट्स की पक्की कमांड
-        script, prompts = get_script_and_prompts("a real, highly useful, and trending smart home gadget available on Amazon India for under 1000 rupees (like a smart bulb, mini camera, or sensor)", is_gadget=True)
+        print("--- 📱 Girish AI Gadgets ---")
+        script, prompts, gadget_name = get_script_and_prompts("a real, highly useful smart home gadget available on Amazon India under 1000 rupees", is_gadget=True)
         image_files = fetch_ai_images(prompts)
         create_human_voice(script, "voice_gadget.mp3")
         time.sleep(3)
         make_video(image_files, "final_gadget.mp4", "voice_gadget.mp3")
         
-        desc = f"🔥 👉 इसे यहाँ से खरीदें (Buy Now): {AMAZON_ID}\n\n{script}\n\n#gadgets #smarthome #tech #shorts #amazonfinds"
-        upload_video(TOKEN_GADGETS, "final_gadget.mp4", "Useful Amazon Gadget Under ₹1000! 🤯 #shorts #gadgets", desc, ["shorts", "tech", "gadgets", "amazon finds"], "28")
+        # 🛑 डिस्क्रिप्शन में पक्का प्रोडक्ट का नाम
+        if gadget_name:
+            desc = f"🔥 👉 मेरी अमेज़न दुकान का लिंक: {AMAZON_ID}\n🔍 अमेज़न पर यह नाम सर्च करें: {gadget_name}\n\n{script}\n\n#gadgets #smarthome #amazonfinds"
+        else:
+            desc = f"🔥 👉 इसे यहाँ से खरीदें: {AMAZON_ID}\n\n{script}\n\n#gadgets #smarthome #amazonfinds"
+            
+        upload_video(TOKEN_GADGETS, "final_gadget.mp4", "Useful Amazon Gadget Under ₹1000! 🤯 #shorts", desc, ["shorts", "gadgets", "amazon finds"], "28")
     except Exception as e:
         print(f"❌ Gadgets चैनल एरर: {e}")
 
+# -- चैनल 2: Mystic Universe --
 def run_mystic_channel():
     try:
-        print("--- 🌌 Mystic Universe (Zoom-in Image Mode) ---")
-        script, prompts = get_script_and_prompts("a highly mysterious and shocking secret of the universe", is_gadget=False)
+        print("--- 🌌 Mystic Universe ---")
+        script, prompts, _ = get_script_and_prompts("a highly mysterious secret of the universe", is_gadget=False)
         image_files = fetch_ai_images(prompts)
         create_human_voice(script, "voice_mystic.mp3")
         time.sleep(3)
         make_video(image_files, "final_mystic.mp4", "voice_mystic.mp3")
         
-        desc = f"{script}\n\n#space #universe #mystery #shorts #ai"
-        upload_video(TOKEN_MYSTIC, "final_mystic.mp4", "The Biggest Space Secret! 🌌 #shorts #space", desc, ["shorts", "space", "universe"], "28")
+        desc = f"{script}\n\n#space #universe #mystery #shorts"
+        upload_video(TOKEN_MYSTIC, "final_mystic.mp4", "The Biggest Space Secret! 🌌 #shorts", desc, ["shorts", "space", "universe"], "28")
     except Exception as e:
         print(f"❌ Mystic चैनल एरर: {e}")
 
+# 7. मेन स्विच
 if __name__ == "__main__":
-    print("🚀 PRO-LEVEL V3.2 AI इंजन स्टार्ट... (Real Gadgets + Zoom FX)")
-    
+    print("🚀 V3.3 AI इंजन स्टार्ट...")
     run_gadgets_channel()
-    
-    print("\n⏳ API लिमिट बचाने के लिए 60 सेकंड का सेफ्टी ब्रेक ले रहे हैं...\n")
+    print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
-    
     run_mystic_channel()
-    
     print("🎯 दोनों चैनलों का काम पूरा हो गया!")
