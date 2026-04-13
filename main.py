@@ -1,5 +1,6 @@
 # गिरीश भाई का मास्टर कोड V3.5 (Double Channel Amazon Monetization + 30-Sec Viral)
 import os
+import sys  # 🛑 गिटहब को एरर बताने के लिए जोड़ा गया है
 import requests
 import asyncio
 import edge_tts
@@ -200,6 +201,8 @@ def run_gadgets_channel():
         upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"Amazing Gadget: {gadget_name}! 🤯 #shorts", desc, ["shorts", "gadgets", "amazon finds"], "28")
     except Exception as e:
         print(f"❌ Gadgets चैनल एरर: {e}")
+        print("🛑 मशीन में गड़बड़ी हुई है, गिटहब को Failed (🔴) सिग्नल भेज रहे हैं...")
+        sys.exit(1)  # 🛑 गिटहब एक्शन को फेल करने की पक्की कमांड
 
 # -- चैनल 2: Mystic Universe --
 def run_mystic_channel():
@@ -216,6 +219,8 @@ def run_mystic_channel():
         upload_video(TOKEN_MYSTIC, "final_mystic.mp4", "The Biggest Space Secret! 🌌 #shorts", desc, ["shorts", "space", "universe"], "28")
     except Exception as e:
         print(f"❌ Mystic चैनल एरर: {e}")
+        print("🛑 मशीन में गड़बड़ी हुई है, गिटहब को Failed (🔴) सिग्नल भेज रहे हैं...")
+        sys.exit(1)  # 🛑 गिटहब एक्शन को फेल करने की पक्की कमांड
 
 # 7. मेन स्विच
 if __name__ == "__main__":
