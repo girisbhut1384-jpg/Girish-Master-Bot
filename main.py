@@ -1,4 +1,4 @@
-# गिरीश भाई का V5.1 हाई-प्रोफाइल मास्टर कोड (Smart Error Tracker के साथ)
+# गिरीश भाई का V5.3 हाई-प्रोफाइल मास्टर कोड (All Gemini Models Combined Fallback)
 import os
 import sys
 import requests
@@ -16,7 +16,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# ImageMagick का पाथ सेट करें (GitHub Actions के लिए)
+# ImageMagick का पाथ सेट करें
 change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
 # 1. तिजोरी से चाबियाँ
@@ -25,7 +25,7 @@ CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleuserconten
 CLIENT_SECRET = "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"
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
-AMAZON_ID = "https://www.amazon.in/?tag=girishbhut07-21"  # आपका पक्का होमपेज लिंक
+AMAZON_ID = "https://www.amazon.in/?tag=girishbhut07-21"  
 
 # 2. रैंडम टॉपिक्स की ब्रेन डिक्शनरी 
 GADGET_TOPICS = [
@@ -40,11 +40,18 @@ MYSTIC_TOPICS = [
     "अमेज़न के जंगलों का रहस्यमयी कबीला", "दुनिया की सबसे श्रापित किताब", "कैलाश पर्वत का अनसुलझा रहस्य"
 ]
 
-# 3. Gemini AI - (Smart Error Tracker के साथ)
+# 3. Gemini AI - (सारे मॉडल्स एक साथ जोड़े गए - ब्रह्मास्त्र लूप)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर वायरल स्क्रिप्ट सोच रहा है...")
-    active_model = "models/gemini-1.5-flash"
-    url = f"https://generativelanguage.googleapis.com/v1beta/{active_model}:generateContent?key={GEMINI_KEY}"
+    
+    # 🛑 V5.3 मास्टरमाइंड आइडिया: सारे मॉडल्स की लिस्ट (एक फेल तो दूसरा चालू)
+    models_to_try = [
+        "models/gemini-1.5-flash",
+        "models/gemini-1.5-flash-latest",
+        "models/gemini-1.5-pro",
+        "models/gemini-1.5-pro-latest",
+        "models/gemini-pro"
+    ]
     
     prompt = f"Write a HIGHLY VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking problem/hook. STRICTLY 50-60 words. Use emojis. "
     
@@ -64,16 +71,29 @@ def get_script_and_prompts(topic, is_gadget=False):
     """
     
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
-    res = requests.post(url, json=payload, timeout=30)
-    response = res.json()
+    response_data = None
     
-    # 🛑 नया स्मार्ट एरर चेकर (अगर जेमिनी ने 'candidates' नहीं भेजा)
-    if 'candidates' not in response:
-        print(f"❌ Gemini AI ने स्क्रिप्ट देने से मना कर दिया!")
-        print(f"⚠️ असली कारण (Google Error): {response}")
-        raise Exception(f"Gemini API Error: {response.get('error', {}).get('message', 'Unknown Limit/Quota Error')}")
+    # एक-एक करके सारे मॉडल्स को आज़माएगा
+    for model in models_to_try:
+        print(f"🤖 मशीन ट्राई कर रही है: {model}...")
+        url = f"https://generativelanguage.googleapis.com/v1beta/{model}:generateContent?key={GEMINI_KEY}"
+        try:
+            res = requests.post(url, json=payload, timeout=30)
+            if res.status_code == 200:
+                temp_data = res.json()
+                if 'candidates' in temp_data:
+                    response_data = temp_data
+                    print(f"✅ सफलता! {model} ने स्क्रिप्ट बना दी।")
+                    break # काम हो गया, लूप से बाहर आओ
+            else:
+                print(f"⚠️ {model} ने मना कर दिया (Error {res.status_code}). अगले मॉडल पर जा रहे हैं...")
+        except Exception as e:
+            print(f"⚠️ {model} डाउन है ({e}). अगले मॉडल पर जा रहे हैं...")
+            
+    if not response_data:
+        raise Exception("❌ सारे Gemini मॉडल्स फेल हो गए! गूगल का सर्वर पूरी तरह डाउन है।")
     
-    clean_text = response['candidates'][0]['content']['parts'][0]['text'].strip()
+    clean_text = response_data['candidates'][0]['content']['parts'][0]['text'].strip()
     
     if clean_text.startswith("```json"):
         clean_text = clean_text[7:-3].strip()
@@ -85,7 +105,7 @@ def get_script_and_prompts(topic, is_gadget=False):
     print(f"✅ [AI स्क्रिप्ट तैयार]: {hindi_script[:60]}...")
     return hindi_script, data['prompts'][:8], data['captions'][:8], data.get('gadget_name', '')
 
-# 4. Pollinations AI (8 तस्वीरें)
+# 4. Pollinations AI 
 def fetch_ai_images(prompts):
     print("🎨 8 हाई-क्वालिटी तस्वीरें बनाई जा रही हैं (Fast Cuts के लिए)...")
     image_files = []
@@ -96,11 +116,19 @@ def fetch_ai_images(prompts):
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         
-        res = requests.get(url, timeout=30) 
-        if res.status_code == 200: 
-            with open(filename, "wb") as f: f.write(res.content)
-            image_files.append(filename)
-            print(f"   ✅ फोटो {i+1}/8 तैयार!")
+        for attempt in range(3): # फोटो के लिए भी ट्राई-अगेन
+            try:
+                res = requests.get(url, timeout=30) 
+                if res.status_code == 200: 
+                    with open(filename, "wb") as f: f.write(res.content)
+                    image_files.append(filename)
+                    print(f"   ✅ फोटो {i+1}/8 तैयार!")
+                    break
+            except Exception:
+                time.sleep(3)
+    
+    if len(image_files) < 8:
+        raise Exception("❌ फोटो बनाने वाला सर्वर डाउन है।")
     return image_files
 
 # 5. असली इंसानों जैसी आवाज़ 
@@ -111,7 +139,7 @@ def create_human_voice(text, filename):
         await communicate.save(filename)
     asyncio.run(_generate())
 
-# 6. मास्टर एडिटिंग (Fast Cuts + Subtitles)
+# 6. मास्टर एडिटिंग
 def make_video(image_files, captions, final_vid, audio_file):
     print("🎬 प्रो-लेवल एडिटिंग (Fast Cuts + Text Subtitles)...")
     main_audio = AudioFileClip(audio_file)
@@ -159,7 +187,7 @@ def upload_video(token, filename, title, description, tags, category):
     response = request.execute()
     print(f"✅ वीडियो लाइव है: https://www.youtube.com/watch?v={response['id']}\n")
 
-# 8. स्मार्ट 'जिद्दी' एग्जीक्यूशन इंजन
+# 8. स्मार्ट 'जिद्दी' एग्जीक्यूशन इंजन 
 def run_channel_safely(channel_type):
     max_retries = 3
     wait_minutes = 10
@@ -192,14 +220,14 @@ def run_channel_safely(channel_type):
                 
         except Exception as e:
             print(f"⚠️ एरर आया: {e}")
-            print(f"⏳ सर्वर बिजी है। फेल नहीं हो रहा हूँ, {wait_minutes} मिनट बाद दोबारा कोशिश करूँगा... (Attempt {attempt+1}/{max_retries})")
+            print(f"⏳ फेल नहीं हो रहा हूँ, {wait_minutes} मिनट बाद दोबारा कोशिश करूँगा... (Attempt {attempt+1}/{max_retries})")
             time.sleep(wait_minutes * 60)
             
     print(f"❌ 3 बार कोशिश की पर सर्वर नहीं चला। अब बंद हो रहा हूँ।")
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V5.1 हाई-प्रोफाइल जिद्दी AI इंजन स्टार्ट...")
+    print("🚀 V5.3 हाई-प्रोफाइल जिद्दी AI इंजन स्टार्ट...")
     run_channel_safely("GADGETS")
     print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
