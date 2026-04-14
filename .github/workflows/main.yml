@@ -35,4 +35,5 @@ jobs:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       run: python main.py
