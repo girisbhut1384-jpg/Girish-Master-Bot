@@ -1,4 +1,4 @@
-# गिरीश भाई का V5.0 हाई-प्रोफाइल मास्टर कोड (Fast Cuts, Subtitles, Smart Retry, Random Topics)
+# गिरीश भाई का V5.1 हाई-प्रोफाइल मास्टर कोड (Smart Error Tracker के साथ)
 import os
 import sys
 import requests
@@ -27,7 +27,7 @@ TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = "https://www.amazon.in/?tag=girishbhut07-21"  # आपका पक्का होमपेज लिंक
 
-# 2. रैंडम टॉपिक्स की ब्रेन डिक्शनरी (ताकि वीडियो कभी एक जैसे न बनें)
+# 2. रैंडम टॉपिक्स की ब्रेन डिक्शनरी 
 GADGET_TOPICS = [
     "स्मार्ट किचन हैक्स गैजेट्स", "मच्छर भगाने वाला हाई-टेक गैजेट", "कमरे को स्मार्ट बनाने वाली लाइट्स", 
     "कार के लिए सीक्रेट गैजेट", "स्टूडेंट्स के लिए जादुई पेन/गैजेट", "सर्दियों के लिए पोर्टेबल हीटर गैजेट",
@@ -40,7 +40,7 @@ MYSTIC_TOPICS = [
     "अमेज़न के जंगलों का रहस्यमयी कबीला", "दुनिया की सबसे श्रापित किताब", "कैलाश पर्वत का अनसुलझा रहस्य"
 ]
 
-# 3. Gemini AI - (8 Photos + 8 Captions के साथ)
+# 3. Gemini AI - (Smart Error Tracker के साथ)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर वायरल स्क्रिप्ट सोच रहा है...")
     active_model = "models/gemini-1.5-flash"
@@ -64,11 +64,17 @@ def get_script_and_prompts(topic, is_gadget=False):
     """
     
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
-    response = requests.post(url, json=payload, timeout=30).json()
+    res = requests.post(url, json=payload, timeout=30)
+    response = res.json()
+    
+    # 🛑 नया स्मार्ट एरर चेकर (अगर जेमिनी ने 'candidates' नहीं भेजा)
+    if 'candidates' not in response:
+        print(f"❌ Gemini AI ने स्क्रिप्ट देने से मना कर दिया!")
+        print(f"⚠️ असली कारण (Google Error): {response}")
+        raise Exception(f"Gemini API Error: {response.get('error', {}).get('message', 'Unknown Limit/Quota Error')}")
     
     clean_text = response['candidates'][0]['content']['parts'][0]['text'].strip()
     
-    # यहाँ पर लाइन कटने की समस्या थी, इसे फिक्स कर दिया गया है
     if clean_text.startswith("```json"):
         clean_text = clean_text[7:-3].strip()
     elif clean_text.startswith("```"):
@@ -153,7 +159,7 @@ def upload_video(token, filename, title, description, tags, category):
     response = request.execute()
     print(f"✅ वीडियो लाइव है: https://www.youtube.com/watch?v={response['id']}\n")
 
-# 8. स्मार्ट 'जिद्दी' एग्जीक्यूशन इंजन (हर 10 मिनट में ट्राई)
+# 8. स्मार्ट 'जिद्दी' एग्जीक्यूशन इंजन
 def run_channel_safely(channel_type):
     max_retries = 3
     wait_minutes = 10
@@ -193,7 +199,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V5.0 हाई-प्रोफाइल जिद्दी AI इंजन स्टार्ट...")
+    print("🚀 V5.1 हाई-प्रोफाइल जिद्दी AI इंजन स्टार्ट...")
     run_channel_safely("GADGETS")
     print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
