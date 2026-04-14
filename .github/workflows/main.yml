@@ -2,8 +2,8 @@ name: Auto YouTube Shorts Uploader V5
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # हर 6 घंटे में ऑटोमैटिक चलेगा
-  workflow_dispatch: # हाथ से रन (Run) का बटन दबाने के लिए
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
 jobs:
   run-bot:
@@ -16,13 +16,12 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
-    - name: Install ImageMagick & Fix Policy (सबटाइटल्स के लिए बहुत जरूरी)
+    - name: Install ImageMagick & Fix Policy
       run: |
         sudo apt-get update
         sudo apt-get install -y imagemagick
-        # MoviePy को टेक्स्ट लिखने की परमिशन देने के लिए सिक्योरिटी पालिसी बदलना:
         sudo sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
 
     - name: Install Python dependencies
