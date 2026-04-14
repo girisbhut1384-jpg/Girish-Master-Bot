@@ -1,4 +1,4 @@
-# गिरीश भाई का V5.5 मास्टर कोड (New Google GenAI SDK 2026 Update)
+# गिरीश भाई का V5.6 मास्टर कोड (Anti-Alias Fix & New Google GenAI SDK)
 import os
 import sys
 import requests
@@ -8,7 +8,13 @@ import time
 import urllib.parse
 import json
 import random
-from google import genai  # 🛑 नया: 2026 का गूगल ऑफिशियल टूल
+
+# 🛑 नया बुलेटप्रूफ़ पैच: ANTIALIAS एरर को हमेशा के लिए खत्म करने के लिए
+import PIL.Image
+if not hasattr(PIL.Image, 'ANTIALIAS'):
+    PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
+
+from google import genai  
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 from moviepy.audio.fx.volumex import volumex
@@ -26,16 +32,14 @@ if not GEMINI_KEY:
     print("❌ भयंकर एरर: GEMINI_API_KEY नहीं मिली!")
     sys.exit(1)
 
-# नए तरीके से जेमिनी क्लाइंट बनाना
 client = genai.Client(api_key=GEMINI_KEY)
-
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = "https://www.amazon.in/?tag=girishbhut07-21"  
 
-# 2. रैंडम टॉपिक्स की ब्रेन डिक्शनरी 
+# 2. रैंडम टॉपिक्स 
 GADGET_TOPICS = [
     "स्मार्ट किचन हैक्स गैजेट्स", "मच्छर भगाने वाला हाई-टेक गैजेट", "कमरे को स्मार्ट बनाने वाली लाइट्स", 
     "कार के लिए सीक्रेट गैजेट", "स्टूडेंट्स के लिए जादुई पेन/गैजेट", "सर्दियों के लिए पोर्टेबल हीटर गैजेट",
@@ -48,11 +52,10 @@ MYSTIC_TOPICS = [
     "अमेज़न के जंगलों का रहस्यमयी कबीला", "दुनिया की सबसे श्रापित किताब", "कैलाश पर्वत का अनसुलझा रहस्य"
 ]
 
-# 3. Gemini AI - (नए GenAI सिस्टम और सारे मॉडल्स के साथ)
+# 3. Gemini AI 
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर वायरल स्क्रिप्ट सोच रहा है...")
     
-    # 🛑 2026 के ब्रह्मास्त्र मॉडल्स (सबसे लेटेस्ट से शुरुआत)
     models_to_try = ["gemini-3.1-pro", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
     
     prompt = f"Write a HIGHLY VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking problem/hook. STRICTLY 50-60 words. Use emojis. "
@@ -74,7 +77,6 @@ def get_script_and_prompts(topic, is_gadget=False):
     
     clean_text = None
     
-    # नए क्लाइंट के साथ लूप
     for m_name in models_to_try:
         print(f"🤖 मशीन नए टूल से ट्राई कर रही है: {m_name}...")
         try:
@@ -223,7 +225,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V5.5 हाई-प्रोफाइल जिद्दी AI इंजन स्टार्ट...")
+    print("🚀 V5.6 हाई-प्रोफाइल जिद्दी AI इंजन स्टार्ट...")
     run_channel_safely("GADGETS")
     print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
