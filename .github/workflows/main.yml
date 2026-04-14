@@ -1,32 +1,38 @@
-name: Girish 24/7 Automation
+name: Auto YouTube Shorts Uploader V5
 
 on:
   schedule:
-    # यह मशीन को हर 6 घंटे में चलाएगा (दिन में 4 बार) जिससे YouTube Limit Error नहीं आएगा
-    - cron: '0 */6 * * *'
-  workflow_dispatch: # आपको खुद बटन दबाकर चलाने की सुविधा देता है
+    - cron: '0 */6 * * *' # हर 6 घंटे में ऑटोमैटिक चलेगा
+  workflow_dispatch: # हाथ से रन (Run) का बटन दबाने के लिए
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.10'
 
-    - name: Install Requirements
-      run: pip install -r requirements.txt
+    - name: Install ImageMagick & Fix Policy (सबटाइटल्स के लिए बहुत जरूरी)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y imagemagick
+        # MoviePy को टेक्स्ट लिखने की परमिशन देने के लिए सिक्योरिटी पालिसी बदलना:
+        sudo sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
 
-    - name: Run Master Engine
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Master AI Script
       env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
-        PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        AMAZON_ID: ${{ secrets.AMAZON_ID }}
       run: python main.py
