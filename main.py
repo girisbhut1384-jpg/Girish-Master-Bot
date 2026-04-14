@@ -1,4 +1,4 @@
-# गिरीश भाई का V5.3 हाई-प्रोफाइल मास्टर कोड (All Gemini Models Combined Fallback)
+# गिरीश भाई का V5.4 हाई-प्रोफाइल मास्टर कोड (Official Google AI SDK Integration)
 import os
 import sys
 import requests
@@ -8,6 +8,7 @@ import time
 import urllib.parse
 import json
 import random
+import google.generativeai as genai  # 🛑 नया: गूगल का अपना ऑफिशियल टूल
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 from moviepy.audio.fx.volumex import volumex
@@ -19,10 +20,17 @@ from googleapiclient.http import MediaFileUpload
 # ImageMagick का पाथ सेट करें
 change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
-# 1. तिजोरी से चाबियाँ
+# 1. तिजोरी से चाबियाँ चेक करना
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+if not GEMINI_KEY:
+    print("❌ भयंकर एरर: GEMINI_API_KEY नहीं मिली! कृपया चेक करें कि गिटहब सीक्रेट्स में चाबी सही से डली है या नहीं।")
+    sys.exit(1)
+
+# जेमिनी को चाबी सौंपना
+genai.configure(api_key=GEMINI_KEY)
+
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
-CLIENT_SECRET = "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"
+CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 AMAZON_ID = "https://www.amazon.in/?tag=girishbhut07-21"  
@@ -40,18 +48,11 @@ MYSTIC_TOPICS = [
     "अमेज़न के जंगलों का रहस्यमयी कबीला", "दुनिया की सबसे श्रापित किताब", "कैलाश पर्वत का अनसुलझा रहस्य"
 ]
 
-# 3. Gemini AI - (सारे मॉडल्स एक साथ जोड़े गए - ब्रह्मास्त्र लूप)
+# 3. Gemini AI - (Google Official API के साथ 100% पक्का तरीका)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर वायरल स्क्रिप्ट सोच रहा है...")
     
-    # 🛑 V5.3 मास्टरमाइंड आइडिया: सारे मॉडल्स की लिस्ट (एक फेल तो दूसरा चालू)
-    models_to_try = [
-        "models/gemini-1.5-flash",
-        "models/gemini-1.5-flash-latest",
-        "models/gemini-1.5-pro",
-        "models/gemini-1.5-pro-latest",
-        "models/gemini-pro"
-    ]
+    models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
     
     prompt = f"Write a HIGHLY VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking problem/hook. STRICTLY 50-60 words. Use emojis. "
     
@@ -70,30 +71,22 @@ def get_script_and_prompts(topic, is_gadget=False):
     }
     """
     
-    payload = {"contents": [{"parts": [{"text": prompt}]}]}
-    response_data = None
+    clean_text = None
     
-    # एक-एक करके सारे मॉडल्स को आज़माएगा
-    for model in models_to_try:
-        print(f"🤖 मशीन ट्राई कर रही है: {model}...")
-        url = f"https://generativelanguage.googleapis.com/v1beta/{model}:generateContent?key={GEMINI_KEY}"
+    # 🛑 Official SDK के ज़रिए ब्रह्मास्त्र लूप
+    for m_name in models_to_try:
+        print(f"🤖 मशीन ऑफिशियल तरीके से ट्राई कर रही है: {m_name}...")
         try:
-            res = requests.post(url, json=payload, timeout=30)
-            if res.status_code == 200:
-                temp_data = res.json()
-                if 'candidates' in temp_data:
-                    response_data = temp_data
-                    print(f"✅ सफलता! {model} ने स्क्रिप्ट बना दी।")
-                    break # काम हो गया, लूप से बाहर आओ
-            else:
-                print(f"⚠️ {model} ने मना कर दिया (Error {res.status_code}). अगले मॉडल पर जा रहे हैं...")
+            model = genai.GenerativeModel(m_name)
+            response = model.generate_content(prompt)
+            clean_text = response.text.strip()
+            print(f"✅ सफलता! {m_name} ने स्क्रिप्ट बना दी।")
+            break
         except Exception as e:
-            print(f"⚠️ {model} डाउन है ({e}). अगले मॉडल पर जा रहे हैं...")
+            print(f"⚠️ {m_name} मॉडल से बात नहीं हो पाई: {e}")
             
-    if not response_data:
-        raise Exception("❌ सारे Gemini मॉडल्स फेल हो गए! गूगल का सर्वर पूरी तरह डाउन है।")
-    
-    clean_text = response_data['candidates'][0]['content']['parts'][0]['text'].strip()
+    if not clean_text:
+        raise Exception("❌ सारे Gemini मॉडल्स फेल हो गए! कृपया चेक करें कि आपकी API Key सही है या गूगल का सर्वर डाउन है।")
     
     if clean_text.startswith("```json"):
         clean_text = clean_text[7:-3].strip()
@@ -116,7 +109,7 @@ def fetch_ai_images(prompts):
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         
-        for attempt in range(3): # फोटो के लिए भी ट्राई-अगेन
+        for attempt in range(3): 
             try:
                 res = requests.get(url, timeout=30) 
                 if res.status_code == 200: 
@@ -227,7 +220,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V5.3 हाई-प्रोफाइल जिद्दी AI इंजन स्टार्ट...")
+    print("🚀 V5.4 हाई-प्रोफाइल जिद्दी AI इंजन स्टार्ट...")
     run_channel_safely("GADGETS")
     print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
