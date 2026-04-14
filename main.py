@@ -67,19 +67,135 @@ def get_script_and_prompts(topic, is_gadget=False):
     response = requests.post(url, json=payload, timeout=30).json()
     
     clean_text = response['candidates'][0]['content']['parts'][0]['text'].strip()
-    if clean_text.startswith("
-http://googleusercontent.com/immersive_entry_chip/0
-http://googleusercontent.com/immersive_entry_chip/1
+    
+    # यहाँ पर लाइन कटने की समस्या थी, इसे फिक्स कर दिया गया है
+    if clean_text.startswith("```json"):
+        clean_text = clean_text[7:-3].strip()
+    elif clean_text.startswith("```"):
+        clean_text = clean_text[3:-3].strip()
+         
+    data = json.loads(clean_text)
+    hindi_script = data['script'].replace("*", "").replace("#", "")
+    print(f"✅ [AI स्क्रिप्ट तैयार]: {hindi_script[:60]}...")
+    return hindi_script, data['prompts'][:8], data['captions'][:8], data.get('gadget_name', '')
 
-### इस V5.0 कोड में क्या चमत्कार होंगे?
-1. **कभी एक जैसा वीडियो नहीं:** हमने `GADGET_TOPICS` और `MYSTIC_TOPICS` की लिस्ट डाल दी है। मशीन इसमें से रैंडमली (लॉटरी की तरह) एक नया टॉपिक उठाएगी।
-2. **8 फोटो + 8 सबटाइटल्स:** अब वीडियो में स्क्रीन पर नीचे बड़े अक्षरों में हिंदी के कैप्शन (Subtitles) आएंगे और हर 3-4 सेकंड में फोटो बदलेगी। यह यूट्यूब पर 100% वायरल वाला फॉर्मेट है।
-3. **आवाज़ में जोश:** `rate="+10%"` लगाकर आवाज़ थोड़ी फ़ास्ट कर दी गई है जिससे बोरियत नहीं होगी।
-4. **जिद्दी ट्राई-अगेन सिस्टम:** `run_channel_safely` फंक्शन में एरर आने पर मशीन गिटहब को तुरंत फेल नहीं करेगी। वह शांति से 10 मिनट सोएगी और फिर से पूरा प्रोसेस दोबारा शुरू करेगी!
+# 4. Pollinations AI (8 तस्वीरें)
+def fetch_ai_images(prompts):
+    print("🎨 8 हाई-क्वालिटी तस्वीरें बनाई जा रही हैं (Fast Cuts के लिए)...")
+    image_files = []
+    seed = random.randint(1000, 99999) 
+    
+    for i, p in enumerate(prompts):
+        safe_prompt = urllib.parse.quote(p + ", highly detailed, 4k, cinematic")
+        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
+        filename = f"ai_scene_{i}.jpg"
+        
+        res = requests.get(url, timeout=30) 
+        if res.status_code == 200: 
+            with open(filename, "wb") as f: f.write(res.content)
+            image_files.append(filename)
+            print(f"   ✅ फोटो {i+1}/8 तैयार!")
+    return image_files
 
-**आपको क्या करना है?**
-1. यह कोड अपनी `main.py` में डालें।
-2. गिटहब वर्कफ़्लो (YML) में `sudo apt-get install -y imagemagick` जोड़ें (ताकि टेक्स्ट जनरेट हो सके)।
-3. अपने दोनों यूट्यूब चैनलों के 'Bio/Links' सेक्शन में अपना यह पक्का लिंक `https://www.amazon.in/?tag=girishbhut07-21` डाल दें।
+# 5. असली इंसानों जैसी आवाज़ 
+def create_human_voice(text, filename):
+    print("🎙️ आवाज़ बनाई जा रही है...")
+    async def _generate():
+        communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+10%")
+        await communicate.save(filename)
+    asyncio.run(_generate())
 
-काम शुरू करें और 24 घंटे बाद चैनल चेक करें, वीडियो की क्वालिटी देखकर आप खुद हैरान रह जाएंगे!
+# 6. मास्टर एडिटिंग (Fast Cuts + Subtitles)
+def make_video(image_files, captions, final_vid, audio_file):
+    print("🎬 प्रो-लेवल एडिटिंग (Fast Cuts + Text Subtitles)...")
+    main_audio = AudioFileClip(audio_file)
+    audio_duration = main_audio.duration
+    time_per_image = audio_duration / len(image_files)
+    
+    clips = []
+    for i, img in enumerate(image_files):
+        base_clip = ImageClip(img)
+        w, h = base_clip.size
+        if w / h > 1080 / 1920: 
+            base_clip = base_clip.resize(height=1920)
+        else: 
+            base_clip = base_clip.resize(width=1080)
+        base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
+        
+        zoomed_clip = base_clip.resize(lambda t: 1 + 0.05 * (t / time_per_image)).set_duration(time_per_image)
+        
+        txt_clip = TextClip(captions[i], fontsize=80, color='white', bg_color='black', font='Arial-Bold', method='caption', size=(900, None))
+        txt_clip = txt_clip.set_position(('center', 'bottom')).set_duration(time_per_image).margin(bottom=300, opacity=0)
+        
+        final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center')), txt_clip], size=(1080, 1920)).set_duration(time_per_image)
+        clips.append(final_clip)
+        
+    video = concatenate_videoclips(clips, method="compose")
+    final = video.set_audio(main_audio).subclip(0, audio_duration)
+    final.write_videofile(final_vid, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", logger=None)
+    main_audio.close()
+    video.close()
+    final.close()
+
+# 7. यूट्यूब अपलोड
+def upload_video(token, filename, title, description, tags, category):
+    print(f"🚀 यूट्यूब पर वीडियो अपलोड हो रहा है...")
+    credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
+    youtube = build("youtube", "v3", credentials=credentials)
+    request = youtube.videos().insert(
+        part="snippet,status",
+        body={
+            "snippet": {"title": title, "description": description, "tags": tags, "categoryId": category},
+            "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}
+        },
+        media_body=MediaFileUpload(filename, chunksize=-1, resumable=True)
+    )
+    response = request.execute()
+    print(f"✅ वीडियो लाइव है: https://www.youtube.com/watch?v={response['id']}\n")
+
+# 8. स्मार्ट 'जिद्दी' एग्जीक्यूशन इंजन (हर 10 मिनट में ट्राई)
+def run_channel_safely(channel_type):
+    max_retries = 3
+    wait_minutes = 10
+    
+    for attempt in range(max_retries):
+        try:
+            if channel_type == "GADGETS":
+                print("--- 📱 Girish AI Gadgets ---")
+                topic = random.choice(GADGET_TOPICS)
+                script, prompts, captions, gadget_name = get_script_and_prompts(topic, is_gadget=True)
+                image_files = fetch_ai_images(prompts)
+                create_human_voice(script, "voice_gadget.mp3")
+                make_video(image_files, captions, "final_gadget.mp4", "voice_gadget.mp3")
+                
+                desc = f"🔥 👉 गैजेट खरीदने का लिंक चैनल के Bio में है!\n🔍 अमेज़न पर सर्च करें: {gadget_name}\n\n{script}\n\n#gadgets #smarthome #amazonfinds"
+                upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 {gadget_name} #shorts", desc, ["shorts", "gadgets", "amazon finds"], "28")
+                return True 
+                
+            elif channel_type == "MYSTIC":
+                print("--- 🌌 Mystic Universe ---")
+                topic = random.choice(MYSTIC_TOPICS)
+                script, prompts, captions, _ = get_script_and_prompts(topic, is_gadget=False)
+                image_files = fetch_ai_images(prompts)
+                create_human_voice(script, "voice_mystic.mp3")
+                make_video(image_files, captions, "final_mystic.mp4", "voice_mystic.mp3")
+                
+                desc = f"🔥 👉 रहस्यमयी किताबें और गैजेट्स का लिंक चैनल के Bio में है!\n\n{script}\n\n#space #universe #mystery #shorts"
+                upload_video(TOKEN_MYSTIC, "final_mystic.mp4", f"🤯 {topic} #shorts", desc, ["shorts", "space", "mystery"], "28")
+                return True 
+                
+        except Exception as e:
+            print(f"⚠️ एरर आया: {e}")
+            print(f"⏳ सर्वर बिजी है। फेल नहीं हो रहा हूँ, {wait_minutes} मिनट बाद दोबारा कोशिश करूँगा... (Attempt {attempt+1}/{max_retries})")
+            time.sleep(wait_minutes * 60)
+            
+    print(f"❌ 3 बार कोशिश की पर सर्वर नहीं चला। अब बंद हो रहा हूँ।")
+    sys.exit(1)
+
+if __name__ == "__main__":
+    print("🚀 V5.0 हाई-प्रोफाइल जिद्दी AI इंजन स्टार्ट...")
+    run_channel_safely("GADGETS")
+    print("\n⏳ 60 सेकंड का ब्रेक...\n")
+    time.sleep(60)
+    run_channel_safely("MYSTIC")
+    print("🎯 दोनों चैनलों का काम शानदार तरीके से पूरा हो गया!")
