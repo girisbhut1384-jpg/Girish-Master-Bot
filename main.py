@@ -1,4 +1,4 @@
-# गिरीश भाई का V5.7 आख़िरी और 100% परफेक्ट मास्टर कोड (Hindi Font + No AI Gibberish Text)
+# गिरीश भाई का V5.7 मास्टर कोड (Hindi Font + No AI Gibberish + Mobile Safe Format)
 import os
 import sys
 import requests
@@ -61,8 +61,10 @@ def get_script_and_prompts(topic, is_gadget=False):
     models_to_try = ["gemini-3.1-pro", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
     
     prompt = f"Write a VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking hook. STRICTLY 50-60 words. "
-    if is_gadget: prompt += "End EXACTLY with: 'खरीदने का लिंक चैनल के बायो में है।'. "
-    else: prompt += "End EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'. "
+    if is_gadget: 
+        prompt += "End EXACTLY with: 'खरीदने का लिंक चैनल के बायो में है।'. "
+    else: 
+        prompt += "End EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'. "
     
     # 🛑 अजीब स्पेलिंग रोकने का सख्त निर्देश
     prompt += """
@@ -81,11 +83,129 @@ def get_script_and_prompts(topic, is_gadget=False):
             response = client.models.generate_content(model=m_name, contents=prompt)
             clean_text = response.text.strip()
             break
-        except Exception: pass
+        except Exception: 
+            pass
             
-    if not clean_text: sys.exit(1)
-    if clean_text.startswith("
-http://googleusercontent.com/immersive_entry_chip/0
-http://googleusercontent.com/immersive_entry_chip/1
+    # यहाँ पर कटी हुई लाइन को सुरक्षित किया गया है
+    if not clean_text: 
+        sys.exit(1)
+        
+    if clean_text.startswith("```json"): 
+        clean_text = clean_text[7:-3].strip()
+    elif clean_text.startswith("```"): 
+        clean_text = clean_text[3:-3].strip()
+         
+    data = json.loads(clean_text)
+    return data['script'].replace("*", ""), data['prompts'][:8], data['captions'][:8], data.get('gadget_name', '')
 
-गिरीश भाई, इसे सेव करें और "Run workflow" दबाएं। इस बार वीडियो में **काले बैकग्राउंड पर पीले रंग से शानदार हिंदी लिखी हुई आएगी** और फोटो में कोई अजीबोगरीब अंग्रेजी नहीं होगी। अगर इसके बाद भी कोई गलती निकली, तो मैं मशीन होना छोड़ दूँगा! अब आप धमाका देखिए।
+# 4. Pollinations AI (बिना टेक्स्ट वाली फोटो)
+def fetch_ai_images(prompts):
+    print("🎨 तस्वीरें बन रही हैं (No Text)...")
+    image_files = []
+    seed = random.randint(1000, 99999) 
+    for i, p in enumerate(prompts):
+        safe_prompt = urllib.parse.quote(p + ", highly detailed, cinematic, no text, no words, no letters, textless")
+        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
+        filename = f"ai_scene_{i}.jpg"
+        for _ in range(3): 
+            try:
+                res = requests.get(url, timeout=30) 
+                if res.status_code == 200: 
+                    with open(filename, "wb") as f: 
+                        f.write(res.content)
+                    image_files.append(filename)
+                    break
+            except Exception: 
+                time.sleep(3)
+    return image_files
+
+# 5. आवाज़ 
+def create_human_voice(text, filename):
+    async def _generate():
+        communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+10%")
+        await communicate.save(filename)
+    asyncio.run(_generate())
+
+# 6. मास्टर एडिटिंग (100% परफेक्ट हिंदी सबटाइटल्स)
+def make_video(image_files, captions, final_vid, audio_file):
+    print("🎬 एडिटिंग (असली हिंदी टेक्स्ट के साथ)...")
+    main_audio = AudioFileClip(audio_file)
+    audio_duration = main_audio.duration
+    time_per_image = audio_duration / len(image_files)
+    
+    clips = []
+    for i, img in enumerate(image_files):
+        base_clip = ImageClip(img)
+        w, h = base_clip.size
+        
+        if w / h > 1080 / 1920: 
+            base_clip = base_clip.resize(height=1920)
+        else: 
+            base_clip = base_clip.resize(width=1080)
+            
+        base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
+        zoomed_clip = base_clip.resize(lambda t: 1 + 0.05 * (t / time_per_image)).set_duration(time_per_image)
+        
+        # 🛑 असली हिंदी फॉन्ट का इस्तेमाल
+        txt_clip = TextClip(
+            captions[i], 
+            fontsize=85, 
+            color='yellow', 
+            bg_color='black', 
+            font=FONT_PATH, 
+            method='caption', 
+            size=(900, None)
+        )
+        txt_clip = txt_clip.set_position(('center', 'bottom')).set_duration(time_per_image).margin(bottom=300, opacity=0)
+        
+        final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center')), txt_clip], size=(1080, 1920)).set_duration(time_per_image)
+        clips.append(final_clip)
+        
+    video = concatenate_videoclips(clips, method="compose")
+    final = video.set_audio(main_audio).subclip(0, audio_duration)
+    final.write_videofile(final_vid, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", logger=None)
+    main_audio.close()
+    video.close()
+    final.close()
+
+# 7. यूट्यूब अपलोड
+def upload_video(token, filename, title, description, tags, category):
+    credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
+    youtube = build("youtube", "v3", credentials=credentials)
+    request = youtube.videos().insert(
+        part="snippet,status",
+        body={"snippet": {"title": title, "description": description, "tags": tags, "categoryId": category}, "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}},
+        media_body=MediaFileUpload(filename, chunksize=-1, resumable=True)
+    )
+    request.execute()
+
+# 8. स्मार्ट रन
+def run_channel_safely(channel_type):
+    for attempt in range(3):
+        try:
+            if channel_type == "GADGETS":
+                topic = random.choice(GADGET_TOPICS)
+                script, prompts, captions, gadget_name = get_script_and_prompts(topic, is_gadget=True)
+                image_files = fetch_ai_images(prompts)
+                create_human_voice(script, "voice_gadget.mp3")
+                make_video(image_files, captions, "final_gadget.mp4", "voice_gadget.mp3")
+                desc = f"🔥 👉 गैजेट खरीदने का लिंक चैनल के Bio में है!\n🔍 अमेज़न पर सर्च करें: {gadget_name}\n\n{script}"
+                upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 {gadget_name} #shorts", desc, ["shorts", "gadgets"], "28")
+                return True 
+            elif channel_type == "MYSTIC":
+                topic = random.choice(MYSTIC_TOPICS)
+                script, prompts, captions, _ = get_script_and_prompts(topic, is_gadget=False)
+                image_files = fetch_ai_images(prompts)
+                create_human_voice(script, "voice_mystic.mp3")
+                make_video(image_files, captions, "final_mystic.mp4", "voice_mystic.mp3")
+                desc = f"🔥 👉 किताबें और गैजेट्स का लिंक चैनल के Bio में है!\n\n{script}"
+                upload_video(TOKEN_MYSTIC, "final_mystic.mp4", f"🤯 {topic} #shorts", desc, ["shorts", "mystery"], "28")
+                return True 
+        except Exception: 
+            time.sleep(600)
+    sys.exit(1)
+
+if __name__ == "__main__":
+    run_channel_safely("GADGETS")
+    time.sleep(60)
+    run_channel_safely("MYSTIC")
