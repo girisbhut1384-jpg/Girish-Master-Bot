@@ -1,4 +1,4 @@
-# गिरीश भाई का V6.0 फाइनल प्रोडक्शन कोड (100% Error-Free & Fully Automated)
+# गिरीश भाई का V6.1 फाइनल ट्रैकर कोड (Unmasking the hidden error)
 import os
 import sys
 import requests
@@ -52,7 +52,6 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
-# 3. Gemini AI (Smart API Manager - No Crashes)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"✅ AI स्क्रिप्ट तैयार कर रहा है: {topic}")
     
@@ -105,7 +104,6 @@ def get_script_and_prompts(topic, is_gadget=False):
     data = json.loads(clean_text)
     return data['script'].replace("*", ""), data['prompts'][:8], data['captions'][:8], data.get('gadget_name', '')
 
-# 4. Pollinations AI (Perfect Images)
 def fetch_ai_images(prompts):
     print("✅ हाई-क्वालिटी 8K तस्वीरें जनरेट हो रही हैं...")
     image_files = []
@@ -213,12 +211,14 @@ def run_channel_safely(channel_type):
                 return True 
                 
         except Exception as e: 
+            # 🛑 सबसे बड़ा बदलाव: अब मशीन चुप नहीं रहेगी, असली एरर बताएगी!
+            print(f"🛑 क्रैश का असली कारण: {e}")
             print(f"⚠️ सिस्टम रीस्टार्ट हो रहा है... (Attempt {attempt+1}/{max_attempts})")
             time.sleep(30) 
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V6.0 मास्टर ऑटोमेशन चालू हो गया है...")
+    print("🚀 V6.1 मास्टर ऑटोमेशन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ चैनल स्विच हो रहा है...\n")
     time.sleep(60)
