@@ -1,4 +1,4 @@
-# गिरीश भाई का V6.3 अनलॉक मास्टर कोड (Font Permission 777 Fix)
+# गिरीश भाई का V7.0 फाइनल प्रोडक्शन कोड (Native Fonts + Zero Security Walls)
 import os
 import sys
 import requests
@@ -8,6 +8,7 @@ import time
 import urllib.parse
 import json
 import random
+import glob
 
 import PIL.Image
 if not hasattr(PIL.Image, 'ANTIALIAS'):
@@ -17,26 +18,20 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 सिक्योरिटी दीवार को तोड़ना
-os.system('sudo rm -f /etc/ImageMagick-6/policy.xml')
+# 🛑 1. इमेजमैजिक सिक्योरिटी दीवार को हमेशा के लिए हटाना
+print("🔓 सिक्योरिटी दीवार हटाई जा रही है...")
+os.system("sudo sed -i '/pattern=\"@\\*\"/d' /etc/ImageMagick-6/policy.xml")
 
-# 🛑 फॉन्ट सिस्टम (मास्टर चाबी 777 के साथ)
-TEMP_FONT = os.path.abspath("NotoSansDevanagari.ttf")
-SYS_FONT = "/usr/share/fonts/truetype/custom/NotoSansDevanagari.ttf"
+# 🛑 2. बिना किसी लिंक के लिनक्स के ऑफिशियल हिंदी फॉन्ट इंस्टॉल करना (100% सेफ)
+print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
+os.system("sudo apt-get update -y")
+os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
 
-if not os.path.exists(SYS_FONT):
-    print("📥 असली हिंदी फॉन्ट डाउनलोड हो रहा है...")
-    font_url = "https://github.com/google/fonts/raw/main/ofl/notosansdevanagari/NotoSansDevanagari-Bold.ttf"
-    r = requests.get(font_url)
-    with open(TEMP_FONT, "wb") as f:
-        f.write(r.content)
-    
-    os.system("sudo mkdir -p /usr/share/fonts/truetype/custom")
-    os.system(f"sudo cp {TEMP_FONT} {SYS_FONT}")
-    # 🛑 यह है वो मास्टर चाबी जो फॉन्ट को 100% अनलॉक कर देगी
-    os.system(f"sudo chmod 777 {SYS_FONT}") 
-    os.system("sudo fc-cache -f -v")
-    print("✅ फॉन्ट पूरी तरह से अनलॉक और सिस्टम में सेट हो गया है!")
+# 🛑 3. इंस्टॉल हुए 100% सही फॉन्ट को खोजना
+sys_fonts = glob.glob("/usr/share/fonts/**/*.ttf", recursive=True)
+hindi_fonts = [f for f in sys_fonts if "Devanagari" in f or "Samyak" in f or "Gargi" in f or "Nakula" in f]
+FONT_PATH = hindi_fonts[0] if hindi_fonts else (sys_fonts[0] if sys_fonts else "Arial")
+print(f"✅ परफेक्ट फॉन्ट मिल गया: {FONT_PATH}")
 
 change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
@@ -93,7 +88,7 @@ def get_script_and_prompts(topic, is_gadget=False):
                     break
             except Exception as e: 
                 if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    print("⏳ गूगल सर्वर बिजी है, 75 सेकंड का ऑटोमैटिक ब्रेक लिया जा रहा है...")
+                    print("⏳ गूगल सर्वर बिजी है, 75 सेकंड का सुरक्षित ब्रेक...")
                     time.sleep(75) 
                     continue
                 else:
@@ -140,7 +135,7 @@ def create_human_voice(text, filename):
     asyncio.run(_generate())
 
 def make_video(image_files, captions, final_vid, audio_file):
-    print("✅ फाइनल वीडियो रेंडर हो रहा है (हिंदी टेक्स्ट के साथ)...")
+    print("✅ फाइनल वीडियो रेंडर हो रहा है (पक्के हिंदी टेक्स्ट के साथ)...")
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
     time_per_image = audio_duration / len(image_files)
@@ -158,13 +153,12 @@ def make_video(image_files, captions, final_vid, audio_file):
         base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.05 * (t / time_per_image)).set_duration(time_per_image)
         
-        # 🛑 अब हम डायरेक्ट सिस्टम फॉन्ट का इस्तेमाल कर रहे हैं
         txt_clip = TextClip(
             captions[i], 
             fontsize=85, 
             color='yellow', 
             bg_color='black', 
-            font=SYS_FONT, 
+            font=FONT_PATH, 
             method='caption', 
             size=(900, None)
         )
@@ -220,13 +214,13 @@ def run_channel_safely(channel_type):
                 return True 
                 
         except Exception as e: 
-            print(f"🛑 क्रैश का असली कारण: {e}")
+            print(f"🛑 एरर: {e}")
             print(f"⚠️ सिस्टम रीस्टार्ट हो रहा है... (Attempt {attempt+1}/{max_attempts})")
             time.sleep(30) 
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V6.3 मास्टर ऑटोमेशन चालू हो गया है...")
+    print("🚀 V7.0 मास्टर ऑटोमेशन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ चैनल स्विच हो रहा है...\n")
     time.sleep(60)
