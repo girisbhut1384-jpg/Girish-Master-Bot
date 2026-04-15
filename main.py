@@ -1,4 +1,4 @@
-# गिरीश भाई का V6.2 फाइनल मास्टरपीस (ImageMagick Security Wall Destroyed)
+# गिरीश भाई का V6.3 अनलॉक मास्टर कोड (Font Permission 777 Fix)
 import os
 import sys
 import requests
@@ -17,19 +17,26 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 असली और आख़िरी ब्रह्मास्त्र: सिक्योरिटी पॉलिसी को ही जड़ से डिलीट कर दिया!
+# 🛑 सिक्योरिटी दीवार को तोड़ना
 os.system('sudo rm -f /etc/ImageMagick-6/policy.xml')
 
-# हिंदी फॉन्ट सिस्टम
-FONT_PATH = os.path.abspath("NotoSansDevanagari-Bold.ttf")
-if not os.path.exists(FONT_PATH):
+# 🛑 फॉन्ट सिस्टम (मास्टर चाबी 777 के साथ)
+TEMP_FONT = os.path.abspath("NotoSansDevanagari.ttf")
+SYS_FONT = "/usr/share/fonts/truetype/custom/NotoSansDevanagari.ttf"
+
+if not os.path.exists(SYS_FONT):
+    print("📥 असली हिंदी फॉन्ट डाउनलोड हो रहा है...")
     font_url = "https://github.com/google/fonts/raw/main/ofl/notosansdevanagari/NotoSansDevanagari-Bold.ttf"
     r = requests.get(font_url)
-    with open(FONT_PATH, "wb") as f:
+    with open(TEMP_FONT, "wb") as f:
         f.write(r.content)
+    
     os.system("sudo mkdir -p /usr/share/fonts/truetype/custom")
-    os.system(f"sudo cp {FONT_PATH} /usr/share/fonts/truetype/custom/")
+    os.system(f"sudo cp {TEMP_FONT} {SYS_FONT}")
+    # 🛑 यह है वो मास्टर चाबी जो फॉन्ट को 100% अनलॉक कर देगी
+    os.system(f"sudo chmod 777 {SYS_FONT}") 
     os.system("sudo fc-cache -f -v")
+    print("✅ फॉन्ट पूरी तरह से अनलॉक और सिस्टम में सेट हो गया है!")
 
 change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
@@ -86,7 +93,7 @@ def get_script_and_prompts(topic, is_gadget=False):
                     break
             except Exception as e: 
                 if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    print("⏳ गूगल सर्वर बिजी है, 75 सेकंड का ऑटोमैटिक सुरक्षित ब्रेक लिया जा रहा है...")
+                    print("⏳ गूगल सर्वर बिजी है, 75 सेकंड का ऑटोमैटिक ब्रेक लिया जा रहा है...")
                     time.sleep(75) 
                     continue
                 else:
@@ -151,12 +158,13 @@ def make_video(image_files, captions, final_vid, audio_file):
         base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.05 * (t / time_per_image)).set_duration(time_per_image)
         
+        # 🛑 अब हम डायरेक्ट सिस्टम फॉन्ट का इस्तेमाल कर रहे हैं
         txt_clip = TextClip(
             captions[i], 
             fontsize=85, 
             color='yellow', 
             bg_color='black', 
-            font=FONT_PATH, 
+            font=SYS_FONT, 
             method='caption', 
             size=(900, None)
         )
@@ -218,7 +226,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V6.2 मास्टर ऑटोमेशन चालू हो गया है...")
+    print("🚀 V6.3 मास्टर ऑटोमेशन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ चैनल स्विच हो रहा है...\n")
     time.sleep(60)
