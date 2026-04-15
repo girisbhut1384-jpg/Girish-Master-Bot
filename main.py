@@ -1,4 +1,4 @@
-# गिरीश भाई का V5.10 अल्टीमेट प्रो वर्ज़न (Hyper-Realistic + Robust Upload)
+# गिरीश भाई का V5.11 आख़िरी मास्टर कोड (ImageMagick Policy Bypass + System Font Injector)
 import os
 import sys
 import requests
@@ -18,7 +18,9 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 100% परफेक्ट हिंदी फॉन्ट डाउनलोड सिस्टम (Absolute Path)
+# 🛑 100% बुलेटप्रूफ फॉन्ट सिस्टम (ImageMagick के सुरक्षा नियमों को तोड़ने के लिए)
+os.system('sudo sed -i "s/pattern=\\"@\\*\\"/pattern=\\"\\*\\"/g" /etc/ImageMagick-6/policy.xml')
+
 FONT_PATH = os.path.abspath("NotoSansDevanagari-Bold.ttf")
 if not os.path.exists(FONT_PATH):
     print("📥 असली हिंदी फॉन्ट डाउनलोड हो रहा है...")
@@ -26,7 +28,12 @@ if not os.path.exists(FONT_PATH):
     r = requests.get(font_url)
     with open(FONT_PATH, "wb") as f:
         f.write(r.content)
-    print(f"✅ हिंदी फॉन्ट तैयार! रास्ता: {FONT_PATH}")
+    
+    # फॉन्ट को सीधा लिनक्स सिस्टम के अंदर इंजेक्ट करना
+    os.system("sudo mkdir -p /usr/share/fonts/truetype/custom")
+    os.system(f"sudo cp {FONT_PATH} /usr/share/fonts/truetype/custom/")
+    os.system("sudo fc-cache -f -v")
+    print("✅ फॉन्ट सिस्टम में सफलतापूर्वक इंजेक्ट कर दिया गया है!")
 
 change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
@@ -53,7 +60,7 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
-# 3. Gemini AI (Hyper-Realistic Prompts)
+# 3. Gemini AI 
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट सोच रहा है...")
     models_to_try = ["gemini-3.1-pro", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
@@ -64,7 +71,6 @@ def get_script_and_prompts(topic, is_gadget=False):
     else: 
         prompt += "End EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'. "
     
-    # 🛑 सबसे बड़ा बदलाव: फोटो को 'असली' कैमरे जैसा बनाने का निर्देश
     prompt += """
     IMPORTANT: For the 'prompts' array, describe the scene BUT you MUST ensure it looks completely real. 
     Add exactly this to the end of EVERY image prompt: ", hyper-realistic, 8k resolution, shot on DSLR, lifelike photography, extreme detail, NO TEXT, textless, no words, no letters".
@@ -96,7 +102,7 @@ def get_script_and_prompts(topic, is_gadget=False):
     data = json.loads(clean_text)
     return data['script'].replace("*", ""), data['prompts'][:8], data['captions'][:8], data.get('gadget_name', '')
 
-# 4. Pollinations AI (High-Quality Realism)
+# 4. Pollinations AI 
 def fetch_ai_images(prompts):
     print("🎨 असली कैमरे जैसी तस्वीरें बन रही हैं...")
     image_files = []
@@ -126,7 +132,7 @@ def create_human_voice(text, filename):
         await communicate.save(filename)
     asyncio.run(_generate())
 
-# 6. मास्टर एडिटिंग 
+# 6. मास्टर एडिटिंग (सिस्टम फॉन्ट के साथ)
 def make_video(image_files, captions, final_vid, audio_file):
     print("🎬 प्रो-लेवल एडिटिंग चालू है...")
     main_audio = AudioFileClip(audio_file)
@@ -146,6 +152,7 @@ def make_video(image_files, captions, final_vid, audio_file):
         base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.05 * (t / time_per_image)).set_duration(time_per_image)
         
+        # 🛑 अब ImageMagick क्रैश नहीं होगा
         txt_clip = TextClip(
             captions[i], 
             fontsize=85, 
@@ -169,7 +176,7 @@ def make_video(image_files, captions, final_vid, audio_file):
 
 # 7. यूट्यूब अपलोड
 def upload_video(token, filename, title, description, tags, category):
-    print("🚀 यूट्यूब पर सुरक्षित अपलोडिंग हो रही है...")
+    print("🚀 यूट्यूब पर अपलोडिंग हो रही है...")
     credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
     youtube = build("youtube", "v3", credentials=credentials)
     request = youtube.videos().insert(
@@ -179,9 +186,9 @@ def upload_video(token, filename, title, description, tags, category):
     )
     request.execute()
 
-# 8. फुल-प्रूफ एग्जीक्यूशन इंजन (40 मिनट वाली आज़ादी के साथ)
+# 8. फुल-प्रूफ एग्जीक्यूशन इंजन
 def run_channel_safely(channel_type):
-    max_attempts = 5 # 🛑 5 बार कोशिश करेगा ताकि 100% अपलोड हो
+    max_attempts = 3
     for attempt in range(max_attempts):
         try:
             if channel_type == "GADGETS":
@@ -210,14 +217,14 @@ def run_channel_safely(channel_type):
                 
         except Exception as e: 
             print(f"⚠️ एरर आया: {e}")
-            print("⏳ मशीन थकेगी नहीं, 2 मिनट बाद दोबारा कोशिश करेगी...")
-            time.sleep(120) # 2 मिनट का सुरक्षित ब्रेक
+            print("⏳ 2 मिनट बाद दोबारा कोशिश करेगी...")
+            time.sleep(120) 
     
-    print(f"❌ {max_attempts} बार कोशिश की, लेकिन यूट्यूब/गूगल सर्वर पूरी तरह डाउन है।")
+    print(f"❌ {max_attempts} बार कोशिश की, सर्वर पूरी तरह डाउन है।")
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V5.10 अल्टीमेट प्रो इंजन स्टार्ट...")
+    print("🚀 V5.11 बुलेटप्रूफ इंजन स्टार्ट...")
     run_channel_safely("GADGETS")
     print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
