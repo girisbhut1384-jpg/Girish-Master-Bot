@@ -1,4 +1,4 @@
-# गिरीश भाई का V5.11 आख़िरी मास्टर कोड (ImageMagick Policy Bypass + System Font Injector)
+# गिरीश भाई का V5.13 मल्टीवर्ज़न मास्टर कोड (All 7 Gemini Models Fallback System)
 import os
 import sys
 import requests
@@ -9,7 +9,6 @@ import urllib.parse
 import json
 import random
 
-# 🛑 ANTIALIAS एरर फिक्स
 import PIL.Image
 if not hasattr(PIL.Image, 'ANTIALIAS'):
     PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
@@ -18,7 +17,7 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 100% बुलेटप्रूफ फॉन्ट सिस्टम (ImageMagick के सुरक्षा नियमों को तोड़ने के लिए)
+# 🛑 बुलेटप्रूफ फॉन्ट सिस्टम
 os.system('sudo sed -i "s/pattern=\\"@\\*\\"/pattern=\\"\\*\\"/g" /etc/ImageMagick-6/policy.xml')
 
 FONT_PATH = os.path.abspath("NotoSansDevanagari-Bold.ttf")
@@ -29,15 +28,13 @@ if not os.path.exists(FONT_PATH):
     with open(FONT_PATH, "wb") as f:
         f.write(r.content)
     
-    # फॉन्ट को सीधा लिनक्स सिस्टम के अंदर इंजेक्ट करना
     os.system("sudo mkdir -p /usr/share/fonts/truetype/custom")
     os.system(f"sudo cp {FONT_PATH} /usr/share/fonts/truetype/custom/")
     os.system("sudo fc-cache -f -v")
-    print("✅ फॉन्ट सिस्टम में सफलतापूर्वक इंजेक्ट कर दिया गया है!")
+    print("✅ फॉन्ट सिस्टम में सफलतापूर्वक इंजेक्ट हो गया!")
 
 change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
-# 1. तिजोरी से चाबियाँ
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 if not GEMINI_KEY:
     print("❌ भयंकर एरर: GEMINI_API_KEY नहीं मिली!")
@@ -49,7 +46,6 @@ CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 
-# 2. रैंडम टॉपिक्स
 GADGET_TOPICS = [
     "स्मार्ट किचन हैक्स गैजेट्स", "मच्छर भगाने वाला हाई-टेक गैजेट", "कमरे को स्मार्ट बनाने वाली लाइट्स", 
     "कार के लिए सीक्रेट गैजेट", "स्टूडेंट्स के लिए जादुई पेन/गैजेट", "सर्दियों के लिए पोर्टेबल हीटर गैजेट"
@@ -60,10 +56,20 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
-# 3. Gemini AI 
+# 3. Gemini AI (मल्टीवर्ज़न सिस्टम - 7 मॉडल्स की फौज)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट सोच रहा है...")
-    models_to_try = ["gemini-3.1-pro", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
+    
+    # 🛑 यहाँ हमने आपके आइडिया के अनुसार सारे मॉडल्स एक साथ डाल दिए हैं
+    models_to_try = [
+        "gemini-3.1-pro",
+        "gemini-3.0-flash",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-pro",
+        "gemini-1.5-flash",
+        "gemini-pro"
+    ]
     
     prompt = f"Write a VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking hook. STRICTLY 50-60 words. "
     if is_gadget: 
@@ -72,7 +78,7 @@ def get_script_and_prompts(topic, is_gadget=False):
         prompt += "End EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'. "
     
     prompt += """
-    IMPORTANT: For the 'prompts' array, describe the scene BUT you MUST ensure it looks completely real. 
+    IMPORTANT: For the 'prompts' array, describe the scene. 
     Add exactly this to the end of EVERY image prompt: ", hyper-realistic, 8k resolution, shot on DSLR, lifelike photography, extreme detail, NO TEXT, textless, no words, no letters".
     Return ONLY JSON:
     {
@@ -85,14 +91,19 @@ def get_script_and_prompts(topic, is_gadget=False):
     clean_text = None
     for m_name in models_to_try:
         try:
+            print(f"   👉 मशीन ट्राई कर रही है: {m_name}...")
             response = client.models.generate_content(model=m_name, contents=prompt)
-            clean_text = response.text.strip()
-            break
-        except Exception: 
-            pass
+            if response.text:
+                clean_text = response.text.strip()
+                print(f"   ✅ सफलता! {m_name} ने अपना काम कर दिया!")
+                break
+            else:
+                print(f"   ❌ {m_name} ने खाली जवाब दिया, अगले मॉडल पर जा रहा हूँ...")
+        except Exception as e: 
+            print(f"   ❌ {m_name} फेल हुआ ({e}), अगले मॉडल पर जा रहा हूँ...")
             
     if not clean_text: 
-        raise Exception("Google Gemini सर्वर डाउन है।")
+        raise Exception("Gemini AI के सातों मॉडल्स फेल हो गए! गूगल का सर्वर पूरी तरह क्रैश है।")
         
     if clean_text.startswith("```json"): 
         clean_text = clean_text[7:-3].strip()
@@ -121,10 +132,9 @@ def fetch_ai_images(prompts):
                     print(f"   ✅ फोटो {i+1}/8 तैयार!")
                     break
             except Exception: 
-                time.sleep(5)
+                time.sleep(3)
     return image_files
 
-# 5. आवाज़ 
 def create_human_voice(text, filename):
     print("🎙️ आवाज़ रिकॉर्ड हो रही है...")
     async def _generate():
@@ -132,7 +142,6 @@ def create_human_voice(text, filename):
         await communicate.save(filename)
     asyncio.run(_generate())
 
-# 6. मास्टर एडिटिंग (सिस्टम फॉन्ट के साथ)
 def make_video(image_files, captions, final_vid, audio_file):
     print("🎬 प्रो-लेवल एडिटिंग चालू है...")
     main_audio = AudioFileClip(audio_file)
@@ -152,7 +161,6 @@ def make_video(image_files, captions, final_vid, audio_file):
         base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.05 * (t / time_per_image)).set_duration(time_per_image)
         
-        # 🛑 अब ImageMagick क्रैश नहीं होगा
         txt_clip = TextClip(
             captions[i], 
             fontsize=85, 
@@ -174,7 +182,6 @@ def make_video(image_files, captions, final_vid, audio_file):
     video.close()
     final.close()
 
-# 7. यूट्यूब अपलोड
 def upload_video(token, filename, title, description, tags, category):
     print("🚀 यूट्यूब पर अपलोडिंग हो रही है...")
     credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
@@ -186,7 +193,6 @@ def upload_video(token, filename, title, description, tags, category):
     )
     request.execute()
 
-# 8. फुल-प्रूफ एग्जीक्यूशन इंजन
 def run_channel_safely(channel_type):
     max_attempts = 3
     for attempt in range(max_attempts):
@@ -217,16 +223,15 @@ def run_channel_safely(channel_type):
                 
         except Exception as e: 
             print(f"⚠️ एरर आया: {e}")
-            print("⏳ 2 मिनट बाद दोबारा कोशिश करेगी...")
-            time.sleep(120) 
+            print("⏳ 1 मिनट बाद दोबारा कोशिश करेगी...")
+            time.sleep(60) 
     
-    print(f"❌ {max_attempts} बार कोशिश की, सर्वर पूरी तरह डाउन है।")
+    print(f"❌ {max_attempts} बार कोशिश की, लेकिन काम नहीं हुआ।")
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V5.11 बुलेटप्रूफ इंजन स्टार्ट...")
+    print("🚀 V5.13 मल्टीवर्ज़न इंजन स्टार्ट...")
     run_channel_safely("GADGETS")
     print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
     run_channel_safely("MYSTIC")
-    print("🎯 दोनों चैनलों का काम 100% परफेक्ट तरीके से पूरा हो गया!")
