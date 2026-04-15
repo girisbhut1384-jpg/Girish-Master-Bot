@@ -1,4 +1,4 @@
-# गिरीश भाई का V5.13 मल्टीवर्ज़न मास्टर कोड (All 7 Gemini Models Fallback System)
+# गिरीश भाई का V5.14 स्मार्ट मास्टर कोड (429 Quota Fix + Smart Sleep)
 import os
 import sys
 import requests
@@ -17,7 +17,7 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 बुलेटप्रूफ फॉन्ट सिस्टम
+# 🛑 बुलेटप्रूफ फॉन्ट सिस्टम 
 os.system('sudo sed -i "s/pattern=\\"@\\*\\"/pattern=\\"\\*\\"/g" /etc/ImageMagick-6/policy.xml')
 
 FONT_PATH = os.path.abspath("NotoSansDevanagari-Bold.ttf")
@@ -56,20 +56,12 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
-# 3. Gemini AI (मल्टीवर्ज़न सिस्टम - 7 मॉडल्स की फौज)
+# 3. Gemini AI (Smart Quota Manager)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट सोच रहा है...")
     
-    # 🛑 यहाँ हमने आपके आइडिया के अनुसार सारे मॉडल्स एक साथ डाल दिए हैं
-    models_to_try = [
-        "gemini-3.1-pro",
-        "gemini-3.0-flash",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-pro",
-        "gemini-1.5-flash",
-        "gemini-pro"
-    ]
+    # 🛑 सिर्फ 3 सबसे ताज़ा और काम करने वाले मॉडल्स (ताकि लिमिट पार न हो)
+    models_to_try = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
     
     prompt = f"Write a VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking hook. STRICTLY 50-60 words. "
     if is_gadget: 
@@ -89,6 +81,7 @@ def get_script_and_prompts(topic, is_gadget=False):
     }
     """
     clean_text = None
+    
     for m_name in models_to_try:
         try:
             print(f"   👉 मशीन ट्राई कर रही है: {m_name}...")
@@ -97,13 +90,26 @@ def get_script_and_prompts(topic, is_gadget=False):
                 clean_text = response.text.strip()
                 print(f"   ✅ सफलता! {m_name} ने अपना काम कर दिया!")
                 break
-            else:
-                print(f"   ❌ {m_name} ने खाली जवाब दिया, अगले मॉडल पर जा रहा हूँ...")
         except Exception as e: 
-            print(f"   ❌ {m_name} फेल हुआ ({e}), अगले मॉडल पर जा रहा हूँ...")
+            error_msg = str(e)
+            # 🛑 429 एरर (लिमिट फुल) आने पर समझदारी से 35 सेकंड का ब्रेक
+            if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                print(f"   ⚠️ गूगल की फ्री 1-मिनट लिमिट भर गई है। मशीन 35 सेकंड आराम करके वापस इसी को ट्राई करेगी...")
+                time.sleep(35)
+                # 35 सेकंड बाद दोबारा कोशिश
+                try:
+                    print(f"   👉 35 सेकंड बाद दोबारा ट्राई कर रही है: {m_name}...")
+                    response = client.models.generate_content(model=m_name, contents=prompt)
+                    clean_text = response.text.strip()
+                    print(f"   ✅ सफलता! 35 सेकंड बाद {m_name} ने काम कर दिया!")
+                    break
+                except Exception as retry_e:
+                    print(f"   ❌ दोबारा कोशिश भी फेल: {retry_e}")
+            else:
+                print(f"   ❌ {m_name} का सर्वर डाउन है: {error_msg}")
             
     if not clean_text: 
-        raise Exception("Gemini AI के सातों मॉडल्स फेल हो गए! गूगल का सर्वर पूरी तरह क्रैश है।")
+        raise Exception("Gemini AI के सारे मॉडल्स और लिमिट खत्म हो गए हैं।")
         
     if clean_text.startswith("```json"): 
         clean_text = clean_text[7:-3].strip()
@@ -230,7 +236,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V5.13 मल्टीवर्ज़न इंजन स्टार्ट...")
+    print("🚀 V5.14 स्मार्ट कोटा इंजन स्टार्ट...")
     run_channel_safely("GADGETS")
     print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
