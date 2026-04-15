@@ -1,4 +1,4 @@
-# गिरीश भाई का V7.0 फाइनल प्रोडक्शन कोड (Native Fonts + Zero Security Walls)
+# गिरीश भाई का V7.1 आख़िरी प्रोडक्शन कोड (Native Fonts + Advanced API Manager)
 import os
 import sys
 import requests
@@ -22,12 +22,11 @@ from moviepy.config import change_settings
 print("🔓 सिक्योरिटी दीवार हटाई जा रही है...")
 os.system("sudo sed -i '/pattern=\"@\\*\"/d' /etc/ImageMagick-6/policy.xml")
 
-# 🛑 2. बिना किसी लिंक के लिनक्स के ऑफिशियल हिंदी फॉन्ट इंस्टॉल करना (100% सेफ)
+# 🛑 2. बिना किसी लिंक के लिनक्स के ऑफिशियल हिंदी फॉन्ट इंस्टॉल करना 
 print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
 os.system("sudo apt-get update -y")
 os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
 
-# 🛑 3. इंस्टॉल हुए 100% सही फॉन्ट को खोजना
 sys_fonts = glob.glob("/usr/share/fonts/**/*.ttf", recursive=True)
 hindi_fonts = [f for f in sys_fonts if "Devanagari" in f or "Samyak" in f or "Gargi" in f or "Nakula" in f]
 FONT_PATH = hindi_fonts[0] if hindi_fonts else (sys_fonts[0] if sys_fonts else "Arial")
@@ -55,10 +54,12 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
+# 🛑 3. स्मार्ट API मैनेजर (यह लिमिट को बाईपास करेगा)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"✅ AI स्क्रिप्ट तैयार कर रहा है: {topic}")
     
-    models_to_try = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    # सबसे स्टेबल और हाई-लिमिट वाले फ्री मॉडल्स
+    models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-pro"]
     
     prompt = f"Write a VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking hook. STRICTLY 50-60 words. "
     if is_gadget: 
@@ -78,26 +79,33 @@ def get_script_and_prompts(topic, is_gadget=False):
     }
     """
     clean_text = None
+    last_error = ""
     
     for m_name in models_to_try:
-        for _ in range(2): 
+        print(f"   👉 ट्राई कर रहा हूँ: {m_name}...")
+        for attempt in range(2): 
             try:
                 response = client.models.generate_content(model=m_name, contents=prompt)
                 if response.text:
                     clean_text = response.text.strip()
+                    print(f"   ✅ सफलता! {m_name} ने स्क्रिप्ट लिख दी!")
                     break
             except Exception as e: 
-                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    print("⏳ गूगल सर्वर बिजी है, 75 सेकंड का सुरक्षित ब्रेक...")
-                    time.sleep(75) 
-                    continue
+                last_error = str(e)
+                if "429" in last_error or "RESOURCE_EXHAUSTED" in last_error:
+                    print(f"   ⏳ {m_name} की लिमिट फुल है, 60 सेकंड रुक कर दोबारा कोशिश...")
+                    time.sleep(60) 
+                elif "503" in last_error:
+                    print(f"   ⏳ गूगल सर्वर डाउन है, 30 सेकंड रुक कर दोबारा कोशिश...")
+                    time.sleep(30)
                 else:
+                    print(f"   ❌ {m_name} काम नहीं कर रहा: {last_error}")
                     break 
         if clean_text:
             break
             
     if not clean_text: 
-        raise Exception("Google API Error")
+        raise Exception(f"Google API पूरी तरह फेल हो गया। आख़िरी एरर: {last_error}")
         
     if clean_text.startswith("```json"): 
         clean_text = clean_text[7:-3].strip()
@@ -214,13 +222,13 @@ def run_channel_safely(channel_type):
                 return True 
                 
         except Exception as e: 
-            print(f"🛑 एरर: {e}")
+            print(f"🛑 मेन एरर: {e}")
             print(f"⚠️ सिस्टम रीस्टार्ट हो रहा है... (Attempt {attempt+1}/{max_attempts})")
             time.sleep(30) 
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V7.0 मास्टर ऑटोमेशन चालू हो गया है...")
+    print("🚀 V7.1 मास्टर ऑटोमेशन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ चैनल स्विच हो रहा है...\n")
     time.sleep(60)
