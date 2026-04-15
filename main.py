@@ -1,4 +1,4 @@
-# गिरीश भाई का V5.7 मास्टर कोड (Hindi Font + No AI Gibberish + Mobile Safe Format)
+# गिरीश भाई का V5.10 अल्टीमेट प्रो वर्ज़न (Hyper-Realistic + Robust Upload)
 import os
 import sys
 import requests
@@ -18,17 +18,16 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 100% परफेक्ट हिंदी फॉन्ट खुद डाउनलोड करने का सिस्टम (ताकि '?' ना आये)
-FONT_PATH = "./NotoSansDevanagari-Bold.ttf"
+# 🛑 100% परफेक्ट हिंदी फॉन्ट डाउनलोड सिस्टम (Absolute Path)
+FONT_PATH = os.path.abspath("NotoSansDevanagari-Bold.ttf")
 if not os.path.exists(FONT_PATH):
     print("📥 असली हिंदी फॉन्ट डाउनलोड हो रहा है...")
     font_url = "https://github.com/google/fonts/raw/main/ofl/notosansdevanagari/NotoSansDevanagari-Bold.ttf"
     r = requests.get(font_url)
     with open(FONT_PATH, "wb") as f:
         f.write(r.content)
-    print("✅ हिंदी फॉन्ट तैयार!")
+    print(f"✅ हिंदी फॉन्ट तैयार! रास्ता: {FONT_PATH}")
 
-# ImageMagick का पाथ
 change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
 # 1. तिजोरी से चाबियाँ
@@ -42,7 +41,6 @@ CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleuserconten
 CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
-AMAZON_ID = "https://www.amazon.in/?tag=girishbhut07-21"  
 
 # 2. रैंडम टॉपिक्स
 GADGET_TOPICS = [
@@ -55,7 +53,7 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
-# 3. Gemini AI 
+# 3. Gemini AI (Hyper-Realistic Prompts)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n🧠 Gemini AI '{topic}' पर स्क्रिप्ट सोच रहा है...")
     models_to_try = ["gemini-3.1-pro", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
@@ -66,14 +64,15 @@ def get_script_and_prompts(topic, is_gadget=False):
     else: 
         prompt += "End EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'. "
     
-    # 🛑 अजीब स्पेलिंग रोकने का सख्त निर्देश
+    # 🛑 सबसे बड़ा बदलाव: फोटो को 'असली' कैमरे जैसा बनाने का निर्देश
     prompt += """
-    IMPORTANT: For the 'prompts' array, describe the scene BUT you MUST add "no text, no words, textless, no letters" at the end of EVERY prompt.
+    IMPORTANT: For the 'prompts' array, describe the scene BUT you MUST ensure it looks completely real. 
+    Add exactly this to the end of EVERY image prompt: ", hyper-realistic, 8k resolution, shot on DSLR, lifelike photography, extreme detail, NO TEXT, textless, no words, no letters".
     Return ONLY JSON:
     {
       "script": "Hindi voiceover text...",
       "captions": ["शॉकिंग सच! 😲", "क्या आपको पता है?", "खतरनाक गैजेट 🔥", "लिंक बायो में है!", "कैप्शन 5", "कैप्शन 6", "कैप्शन 7", "कैप्शन 8"],
-      "prompts": ["Image 1 prompt, no text...", "Image 2 prompt, no text...", "...", "...", "...", "...", "...", "..."],
+      "prompts": ["Image 1 prompt...", "Image 2 prompt...", "...", "...", "...", "...", "...", "..."],
       "gadget_name": "Amazon search name or empty."
     }
     """
@@ -86,9 +85,8 @@ def get_script_and_prompts(topic, is_gadget=False):
         except Exception: 
             pass
             
-    # यहाँ पर कटी हुई लाइन को सुरक्षित किया गया है
     if not clean_text: 
-        sys.exit(1)
+        raise Exception("Google Gemini सर्वर डाउन है।")
         
     if clean_text.startswith("```json"): 
         clean_text = clean_text[7:-3].strip()
@@ -98,37 +96,39 @@ def get_script_and_prompts(topic, is_gadget=False):
     data = json.loads(clean_text)
     return data['script'].replace("*", ""), data['prompts'][:8], data['captions'][:8], data.get('gadget_name', '')
 
-# 4. Pollinations AI (बिना टेक्स्ट वाली फोटो)
+# 4. Pollinations AI (High-Quality Realism)
 def fetch_ai_images(prompts):
-    print("🎨 तस्वीरें बन रही हैं (No Text)...")
+    print("🎨 असली कैमरे जैसी तस्वीरें बन रही हैं...")
     image_files = []
     seed = random.randint(1000, 99999) 
     for i, p in enumerate(prompts):
-        safe_prompt = urllib.parse.quote(p + ", highly detailed, cinematic, no text, no words, no letters, textless")
+        safe_prompt = urllib.parse.quote(p)
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         for _ in range(3): 
             try:
-                res = requests.get(url, timeout=30) 
+                res = requests.get(url, timeout=40) 
                 if res.status_code == 200: 
                     with open(filename, "wb") as f: 
                         f.write(res.content)
                     image_files.append(filename)
+                    print(f"   ✅ फोटो {i+1}/8 तैयार!")
                     break
             except Exception: 
-                time.sleep(3)
+                time.sleep(5)
     return image_files
 
 # 5. आवाज़ 
 def create_human_voice(text, filename):
+    print("🎙️ आवाज़ रिकॉर्ड हो रही है...")
     async def _generate():
         communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+10%")
         await communicate.save(filename)
     asyncio.run(_generate())
 
-# 6. मास्टर एडिटिंग (100% परफेक्ट हिंदी सबटाइटल्स)
+# 6. मास्टर एडिटिंग 
 def make_video(image_files, captions, final_vid, audio_file):
-    print("🎬 एडिटिंग (असली हिंदी टेक्स्ट के साथ)...")
+    print("🎬 प्रो-लेवल एडिटिंग चालू है...")
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
     time_per_image = audio_duration / len(image_files)
@@ -146,7 +146,6 @@ def make_video(image_files, captions, final_vid, audio_file):
         base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.05 * (t / time_per_image)).set_duration(time_per_image)
         
-        # 🛑 असली हिंदी फॉन्ट का इस्तेमाल
         txt_clip = TextClip(
             captions[i], 
             fontsize=85, 
@@ -170,6 +169,7 @@ def make_video(image_files, captions, final_vid, audio_file):
 
 # 7. यूट्यूब अपलोड
 def upload_video(token, filename, title, description, tags, category):
+    print("🚀 यूट्यूब पर सुरक्षित अपलोडिंग हो रही है...")
     credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
     youtube = build("youtube", "v3", credentials=credentials)
     request = youtube.videos().insert(
@@ -179,33 +179,47 @@ def upload_video(token, filename, title, description, tags, category):
     )
     request.execute()
 
-# 8. स्मार्ट रन
+# 8. फुल-प्रूफ एग्जीक्यूशन इंजन (40 मिनट वाली आज़ादी के साथ)
 def run_channel_safely(channel_type):
-    for attempt in range(3):
+    max_attempts = 5 # 🛑 5 बार कोशिश करेगा ताकि 100% अपलोड हो
+    for attempt in range(max_attempts):
         try:
             if channel_type == "GADGETS":
+                print(f"--- 📱 GADGETS (Attempt {attempt+1}/{max_attempts}) ---")
                 topic = random.choice(GADGET_TOPICS)
                 script, prompts, captions, gadget_name = get_script_and_prompts(topic, is_gadget=True)
                 image_files = fetch_ai_images(prompts)
                 create_human_voice(script, "voice_gadget.mp3")
                 make_video(image_files, captions, "final_gadget.mp4", "voice_gadget.mp3")
                 desc = f"🔥 👉 गैजेट खरीदने का लिंक चैनल के Bio में है!\n🔍 अमेज़न पर सर्च करें: {gadget_name}\n\n{script}"
-                upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 {gadget_name} #shorts", desc, ["shorts", "gadgets"], "28")
+                upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 {gadget_name} #shorts", desc, ["shorts", "gadgets", "amazon finds"], "28")
+                print("✅ GADGETS चैनल पर परफेक्ट वीडियो लाइव है!")
                 return True 
+                
             elif channel_type == "MYSTIC":
+                print(f"--- 🌌 MYSTIC (Attempt {attempt+1}/{max_attempts}) ---")
                 topic = random.choice(MYSTIC_TOPICS)
                 script, prompts, captions, _ = get_script_and_prompts(topic, is_gadget=False)
                 image_files = fetch_ai_images(prompts)
                 create_human_voice(script, "voice_mystic.mp3")
                 make_video(image_files, captions, "final_mystic.mp4", "voice_mystic.mp3")
-                desc = f"🔥 👉 किताबें और गैजेट्स का लिंक चैनल के Bio में है!\n\n{script}"
-                upload_video(TOKEN_MYSTIC, "final_mystic.mp4", f"🤯 {topic} #shorts", desc, ["shorts", "mystery"], "28")
+                desc = f"🔥 👉 रहस्यमयी किताबें और गैजेट्स का लिंक चैनल के Bio में है!\n\n{script}"
+                upload_video(TOKEN_MYSTIC, "final_mystic.mp4", f"🤯 {topic} #shorts", desc, ["shorts", "mystery", "facts"], "28")
+                print("✅ MYSTIC चैनल पर परफेक्ट वीडियो लाइव है!")
                 return True 
-        except Exception: 
-            time.sleep(600)
+                
+        except Exception as e: 
+            print(f"⚠️ एरर आया: {e}")
+            print("⏳ मशीन थकेगी नहीं, 2 मिनट बाद दोबारा कोशिश करेगी...")
+            time.sleep(120) # 2 मिनट का सुरक्षित ब्रेक
+    
+    print(f"❌ {max_attempts} बार कोशिश की, लेकिन यूट्यूब/गूगल सर्वर पूरी तरह डाउन है।")
     sys.exit(1)
 
 if __name__ == "__main__":
+    print("🚀 V5.10 अल्टीमेट प्रो इंजन स्टार्ट...")
     run_channel_safely("GADGETS")
+    print("\n⏳ 60 सेकंड का ब्रेक...\n")
     time.sleep(60)
     run_channel_safely("MYSTIC")
+    print("🎯 दोनों चैनलों का काम 100% परफेक्ट तरीके से पूरा हो गया!")
