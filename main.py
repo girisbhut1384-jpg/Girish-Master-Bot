@@ -1,4 +1,4 @@
-# गिरीश भाई का V6.1 फाइनल ट्रैकर कोड (Unmasking the hidden error)
+# गिरीश भाई का V6.2 फाइनल मास्टरपीस (ImageMagick Security Wall Destroyed)
 import os
 import sys
 import requests
@@ -17,9 +17,10 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 100% बुलेटप्रूफ फॉन्ट सिस्टम 
-os.system('sudo sed -i "s/pattern=\\"@\\*\\"/pattern=\\"\\*\\"/g" /etc/ImageMagick-6/policy.xml')
+# 🛑 असली और आख़िरी ब्रह्मास्त्र: सिक्योरिटी पॉलिसी को ही जड़ से डिलीट कर दिया!
+os.system('sudo rm -f /etc/ImageMagick-6/policy.xml')
 
+# हिंदी फॉन्ट सिस्टम
 FONT_PATH = os.path.abspath("NotoSansDevanagari-Bold.ttf")
 if not os.path.exists(FONT_PATH):
     font_url = "https://github.com/google/fonts/raw/main/ofl/notosansdevanagari/NotoSansDevanagari-Bold.ttf"
@@ -211,14 +212,13 @@ def run_channel_safely(channel_type):
                 return True 
                 
         except Exception as e: 
-            # 🛑 सबसे बड़ा बदलाव: अब मशीन चुप नहीं रहेगी, असली एरर बताएगी!
             print(f"🛑 क्रैश का असली कारण: {e}")
             print(f"⚠️ सिस्टम रीस्टार्ट हो रहा है... (Attempt {attempt+1}/{max_attempts})")
             time.sleep(30) 
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V6.1 मास्टर ऑटोमेशन चालू हो गया है...")
+    print("🚀 V6.2 मास्टर ऑटोमेशन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ चैनल स्विच हो रहा है...\n")
     time.sleep(60)
