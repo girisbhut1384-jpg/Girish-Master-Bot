@@ -1,4 +1,3 @@
-# गिरीश भाई का V8.2 फाइनल कोड (Brute-Force JSON Cutter + Stable Engines)
 import os
 import sys
 import requests
@@ -45,58 +44,30 @@ CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 
-GADGET_TOPICS = [
-    "स्मार्ट किचन हैक्स गैजेट्स", "मच्छर भगाने वाला हाई-टेक गैजेट", "कमरे को स्मार्ट बनाने वाली लाइट्स", 
-    "कार के लिए सीक्रेट गैजेट", "स्टूडेंट्स के लिए जादुई पेन/गैजेट", "सर्दियों के लिए पोर्टेबल हीटर गैजेट"
-]
+GADGET_TOPICS = ["स्मार्ट किचन हैक्स", "मच्छर भगाने वाला गैजेट", "स्मार्ट लाइट्स", "कार गैजेट", "स्टूडेंट गैजेट", "पोर्टेबल हीटर"]
+MYSTIC_TOPICS = ["बरमूडा ट्राएंगल का सच", "पिरामिडों के नीचे क्या है?", "एलियंस के सबूत", "समुद्र का रहस्य", "समय यात्रा", "ब्लैक होल"]
 
-MYSTIC_TOPICS = [
-    "बरमूडा ट्राएंगल का सबसे नया सच", "मिस्र के पिरामिडों के नीचे क्या है?", "क्या एलियंस पृथ्वी पर आ चुके हैं?",
-    "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
-]
-
-def get_fallback_script(prompt, model_name):
-    print(f"   👉 बैकअप इंजन चालू: {model_name}...")
-    url = "https://text.pollinations.ai/"
-    data = {
-        "messages": [
-            {"role": "system", "content": "You are a professional YouTube script writer. Respond ONLY with a valid JSON object. No explanations, no markdown, no reasoning tags. ONLY the JSON."},
-            {"role": "user", "content": prompt}
-        ],
-        "model": model_name,
-        "jsonMode": True
-    }
-    response = requests.post(url, json=data, timeout=60)
+# 3. डायरेक्ट बैकअप API
+def get_fallback_script(prompt):
+    print(f"   👉 बैकअप इंजन चालू कर रहा हूँ...")
+    safe_prompt = prompt + "\n\nCRITICAL RULE: Return ONLY a valid JSON object starting with { and ending with }. NO markdown, NO reasoning tags, NO text outside the JSON."
+    url = f"https://text.pollinations.ai/{urllib.parse.quote(safe_prompt)}"
+    response = requests.get(url, timeout=60)
     response.raise_for_status()
     return response.text
 
+# 4. पक्का JSON कटर
 def extract_json_safely(raw_text):
     raw_text = str(raw_text).strip()
     
-    # स्टेप 1: अगर AI ने किसी डिब्बे में पैक किया है, तो उसे खोलना
-    try:
-        outer = json.loads(raw_text)
-        if isinstance(outer, dict):
-            if 'choices' in outer:
-                raw_text = str(outer['choices'][0]['message'].get('content', raw_text))
-            elif 'content' in outer:
-                raw_text = str(outer['content'])
-    except:
-        pass
-
-    # स्टेप 2: Markdown कचरा हटाना
     if "```json" in raw_text:
         raw_text = raw_text.split("```json")[1].split("```")[0]
     elif "```" in raw_text:
         raw_text = raw_text.split("```")[1].split("```")[0]
 
-    # स्टेप 3: ब्रूट-फोर्स कटर (सिर्फ { से } तक निकालेगा)
-    start_idx = raw_text.find('{')
-    end_idx = raw_text.rfind('}')
-    
-    if start_idx != -1 and end_idx != -1:
-        return raw_text[start_idx:end_idx+1]
-        
+    match = re.search(r'\{[\s\S]*\}', raw_text)
+    if match:
+        return match.group(0)
     return raw_text
 
 def get_script_and_prompts(topic, is_gadget=False):
@@ -122,46 +93,46 @@ def get_script_and_prompts(topic, is_gadget=False):
     
     clean_text = None
     
-    # 🛑 100% सेफ इंजनों की लिस्ट (OpenAI बाहर कर दिया है)
-    engines = [
-        {"type": "gemini", "name": "gemini-2.0-flash"},
-        {"type": "gemini", "name": "gemini-1.5-flash"},
-        {"type": "fallback", "name": "llama"},   # Meta Llama
-        {"type": "fallback", "name": "mistral"}  # Mistral
-    ]
-    
-    for engine in engines:
-        try:
-            if engine["type"] == "gemini":
-                print(f"   👉 इंजन ट्राई कर रहा हूँ: {engine['name']}...")
-                response = client.models.generate_content(model=engine['name'], contents=prompt)
-                if response.text:
-                    clean_text = response.text.strip()
-                    print(f"   ✅ {engine['name']} ने जवाब दिया।")
-                    break
-            else:
-                clean_text = get_fallback_script(prompt, engine['name']).strip()
-                if clean_text:
-                    print(f"   ✅ बैकअप इंजन ({engine['name']}) ने जवाब दिया।")
-                    break
-        except Exception as e:
-            print(f"   ❌ {engine['name']} फेल हुआ। अगले इंजन पर जा रहा हूँ...")
-            continue 
-            
-    if not clean_text: 
-        raise Exception("चारों इंजन फेल! इंटरनेट पूरी तरह डाउन है।")
+    try:
+        print("   👉 मेन इंजन ट्राई कर रहा हूँ: gemini-2.0-flash...")
+        response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+        if response.text:
+            clean_text = response.text
+            print("   ✅ मेन इंजन ने जवाब दिया।")
+    except:
+        pass
         
-    # ब्रूट-फोर्स कटर का इस्तेमाल
+    if not clean_text:
+        try:
+            print("   👉 मेन इंजन फेल। दूसरा मेन इंजन ट्राई कर रहा हूँ: gemini-1.5-flash...")
+            response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
+            if response.text:
+                clean_text = response.text
+                print("   ✅ दूसरे मेन इंजन ने जवाब दिया।")
+        except:
+            pass
+
+    if not clean_text:
+        try:
+            clean_text = get_fallback_script(prompt)
+            if clean_text:
+                print("   ✅ बैकअप इंजन ने जवाब दिया।")
+        except Exception as e:
+            raise Exception(f"इंटरनेट या बैकअप इंजन फेल: {e}")
+
+    if not clean_text:
+        raise Exception("सारे इंजन फेल हो गए।")
+
     clean_text = extract_json_safely(clean_text)
 
     try:
         data = json.loads(clean_text)
     except json.JSONDecodeError:
-        raise Exception(f"AI का डाटा गलत है: {clean_text[:100]}...")
+        raise Exception(f"AI का डाटा JSON नहीं है: {clean_text[:100]}...")
 
     script = data.get('script', data.get('Script', ''))
     if not script:
-         raise Exception(f"AI ने 'script' नहीं लिखी! डाटा: {clean_text[:100]}...")
+         raise Exception(f"'script' नहीं मिली! डाटा: {clean_text[:100]}...")
 
     return script.replace("*", ""), data.get('prompts', [])[:8], data.get('captions', [])[:8], data.get('gadget_name', '')
 
@@ -234,6 +205,9 @@ def make_video(image_files, captions, final_vid, audio_file):
 
 def upload_video(token, filename, title, description, tags, category):
     print("✅ यूट्यूब पर वीडियो अपलोड किया जा रहा है...")
+    from google.oauth2.credentials import Credentials
+    from googleapiclient.discovery import build
+    from googleapiclient.http import MediaFileUpload
     credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
     youtube = build("youtube", "v3", credentials=credentials)
     request = youtube.videos().insert(
@@ -278,7 +252,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V8.2 इंजन चालू हो गया है...")
+    print("🚀 फाइनल इंजन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ ब्रेक...\n")
     time.sleep(30)
