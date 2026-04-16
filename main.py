@@ -1,4 +1,4 @@
-# गिरीश भाई का V8.1 सॉलिड कोड (Pure Logic + Raw Text Extractor)
+# गिरीश भाई का V8.2 फाइनल कोड (Brute-Force JSON Cutter + Stable Engines)
 import os
 import sys
 import requests
@@ -9,6 +9,7 @@ import urllib.parse
 import json
 import random
 import glob
+import re
 
 import PIL.Image
 if not hasattr(PIL.Image, 'ANTIALIAS'):
@@ -54,36 +55,48 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
-# 3. सिंपल और डायरेक्ट बैकअप API (बिना किसी डिब्बे के)
 def get_fallback_script(prompt, model_name):
     print(f"   👉 बैकअप इंजन चालू: {model_name}...")
-    system_prompt = "You are a script writer. Return strictly RAW JSON. No reasoning, no markdown."
-    url = f"https://text.pollinations.ai/{urllib.parse.quote(prompt)}?model={model_name}&system={urllib.parse.quote(system_prompt)}"
-    response = requests.get(url, timeout=60)
+    url = "https://text.pollinations.ai/"
+    data = {
+        "messages": [
+            {"role": "system", "content": "You are a professional YouTube script writer. Respond ONLY with a valid JSON object. No explanations, no markdown, no reasoning tags. ONLY the JSON."},
+            {"role": "user", "content": prompt}
+        ],
+        "model": model_name,
+        "jsonMode": True
+    }
+    response = requests.post(url, json=data, timeout=60)
+    response.raise_for_status()
     return response.text
 
-# 4. 3-स्टेप स्कैनर (जो फालतू कचरा साफ़ करेगा)
 def extract_json_safely(raw_text):
+    raw_text = str(raw_text).strip()
+    
+    # स्टेप 1: अगर AI ने किसी डिब्बे में पैक किया है, तो उसे खोलना
     try:
-        parsed = json.loads(raw_text)
-        if isinstance(parsed, dict):
-            if 'content' in parsed and isinstance(parsed['content'], str) and '{' in parsed['content']:
-                raw_text = parsed['content']
-            elif 'choices' in parsed:
-                raw_text = parsed['choices'][0]['message']['content']
+        outer = json.loads(raw_text)
+        if isinstance(outer, dict):
+            if 'choices' in outer:
+                raw_text = str(outer['choices'][0]['message'].get('content', raw_text))
+            elif 'content' in outer:
+                raw_text = str(outer['content'])
     except:
         pass
 
+    # स्टेप 2: Markdown कचरा हटाना
     if "```json" in raw_text:
         raw_text = raw_text.split("```json")[1].split("```")[0]
     elif "```" in raw_text:
         raw_text = raw_text.split("```")[1].split("```")[0]
 
+    # स्टेप 3: ब्रूट-फोर्स कटर (सिर्फ { से } तक निकालेगा)
     start_idx = raw_text.find('{')
     end_idx = raw_text.rfind('}')
     
     if start_idx != -1 and end_idx != -1:
         return raw_text[start_idx:end_idx+1]
+        
     return raw_text
 
 def get_script_and_prompts(topic, is_gadget=False):
@@ -108,12 +121,13 @@ def get_script_and_prompts(topic, is_gadget=False):
     """
     
     clean_text = None
+    
+    # 🛑 100% सेफ इंजनों की लिस्ट (OpenAI बाहर कर दिया है)
     engines = [
         {"type": "gemini", "name": "gemini-2.0-flash"},
         {"type": "gemini", "name": "gemini-1.5-flash"},
-        {"type": "fallback", "name": "openai"},  
-        {"type": "fallback", "name": "llama"},   
-        {"type": "fallback", "name": "mistral"}  
+        {"type": "fallback", "name": "llama"},   # Meta Llama
+        {"type": "fallback", "name": "mistral"}  # Mistral
     ]
     
     for engine in engines:
@@ -131,22 +145,23 @@ def get_script_and_prompts(topic, is_gadget=False):
                     print(f"   ✅ बैकअप इंजन ({engine['name']}) ने जवाब दिया।")
                     break
         except Exception as e:
-            print(f"   ❌ {engine['name']} फेल। अगले इंजन पर जा रहा हूँ...")
+            print(f"   ❌ {engine['name']} फेल हुआ। अगले इंजन पर जा रहा हूँ...")
             continue 
             
     if not clean_text: 
-        raise Exception("चारों इंजन फेल! इंटरनेट कनेक्शन डाउन है।")
+        raise Exception("चारों इंजन फेल! इंटरनेट पूरी तरह डाउन है।")
         
+    # ब्रूट-फोर्स कटर का इस्तेमाल
     clean_text = extract_json_safely(clean_text)
 
     try:
         data = json.loads(clean_text)
     except json.JSONDecodeError:
-        raise Exception(f"JSON डिकोड एरर: {clean_text[:100]}...")
+        raise Exception(f"AI का डाटा गलत है: {clean_text[:100]}...")
 
     script = data.get('script', data.get('Script', ''))
     if not script:
-         raise Exception(f"'script' टैग नहीं मिला! डाटा: {clean_text[:100]}...")
+         raise Exception(f"AI ने 'script' नहीं लिखी! डाटा: {clean_text[:100]}...")
 
     return script.replace("*", ""), data.get('prompts', [])[:8], data.get('captions', [])[:8], data.get('gadget_name', '')
 
@@ -263,7 +278,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V8.1 इंजन चालू हो गया है...")
+    print("🚀 V8.2 इंजन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ ब्रेक...\n")
     time.sleep(30)
