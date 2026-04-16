@@ -1,4 +1,4 @@
-# गिरीश भाई का V8.0 मास्टर कोड (Bulletproof JSON Extractor)
+# गिरीश भाई का V8.1 सॉलिड कोड (Pure Logic + Raw Text Extractor)
 import os
 import sys
 import requests
@@ -18,11 +18,11 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 1. इमेजमैजिक सिक्योरिटी दीवार हटाना
+# 1. इमेजमैजिक सिक्योरिटी दीवार हटाना
 print("🔓 सिक्योरिटी दीवार हटाई जा रही है...")
 os.system("sudo sed -i '/pattern=\"@\\*\"/d' /etc/ImageMagick-6/policy.xml")
 
-# 🛑 2. लिनक्स के ऑफिशियल हिंदी फॉन्ट
+# 2. लिनक्स के ऑफिशियल हिंदी फॉन्ट
 print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
 os.system("sudo apt-get update -y")
 os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
@@ -30,7 +30,7 @@ os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
 sys_fonts = glob.glob("/usr/share/fonts/**/*.ttf", recursive=True)
 hindi_fonts = [f for f in sys_fonts if "Devanagari" in f or "Samyak" in f or "Gargi" in f or "Nakula" in f]
 FONT_PATH = hindi_fonts[0] if hindi_fonts else (sys_fonts[0] if sys_fonts else "Arial")
-print(f"✅ परफेक्ट फॉन्ट मिल गया: {FONT_PATH}")
+print(f"✅ फॉन्ट मिल गया: {FONT_PATH}")
 
 change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
@@ -54,33 +54,37 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
+# 3. सिंपल और डायरेक्ट बैकअप API (बिना किसी डिब्बे के)
 def get_fallback_script(prompt, model_name):
     print(f"   👉 बैकअप इंजन चालू: {model_name}...")
-    url = "https://text.pollinations.ai/"
-    data = {
-        "messages": [
-            {"role": "system", "content": "You are a professional YouTube script writer. Respond ONLY with raw, valid JSON. Do not add markdown or explanations."},
-            {"role": "user", "content": prompt}
-        ],
-        "model": model_name,
-        "jsonMode": True
-    }
-    response = requests.post(url, json=data, timeout=60)
-    response.raise_for_status()
-    
-    resp_text = response.text.strip()
-    
-    # अगर जवाब API के डिब्बे में है, तो पहले डिब्बा खोलें
+    system_prompt = "You are a script writer. Return strictly RAW JSON. No reasoning, no markdown."
+    url = f"https://text.pollinations.ai/{urllib.parse.quote(prompt)}?model={model_name}&system={urllib.parse.quote(system_prompt)}"
+    response = requests.get(url, timeout=60)
+    return response.text
+
+# 4. 3-स्टेप स्कैनर (जो फालतू कचरा साफ़ करेगा)
+def extract_json_safely(raw_text):
     try:
-        parsed = json.loads(resp_text)
-        if "choices" in parsed and len(parsed["choices"]) > 0:
-            resp_text = parsed["choices"][0]["message"]["content"]
-        elif "content" in parsed:
-            resp_text = parsed["content"]
+        parsed = json.loads(raw_text)
+        if isinstance(parsed, dict):
+            if 'content' in parsed and isinstance(parsed['content'], str) and '{' in parsed['content']:
+                raw_text = parsed['content']
+            elif 'choices' in parsed:
+                raw_text = parsed['choices'][0]['message']['content']
     except:
         pass
-        
-    return resp_text
+
+    if "```json" in raw_text:
+        raw_text = raw_text.split("```json")[1].split("```")[0]
+    elif "```" in raw_text:
+        raw_text = raw_text.split("```")[1].split("```")[0]
+
+    start_idx = raw_text.find('{')
+    end_idx = raw_text.rfind('}')
+    
+    if start_idx != -1 and end_idx != -1:
+        return raw_text[start_idx:end_idx+1]
+    return raw_text
 
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n✅ AI स्क्रिप्ट तैयार कर रहा है: {topic}")
@@ -104,7 +108,6 @@ def get_script_and_prompts(topic, is_gadget=False):
     """
     
     clean_text = None
-    
     engines = [
         {"type": "gemini", "name": "gemini-2.0-flash"},
         {"type": "gemini", "name": "gemini-1.5-flash"},
@@ -116,42 +119,34 @@ def get_script_and_prompts(topic, is_gadget=False):
     for engine in engines:
         try:
             if engine["type"] == "gemini":
-                print(f"   👉 मेन इंजन ट्राई कर रहा हूँ: {engine['name']}...")
+                print(f"   👉 इंजन ट्राई कर रहा हूँ: {engine['name']}...")
                 response = client.models.generate_content(model=engine['name'], contents=prompt)
                 if response.text:
                     clean_text = response.text.strip()
-                    print(f"   ✅ {engine['name']} ने जवाब दिया!")
+                    print(f"   ✅ {engine['name']} ने जवाब दिया।")
                     break
             else:
                 clean_text = get_fallback_script(prompt, engine['name']).strip()
                 if clean_text:
-                    print(f"   ✅ बैकअप इंजन ({engine['name']}) ने जवाब दिया!")
+                    print(f"   ✅ बैकअप इंजन ({engine['name']}) ने जवाब दिया।")
                     break
         except Exception as e:
-            print(f"   ❌ {engine['name']} फेल हुआ। अगले इंजन पर जा रहा हूँ...")
+            print(f"   ❌ {engine['name']} फेल। अगले इंजन पर जा रहा हूँ...")
             continue 
             
     if not clean_text: 
-        raise Exception("चारों इंजन फेल! इंटरनेट पूरी तरह डाउन है।")
+        raise Exception("चारों इंजन फेल! इंटरनेट कनेक्शन डाउन है।")
         
-    # 🛑 सबसे आख़िरी और पक्का समाधान (Bulletproof Extractor)
-    # AI कुछ भी दे, हम सिर्फ { से } तक का हिस्सा काट कर निकालेंगे
-    start_idx = clean_text.find('{')
-    end_idx = clean_text.rfind('}')
-    
-    if start_idx != -1 and end_idx != -1:
-        clean_text = clean_text[start_idx:end_idx+1]
-    else:
-        raise Exception(f"AI के जवाब में कोई JSON नहीं मिला: {clean_text[:100]}")
+    clean_text = extract_json_safely(clean_text)
 
     try:
         data = json.loads(clean_text)
     except json.JSONDecodeError:
-        raise Exception(f"AI का डाटा खराब है: {clean_text[:100]}...")
+        raise Exception(f"JSON डिकोड एरर: {clean_text[:100]}...")
 
     script = data.get('script', data.get('Script', ''))
     if not script:
-         raise Exception(f"AI ने 'script' नहीं लिखी! डाटा: {clean_text[:100]}...")
+         raise Exception(f"'script' टैग नहीं मिला! डाटा: {clean_text[:100]}...")
 
     return script.replace("*", ""), data.get('prompts', [])[:8], data.get('captions', [])[:8], data.get('gadget_name', '')
 
@@ -176,14 +171,14 @@ def fetch_ai_images(prompts):
     return image_files
 
 def create_human_voice(text, filename):
-    print("✅ प्रोफेशनल वॉइसओवर रिकॉर्ड हो रहा है...")
+    print("✅ वॉइसओवर रिकॉर्ड हो रहा है...")
     async def _generate():
         communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+10%")
         await communicate.save(filename)
     asyncio.run(_generate())
 
 def make_video(image_files, captions, final_vid, audio_file):
-    print("✅ फाइनल वीडियो रेंडर हो रहा है...")
+    print("✅ वीडियो रेंडर हो रहा है...")
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
     time_per_image = audio_duration / len(image_files)
@@ -238,7 +233,7 @@ def run_channel_safely(channel_type):
     for attempt in range(max_attempts):
         try:
             if channel_type == "GADGETS":
-                print(f"\n--- 📱 GADGETS चैनल की प्रोसेसिंग चालू है ---")
+                print(f"\n--- 📱 GADGETS चैनल प्रोसेसिंग ---")
                 topic = random.choice(GADGET_TOPICS)
                 script, prompts, captions, gadget_name = get_script_and_prompts(topic, is_gadget=True)
                 image_files = fetch_ai_images(prompts)
@@ -246,11 +241,11 @@ def run_channel_safely(channel_type):
                 make_video(image_files, captions, "final_gadget.mp4", "voice_gadget.mp3")
                 desc = f"🔥 👉 गैजेट खरीदने का लिंक चैनल के Bio में है!\n🔍 अमेज़न पर सर्च करें: {gadget_name}\n\n{script}"
                 upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 {gadget_name} #shorts", desc, ["shorts", "gadgets", "amazon finds"], "28")
-                print("🏆 GADGETS चैनल पर वीडियो सफलतापूर्वक लाइव हो गया!")
+                print("✅ GADGETS चैनल पर वीडियो लाइव हो गया।")
                 return True 
                 
             elif channel_type == "MYSTIC":
-                print(f"\n--- 🌌 MYSTIC चैनल की प्रोसेसिंग चालू है ---")
+                print(f"\n--- 🌌 MYSTIC चैनल प्रोसेसिंग ---")
                 topic = random.choice(MYSTIC_TOPICS)
                 script, prompts, captions, _ = get_script_and_prompts(topic, is_gadget=False)
                 image_files = fetch_ai_images(prompts)
@@ -258,19 +253,19 @@ def run_channel_safely(channel_type):
                 make_video(image_files, captions, "final_mystic.mp4", "voice_mystic.mp3")
                 desc = f"🔥 👉 रहस्यमयी किताबें और गैजेट्स का लिंक चैनल के Bio में है!\n\n{script}"
                 upload_video(TOKEN_MYSTIC, "final_mystic.mp4", f"🤯 {topic} #shorts", desc, ["shorts", "mystery", "facts"], "28")
-                print("🏆 MYSTIC चैनल पर वीडियो सफलतापूर्वक लाइव हो गया!")
+                print("✅ MYSTIC चैनल पर वीडियो लाइव हो गया।")
                 return True 
                 
         except Exception as e: 
-            print(f"🛑 मेन एरर: {e}")
+            print(f"🛑 एरर: {e}")
             print(f"⚠️ सिस्टम रीस्टार्ट हो रहा है... (Attempt {attempt+1}/{max_attempts})")
             time.sleep(15) 
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V8.0 मास्टर ऑटोमेशन चालू हो गया है...")
+    print("🚀 V8.1 इंजन चालू हो गया है...")
     run_channel_safely("GADGETS")
-    print("\n⏳ चैनल स्विच हो रहा है...\n")
+    print("\n⏳ ब्रेक...\n")
     time.sleep(30)
     run_channel_safely("MYSTIC")
-    print("\n🎯 आज का काम पूरा हुआ! मशीन स्लीप मोड में जा रही है।")
+    print("\n🎯 आज का काम पूरा हुआ।")
