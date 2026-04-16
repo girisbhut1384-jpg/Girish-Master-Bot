@@ -1,4 +1,4 @@
-# गिरीश भाई का V7.5 आख़िरी मास्टर कोड (4-Engine Fallback + Smart JSON Decoder)
+# गिरीश भाई का V8.0 मास्टर कोड (Bulletproof JSON Extractor)
 import os
 import sys
 import requests
@@ -18,11 +18,11 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 1. इमेजमैजिक सिक्योरिटी दीवार को हटाना
+# 🛑 1. इमेजमैजिक सिक्योरिटी दीवार हटाना
 print("🔓 सिक्योरिटी दीवार हटाई जा रही है...")
 os.system("sudo sed -i '/pattern=\"@\\*\"/d' /etc/ImageMagick-6/policy.xml")
 
-# 🛑 2. लिनक्स के ऑफिशियल हिंदी फॉन्ट (100% सक्सेस)
+# 🛑 2. लिनक्स के ऑफिशियल हिंदी फॉन्ट
 print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
 os.system("sudo apt-get update -y")
 os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
@@ -54,13 +54,12 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
-# 🛑 3. स्मार्ट API मैनेजर (डिकोडर के साथ)
 def get_fallback_script(prompt, model_name):
     print(f"   👉 बैकअप इंजन चालू: {model_name}...")
     url = "https://text.pollinations.ai/"
     data = {
         "messages": [
-            {"role": "system", "content": "You are a script writer. Return ONLY valid raw JSON data."},
+            {"role": "system", "content": "You are a professional YouTube script writer. Respond ONLY with raw, valid JSON. Do not add markdown or explanations."},
             {"role": "user", "content": prompt}
         ],
         "model": model_name,
@@ -70,11 +69,14 @@ def get_fallback_script(prompt, model_name):
     response.raise_for_status()
     
     resp_text = response.text.strip()
-    # स्मार्ट डिकोडर: अगर जवाब OpenAI के डिब्बे में आया है, तो उसे खोलना
+    
+    # अगर जवाब API के डिब्बे में है, तो पहले डिब्बा खोलें
     try:
         parsed = json.loads(resp_text)
         if "choices" in parsed and len(parsed["choices"]) > 0:
-            return parsed["choices"][0]["message"]["content"]
+            resp_text = parsed["choices"][0]["message"]["content"]
+        elif "content" in parsed:
+            resp_text = parsed["content"]
     except:
         pass
         
@@ -118,36 +120,38 @@ def get_script_and_prompts(topic, is_gadget=False):
                 response = client.models.generate_content(model=engine['name'], contents=prompt)
                 if response.text:
                     clean_text = response.text.strip()
-                    print(f"   ✅ सफलता! {engine['name']} ने स्क्रिप्ट लिख दी!")
+                    print(f"   ✅ {engine['name']} ने जवाब दिया!")
                     break
             else:
                 clean_text = get_fallback_script(prompt, engine['name']).strip()
                 if clean_text:
-                    print(f"   ✅ सफलता! बैकअप इंजन ({engine['name']}) ने स्क्रिप्ट लिख दी!")
+                    print(f"   ✅ बैकअप इंजन ({engine['name']}) ने जवाब दिया!")
                     break
-                    
         except Exception as e:
-            print(f"   ❌ {engine['name']} फेल हुआ। तुरंत अगले इंजन पर शिफ्ट हो रहा हूँ...")
+            print(f"   ❌ {engine['name']} फेल हुआ। अगले इंजन पर जा रहा हूँ...")
             continue 
             
     if not clean_text: 
         raise Exception("चारों इंजन फेल! इंटरनेट पूरी तरह डाउन है।")
         
-    # JSON को साफ़ करना (अगर AI ने ```json लगा कर भेजा हो)
-    if "```json" in clean_text:
-        clean_text = clean_text.split("```json")[1].split("```")[0].strip()
-    elif "```" in clean_text:
-        clean_text = clean_text.split("```")[1].split("```")[0].strip()
-         
+    # 🛑 सबसे आख़िरी और पक्का समाधान (Bulletproof Extractor)
+    # AI कुछ भी दे, हम सिर्फ { से } तक का हिस्सा काट कर निकालेंगे
+    start_idx = clean_text.find('{')
+    end_idx = clean_text.rfind('}')
+    
+    if start_idx != -1 and end_idx != -1:
+        clean_text = clean_text[start_idx:end_idx+1]
+    else:
+        raise Exception(f"AI के जवाब में कोई JSON नहीं मिला: {clean_text[:100]}")
+
     try:
         data = json.loads(clean_text)
     except json.JSONDecodeError:
-        raise Exception(f"AI ने गलत फॉर्मेट दिया: {clean_text[:50]}...")
+        raise Exception(f"AI का डाटा खराब है: {clean_text[:100]}...")
 
-    # पक्का चेक कि 'script' मौजूद है
     script = data.get('script', data.get('Script', ''))
     if not script:
-         raise Exception(f"AI ने 'script' नहीं लिखी! Raw Text: {clean_text[:50]}...")
+         raise Exception(f"AI ने 'script' नहीं लिखी! डाटा: {clean_text[:100]}...")
 
     return script.replace("*", ""), data.get('prompts', [])[:8], data.get('captions', [])[:8], data.get('gadget_name', '')
 
@@ -157,7 +161,7 @@ def fetch_ai_images(prompts):
     seed = random.randint(1000, 99999) 
     for i, p in enumerate(prompts):
         safe_prompt = urllib.parse.quote(p)
-        url = f"[https://image.pollinations.ai/prompt/](https://image.pollinations.ai/prompt/){safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
+        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         for _ in range(3): 
             try:
@@ -179,7 +183,7 @@ def create_human_voice(text, filename):
     asyncio.run(_generate())
 
 def make_video(image_files, captions, final_vid, audio_file):
-    print("✅ फाइनल वीडियो रेंडर हो रहा है (पक्के हिंदी टेक्स्ट के साथ)...")
+    print("✅ फाइनल वीडियो रेंडर हो रहा है...")
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
     time_per_image = audio_duration / len(image_files)
@@ -220,7 +224,7 @@ def make_video(image_files, captions, final_vid, audio_file):
 
 def upload_video(token, filename, title, description, tags, category):
     print("✅ यूट्यूब पर वीडियो अपलोड किया जा रहा है...")
-    credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="[https://oauth2.googleapis.com/token](https://oauth2.googleapis.com/token)")
+    credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
     youtube = build("youtube", "v3", credentials=credentials)
     request = youtube.videos().insert(
         part="snippet,status",
@@ -264,7 +268,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V7.5 मास्टर ऑटोमेशन (Unstoppable Engine) चालू हो गया है...")
+    print("🚀 V8.0 मास्टर ऑटोमेशन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ चैनल स्विच हो रहा है...\n")
     time.sleep(30)
