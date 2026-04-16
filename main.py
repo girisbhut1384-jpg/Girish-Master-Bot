@@ -1,4 +1,4 @@
-# गिरीश भाई का V7.2 आख़िरी प्रोडक्शन कोड (2-Minute Quota Clear + No 404 Models)
+# गिरीश भाई का V7.4 आख़िरी मास्टर कोड (4-Engine Multi-Fallback System)
 import os
 import sys
 import requests
@@ -18,11 +18,11 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 🛑 1. इमेजमैजिक सिक्योरिटी दीवार को हमेशा के लिए हटाना
+# 🛑 1. इमेजमैजिक सिक्योरिटी दीवार को हटाना
 print("🔓 सिक्योरिटी दीवार हटाई जा रही है...")
 os.system("sudo sed -i '/pattern=\"@\\*\"/d' /etc/ImageMagick-6/policy.xml")
 
-# 🛑 2. बिना किसी लिंक के लिनक्स के ऑफिशियल हिंदी फॉन्ट इंस्टॉल करना (सक्सेसफुल)
+# 🛑 2. लिनक्स के ऑफिशियल हिंदी फॉन्ट (वीडियो इंजन 100% परफेक्ट)
 print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
 os.system("sudo apt-get update -y")
 os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
@@ -54,12 +54,24 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
-# 🛑 3. स्मार्ट API मैनेजर (120 सेकंड के पक्के ब्रेक के साथ)
+# 🛑 3. सुपर स्मार्ट 4-इंजन API मैनेजर
+def get_fallback_script(prompt, model_name):
+    print(f"   👉 बैकअप इंजन चालू: {model_name}...")
+    url = "https://text.pollinations.ai/"
+    data = {
+        "messages": [
+            {"role": "system", "content": "You are a script writer. Return ONLY raw valid JSON."},
+            {"role": "user", "content": prompt}
+        ],
+        "model": model_name,
+        "jsonMode": True
+    }
+    response = requests.post(url, json=data, timeout=60)
+    response.raise_for_status()
+    return response.text
+
 def get_script_and_prompts(topic, is_gadget=False):
-    print(f"✅ AI स्क्रिप्ट तैयार कर रहा है: {topic}")
-    
-    # सिर्फ वो मॉडल्स जो 100% चल रहे हैं
-    models_to_try = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"]
+    print(f"\n✅ AI स्क्रिप्ट तैयार कर रहा है: {topic}")
     
     prompt = f"Write a VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking hook. STRICTLY 50-60 words. "
     if is_gadget: 
@@ -78,37 +90,39 @@ def get_script_and_prompts(topic, is_gadget=False):
       "gadget_name": "Amazon search name or empty."
     }
     """
-    clean_text = None
-    last_error = ""
     
-    for m_name in models_to_try:
-        print(f"   👉 ट्राई कर रहा हूँ: {m_name}...")
-        for attempt in range(3): # हर मॉडल को 3 बार ट्राई करेगा
-            try:
-                response = client.models.generate_content(model=m_name, contents=prompt)
+    clean_text = None
+    
+    # 4 इंजनों की लिस्ट: 2 गूगल के, 3 फ्री बैकअप (ChatGPT, Llama, Mistral)
+    engines = [
+        {"type": "gemini", "name": "gemini-2.0-flash"},
+        {"type": "gemini", "name": "gemini-1.5-flash"},
+        {"type": "fallback", "name": "openai"},  # ChatGPT Free Alternative
+        {"type": "fallback", "name": "llama"},   # Meta Llama
+        {"type": "fallback", "name": "mistral"}  # Mistral AI
+    ]
+    
+    for engine in engines:
+        try:
+            if engine["type"] == "gemini":
+                print(f"   👉 मेन इंजन ट्राई कर रहा हूँ: {engine['name']}...")
+                response = client.models.generate_content(model=engine['name'], contents=prompt)
                 if response.text:
                     clean_text = response.text.strip()
-                    print(f"   ✅ सफलता! {m_name} ने स्क्रिप्ट लिख दी!")
+                    print(f"   ✅ सफलता! {engine['name']} ने स्क्रिप्ट लिख दी!")
                     break
-            except Exception as e: 
-                last_error = str(e)
-                if "429" in last_error or "RESOURCE_EXHAUSTED" in last_error:
-                    print(f"   ⏳ गूगल का ट्रैफिक जाम (429) है। पूरे 120 सेकंड (2 मिनट) का पक्का ब्रेक ले रहा हूँ...")
-                    time.sleep(120) 
-                elif "404" in last_error or "NOT_FOUND" in last_error:
-                    print(f"   ⚠️ {m_name} मॉडल गूगल ने हटा दिया है। इसे छोड़कर आगे बढ़ रहा हूँ...")
-                    break # यह मॉडल छोड़कर अगले पर जाएगा
-                elif "503" in last_error:
-                    print(f"   ⏳ गूगल सर्वर डाउन है, 30 सेकंड का ब्रेक...")
-                    time.sleep(30)
-                else:
-                    print(f"   ❌ {m_name} में अज्ञात एरर: {last_error}")
-                    break 
-        if clean_text:
-            break
+            else:
+                clean_text = get_fallback_script(prompt, engine['name']).strip()
+                if clean_text:
+                    print(f"   ✅ सफलता! बैकअप इंजन ({engine['name']}) ने स्क्रिप्ट लिख दी!")
+                    break
+                    
+        except Exception as e:
+            print(f"   ❌ {engine['name']} फेल हुआ। तुरंत अगले इंजन पर शिफ्ट हो रहा हूँ...")
+            continue # मशीन रुकेगी नहीं, सीधा अगले मॉडल पर जाएगी
             
     if not clean_text: 
-        raise Exception(f"Google API की डेली (Daily) लिमिट ख़त्म हो गई है! आख़िरी एरर: {last_error}")
+        raise Exception("चारों इंजन और सारे बैकअप फेल हो गए! इंटरनेट पूरी तरह डाउन है।")
         
     if clean_text.startswith("```json"): 
         clean_text = clean_text[7:-3].strip()
@@ -226,17 +240,14 @@ def run_channel_safely(channel_type):
                 
         except Exception as e: 
             print(f"🛑 मेन एरर: {e}")
-            if "Daily" in str(e) or "डेली" in str(e):
-                print("⚠️ आज की 1500 लिमिट पूरी हो गई है, मशीन अब कल अपने-आप चलेगी।")
-                sys.exit(1)
             print(f"⚠️ सिस्टम रीस्टार्ट हो रहा है... (Attempt {attempt+1}/{max_attempts})")
-            time.sleep(30) 
+            time.sleep(15) 
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V7.2 मास्टर ऑटोमेशन चालू हो गया है...")
+    print("🚀 V7.4 मास्टर ऑटोमेशन (4-Engine System) चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ चैनल स्विच हो रहा है...\n")
-    time.sleep(60)
+    time.sleep(30)
     run_channel_safely("MYSTIC")
     print("\n🎯 आज का काम पूरा हुआ! मशीन स्लीप मोड में जा रही है।")
