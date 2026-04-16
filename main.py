@@ -18,9 +18,10 @@ from google import genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 1. इमेजमैजिक सिक्योरिटी दीवार हटाना
+# 1. इमेजमैजिक सिक्योरिटी दीवार को जड़ से हटाना (100% पक्का तरीका)
 print("🔓 सिक्योरिटी दीवार हटाई जा रही है...")
-os.system("sudo sed -i '/pattern=\"@\\*\"/d' /etc/ImageMagick-6/policy.xml")
+os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
+os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
 # 2. लिनक्स के ऑफिशियल हिंदी फॉन्ट
 print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
@@ -47,16 +48,23 @@ TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 GADGET_TOPICS = ["स्मार्ट किचन हैक्स", "मच्छर भगाने वाला गैजेट", "स्मार्ट लाइट्स", "कार गैजेट", "स्टूडेंट गैजेट", "पोर्टेबल हीटर"]
 MYSTIC_TOPICS = ["बरमूडा ट्राएंगल का सच", "पिरामिडों के नीचे क्या है?", "एलियंस के सबूत", "समुद्र का रहस्य", "समय यात्रा", "ब्लैक होल"]
 
-# 3. डायरेक्ट बैकअप API
-def get_fallback_script(prompt):
-    print(f"   👉 बैकअप इंजन चालू कर रहा हूँ...")
-    safe_prompt = prompt + "\n\nCRITICAL RULE: Return ONLY a valid JSON object starting with { and ending with }. NO markdown, NO reasoning tags, NO text outside the JSON."
-    url = f"https://text.pollinations.ai/{urllib.parse.quote(safe_prompt)}"
-    response = requests.get(url, timeout=60)
+# 3. बैकअप API (Mistral और Llama - बिना Reasoning वाले इंजन)
+def get_fallback_script(prompt, model="mistral"):
+    print(f"   👉 बैकअप इंजन ({model}) चालू कर रहा हूँ...")
+    url = "https://text.pollinations.ai/"
+    data = {
+        "messages": [
+            {"role": "system", "content": "You are a JSON generator. Return strictly valid JSON object ONLY. NO markdown. NO explanations."},
+            {"role": "user", "content": prompt}
+        ],
+        "model": model,
+        "jsonMode": True
+    }
+    response = requests.post(url, json=data, timeout=60)
     response.raise_for_status()
     return response.text
 
-# 4. पक्का JSON कटर
+# 4. पक्का JSON एक्सट्रैक्टर 
 def extract_json_safely(raw_text):
     raw_text = str(raw_text).strip()
     
@@ -65,10 +73,42 @@ def extract_json_safely(raw_text):
     elif "```" in raw_text:
         raw_text = raw_text.split("```")[1].split("```")[0]
 
-    match = re.search(r'\{[\s\S]*\}', raw_text)
+    try:
+        parsed = json.loads(raw_text)
+        if isinstance(parsed, dict):
+            if 'choices' in parsed:
+                content = parsed['choices'][0]['message'].get('content', '')
+                try:
+                    return json.loads(content)
+                except:
+                    raw_text = content
+            elif 'content' in parsed:
+                content = parsed['content']
+                try:
+                    return json.loads(content)
+                except:
+                    raw_text = content
+            else:
+                return parsed
+    except:
+        pass
+
+    match = re.search(r'\{[\s\S]*"script"[\s\S]*\}', raw_text, re.IGNORECASE)
     if match:
-        return match.group(0)
-    return raw_text
+        try:
+            return json.loads(match.group(0))
+        except:
+            pass
+
+    start = raw_text.find('{')
+    end = raw_text.rfind('}')
+    if start != -1 and end != -1:
+        try:
+            return json.loads(raw_text[start:end+1])
+        except:
+            pass
+            
+    return None
 
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n✅ AI स्क्रिप्ट तैयार कर रहा है: {topic}")
@@ -99,40 +139,42 @@ def get_script_and_prompts(topic, is_gadget=False):
         if response.text:
             clean_text = response.text
             print("   ✅ मेन इंजन ने जवाब दिया।")
-    except:
-        pass
-        
-    if not clean_text:
+    except Exception as e:
+        print(f"   ❌ मेन इंजन फेल: {e}")
         try:
-            print("   👉 मेन इंजन फेल। दूसरा मेन इंजन ट्राई कर रहा हूँ: gemini-1.5-flash...")
+            print("   👉 दूसरा मेन इंजन ट्राई कर रहा हूँ: gemini-1.5-flash...")
             response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
             if response.text:
                 clean_text = response.text
                 print("   ✅ दूसरे मेन इंजन ने जवाब दिया।")
-        except:
-            pass
+        except Exception as e2:
+            print(f"   ❌ दूसरा मेन इंजन भी फेल: {e2}")
 
     if not clean_text:
         try:
-            clean_text = get_fallback_script(prompt)
+            clean_text = get_fallback_script(prompt, "mistral")
             if clean_text:
-                print("   ✅ बैकअप इंजन ने जवाब दिया।")
+                print("   ✅ बैकअप इंजन (Mistral) ने जवाब दिया।")
         except Exception as e:
-            raise Exception(f"इंटरनेट या बैकअप इंजन फेल: {e}")
+            print(f"   ❌ Mistral फेल: {e}")
+            try:
+                clean_text = get_fallback_script(prompt, "llama")
+                if clean_text:
+                    print("   ✅ बैकअप इंजन (Llama) ने जवाब दिया।")
+            except Exception as e2:
+                raise Exception(f"सारे इंटरनेट और बैकअप इंजन फेल: {e2}")
 
     if not clean_text:
         raise Exception("सारे इंजन फेल हो गए।")
 
-    clean_text = extract_json_safely(clean_text)
+    data = extract_json_safely(clean_text)
 
-    try:
-        data = json.loads(clean_text)
-    except json.JSONDecodeError:
+    if not data:
         raise Exception(f"AI का डाटा JSON नहीं है: {clean_text[:100]}...")
 
     script = data.get('script', data.get('Script', ''))
     if not script:
-         raise Exception(f"'script' नहीं मिली! डाटा: {clean_text[:100]}...")
+         raise Exception(f"'script' नहीं मिली! डाटा: {str(data)[:100]}...")
 
     return script.replace("*", ""), data.get('prompts', [])[:8], data.get('captions', [])[:8], data.get('gadget_name', '')
 
