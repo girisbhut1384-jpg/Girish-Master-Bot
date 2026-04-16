@@ -1,4 +1,4 @@
-# गिरीश भाई का V7.1 आख़िरी प्रोडक्शन कोड (Native Fonts + Advanced API Manager)
+# गिरीश भाई का V7.2 आख़िरी प्रोडक्शन कोड (2-Minute Quota Clear + No 404 Models)
 import os
 import sys
 import requests
@@ -22,7 +22,7 @@ from moviepy.config import change_settings
 print("🔓 सिक्योरिटी दीवार हटाई जा रही है...")
 os.system("sudo sed -i '/pattern=\"@\\*\"/d' /etc/ImageMagick-6/policy.xml")
 
-# 🛑 2. बिना किसी लिंक के लिनक्स के ऑफिशियल हिंदी फॉन्ट इंस्टॉल करना 
+# 🛑 2. बिना किसी लिंक के लिनक्स के ऑफिशियल हिंदी फॉन्ट इंस्टॉल करना (सक्सेसफुल)
 print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
 os.system("sudo apt-get update -y")
 os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
@@ -54,12 +54,12 @@ MYSTIC_TOPICS = [
     "समुद्र की सबसे गहरी जगह का रहस्य", "समय यात्रा (Time Travel) के असली सबूत", "ब्लैक होल के अंदर की दुनिया"
 ]
 
-# 🛑 3. स्मार्ट API मैनेजर (यह लिमिट को बाईपास करेगा)
+# 🛑 3. स्मार्ट API मैनेजर (120 सेकंड के पक्के ब्रेक के साथ)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"✅ AI स्क्रिप्ट तैयार कर रहा है: {topic}")
     
-    # सबसे स्टेबल और हाई-लिमिट वाले फ्री मॉडल्स
-    models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-pro"]
+    # सिर्फ वो मॉडल्स जो 100% चल रहे हैं
+    models_to_try = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"]
     
     prompt = f"Write a VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking hook. STRICTLY 50-60 words. "
     if is_gadget: 
@@ -83,7 +83,7 @@ def get_script_and_prompts(topic, is_gadget=False):
     
     for m_name in models_to_try:
         print(f"   👉 ट्राई कर रहा हूँ: {m_name}...")
-        for attempt in range(2): 
+        for attempt in range(3): # हर मॉडल को 3 बार ट्राई करेगा
             try:
                 response = client.models.generate_content(model=m_name, contents=prompt)
                 if response.text:
@@ -93,19 +93,22 @@ def get_script_and_prompts(topic, is_gadget=False):
             except Exception as e: 
                 last_error = str(e)
                 if "429" in last_error or "RESOURCE_EXHAUSTED" in last_error:
-                    print(f"   ⏳ {m_name} की लिमिट फुल है, 60 सेकंड रुक कर दोबारा कोशिश...")
-                    time.sleep(60) 
+                    print(f"   ⏳ गूगल का ट्रैफिक जाम (429) है। पूरे 120 सेकंड (2 मिनट) का पक्का ब्रेक ले रहा हूँ...")
+                    time.sleep(120) 
+                elif "404" in last_error or "NOT_FOUND" in last_error:
+                    print(f"   ⚠️ {m_name} मॉडल गूगल ने हटा दिया है। इसे छोड़कर आगे बढ़ रहा हूँ...")
+                    break # यह मॉडल छोड़कर अगले पर जाएगा
                 elif "503" in last_error:
-                    print(f"   ⏳ गूगल सर्वर डाउन है, 30 सेकंड रुक कर दोबारा कोशिश...")
+                    print(f"   ⏳ गूगल सर्वर डाउन है, 30 सेकंड का ब्रेक...")
                     time.sleep(30)
                 else:
-                    print(f"   ❌ {m_name} काम नहीं कर रहा: {last_error}")
+                    print(f"   ❌ {m_name} में अज्ञात एरर: {last_error}")
                     break 
         if clean_text:
             break
             
     if not clean_text: 
-        raise Exception(f"Google API पूरी तरह फेल हो गया। आख़िरी एरर: {last_error}")
+        raise Exception(f"Google API की डेली (Daily) लिमिट ख़त्म हो गई है! आख़िरी एरर: {last_error}")
         
     if clean_text.startswith("```json"): 
         clean_text = clean_text[7:-3].strip()
@@ -223,12 +226,15 @@ def run_channel_safely(channel_type):
                 
         except Exception as e: 
             print(f"🛑 मेन एरर: {e}")
+            if "Daily" in str(e) or "डेली" in str(e):
+                print("⚠️ आज की 1500 लिमिट पूरी हो गई है, मशीन अब कल अपने-आप चलेगी।")
+                sys.exit(1)
             print(f"⚠️ सिस्टम रीस्टार्ट हो रहा है... (Attempt {attempt+1}/{max_attempts})")
             time.sleep(30) 
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 V7.1 मास्टर ऑटोमेशन चालू हो गया है...")
+    print("🚀 V7.2 मास्टर ऑटोमेशन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ चैनल स्विच हो रहा है...\n")
     time.sleep(60)
