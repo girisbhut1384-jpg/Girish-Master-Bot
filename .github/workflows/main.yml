@@ -1,38 +1,41 @@
-name: Auto YouTube Shorts Uploader V5
+name: Auto YouTube Shorts Generator
 
 on:
+  workflow_dispatch: # यह आपको मैन्युअल 'Run workflow' का बटन देगा
   schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
+    - cron: '0 4 * * *' # यह मशीन को रोज़ ऑटोमैटिक चलाएगा
 
 jobs:
-  run-bot:
+  build_and_upload:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout Repository
       uses: actions/checkout@v3
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.10'
 
-    - name: Install ImageMagick & Fix Policy
+    - name: Install System Dependencies (ImageMagick & Fonts)
       run: |
-        sudo apt-get update
-        sudo apt-get install -y imagemagick
-        sudo sed -i 's/pattern="@\*"/pattern="\*"/g' /etc/ImageMagick-6/policy.xml
+        sudo apt-get update -y
+        sudo apt-get install -y imagemagick fonts-indic fonts-noto-core
+        sudo rm -f /etc/ImageMagick-6/policy.xml
+        sudo rm -f /etc/ImageMagick-7/policy.xml
 
-    - name: Auto-Update & Install Dependencies
+    - name: Install Python Libraries
       run: |
-        python -m pip install --upgrade pip
-        pip install --upgrade requests edge-tts google-api-python-client google-auth-oauthlib google-auth-httplib2 google-genai Pillow==9.5.0 moviepy==1.0.3
+        pip install requests edge-tts moviepy==1.0.3 pillow google-api-python-client google-auth-oauthlib google-auth-httplib2
 
-    - name: Run Master AI Script
+    - name: Run Video Generator Script
       env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        # 🛑 यहाँ हमने नई Groq चाबी को अंदर जाने का रास्ता दे दिया है
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        
+        # यूट्यूब अपलोड करने वाली पुरानी चाबियां
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
-        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       run: python main.py
