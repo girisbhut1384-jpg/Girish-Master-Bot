@@ -14,16 +14,15 @@ import PIL.Image
 if not hasattr(PIL.Image, 'ANTIALIAS'):
     PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
 
-from google import genai  
 from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
-# 1. इमेजमैजिक सिक्योरिटी दीवार को जड़ से हटाना (100% पक्का तरीका)
+# 1. सिक्योरिटी दीवार हटाना
 print("🔓 सिक्योरिटी दीवार हटाई जा रही है...")
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
-# 2. लिनक्स के ऑफिशियल हिंदी फॉन्ट
+# 2. हिंदी फॉन्ट इंस्टॉल करना
 print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
 os.system("sudo apt-get update -y")
 os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
@@ -31,15 +30,15 @@ os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
 sys_fonts = glob.glob("/usr/share/fonts/**/*.ttf", recursive=True)
 hindi_fonts = [f for f in sys_fonts if "Devanagari" in f or "Samyak" in f or "Gargi" in f or "Nakula" in f]
 FONT_PATH = hindi_fonts[0] if hindi_fonts else (sys_fonts[0] if sys_fonts else "Arial")
-print(f"✅ फॉन्ट मिल गया: {FONT_PATH}")
 
 change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
-GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
-if not GEMINI_KEY:
+# 🛑 Groq की चाबी चेक करना
+GROQ_KEY = os.environ.get("GROQ_API_KEY")
+if not GROQ_KEY:
+    print("❌ एरर: GROQ_API_KEY गिटहब सीक्रेट्स में नहीं मिली!")
     sys.exit(1)
 
-client = genai.Client(api_key=GEMINI_KEY)
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
@@ -48,70 +47,9 @@ TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 GADGET_TOPICS = ["स्मार्ट किचन हैक्स", "मच्छर भगाने वाला गैजेट", "स्मार्ट लाइट्स", "कार गैजेट", "स्टूडेंट गैजेट", "पोर्टेबल हीटर"]
 MYSTIC_TOPICS = ["बरमूडा ट्राएंगल का सच", "पिरामिडों के नीचे क्या है?", "एलियंस के सबूत", "समुद्र का रहस्य", "समय यात्रा", "ब्लैक होल"]
 
-# 3. बैकअप API (Mistral और Llama - बिना Reasoning वाले इंजन)
-def get_fallback_script(prompt, model="mistral"):
-    print(f"   👉 बैकअप इंजन ({model}) चालू कर रहा हूँ...")
-    url = "https://text.pollinations.ai/"
-    data = {
-        "messages": [
-            {"role": "system", "content": "You are a JSON generator. Return strictly valid JSON object ONLY. NO markdown. NO explanations."},
-            {"role": "user", "content": prompt}
-        ],
-        "model": model,
-        "jsonMode": True
-    }
-    response = requests.post(url, json=data, timeout=60)
-    response.raise_for_status()
-    return response.text
-
-# 4. पक्का JSON एक्सट्रैक्टर 
-def extract_json_safely(raw_text):
-    raw_text = str(raw_text).strip()
-    
-    if "```json" in raw_text:
-        raw_text = raw_text.split("```json")[1].split("```")[0]
-    elif "```" in raw_text:
-        raw_text = raw_text.split("```")[1].split("```")[0]
-
-    try:
-        parsed = json.loads(raw_text)
-        if isinstance(parsed, dict):
-            if 'choices' in parsed:
-                content = parsed['choices'][0]['message'].get('content', '')
-                try:
-                    return json.loads(content)
-                except:
-                    raw_text = content
-            elif 'content' in parsed:
-                content = parsed['content']
-                try:
-                    return json.loads(content)
-                except:
-                    raw_text = content
-            else:
-                return parsed
-    except:
-        pass
-
-    match = re.search(r'\{[\s\S]*"script"[\s\S]*\}', raw_text, re.IGNORECASE)
-    if match:
-        try:
-            return json.loads(match.group(0))
-        except:
-            pass
-
-    start = raw_text.find('{')
-    end = raw_text.rfind('}')
-    if start != -1 and end != -1:
-        try:
-            return json.loads(raw_text[start:end+1])
-        except:
-            pass
-            
-    return None
-
+# 3. नया Groq (Llama 3) स्क्रिप्ट जनरेटर
 def get_script_and_prompts(topic, is_gadget=False):
-    print(f"\n✅ AI स्क्रिप्ट तैयार कर रहा है: {topic}")
+    print(f"\n✅ Groq AI स्क्रिप्ट तैयार कर रहा है: {topic}")
     
     prompt = f"Write a VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking hook. STRICTLY 50-60 words. "
     if is_gadget: 
@@ -131,53 +69,41 @@ def get_script_and_prompts(topic, is_gadget=False):
     }
     """
     
-    clean_text = None
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {GROQ_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    # Llama-3 का सबसे पॉवरफुल मॉडल इस्तेमाल कर रहे हैं
+    data = {
+        "model": "llama3-70b-8192",
+        "messages": [
+            {"role": "system", "content": "You are a helpful JSON generator. Output valid JSON only."},
+            {"role": "user", "content": prompt}
+        ],
+        "response_format": {"type": "json_object"}
+    }
     
     try:
-        print("   👉 मेन इंजन ट्राई कर रहा हूँ: gemini-2.0-flash...")
-        response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
-        if response.text:
-            clean_text = response.text
-            print("   ✅ मेन इंजन ने जवाब दिया।")
+        response = requests.post(url, headers=headers, json=data, timeout=60)
+        response.raise_for_status()
+        result = response.json()
+        
+        # Groq से मिला हुआ JSON निकालना
+        content = result['choices'][0]['message']['content']
+        parsed_data = json.loads(content)
+        
+        script = parsed_data.get('script', '')
+        if not script:
+            raise Exception("स्क्रिप्ट नहीं मिली!")
+            
+        return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('gadget_name', '')
+        
     except Exception as e:
-        print(f"   ❌ मेन इंजन फेल: {e}")
-        try:
-            print("   👉 दूसरा मेन इंजन ट्राई कर रहा हूँ: gemini-1.5-flash...")
-            response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
-            if response.text:
-                clean_text = response.text
-                print("   ✅ दूसरे मेन इंजन ने जवाब दिया।")
-        except Exception as e2:
-            print(f"   ❌ दूसरा मेन इंजन भी फेल: {e2}")
+        raise Exception(f"Groq AI फेल हो गया: {e}")
 
-    if not clean_text:
-        try:
-            clean_text = get_fallback_script(prompt, "mistral")
-            if clean_text:
-                print("   ✅ बैकअप इंजन (Mistral) ने जवाब दिया।")
-        except Exception as e:
-            print(f"   ❌ Mistral फेल: {e}")
-            try:
-                clean_text = get_fallback_script(prompt, "llama")
-                if clean_text:
-                    print("   ✅ बैकअप इंजन (Llama) ने जवाब दिया।")
-            except Exception as e2:
-                raise Exception(f"सारे इंटरनेट और बैकअप इंजन फेल: {e2}")
-
-    if not clean_text:
-        raise Exception("सारे इंजन फेल हो गए।")
-
-    data = extract_json_safely(clean_text)
-
-    if not data:
-        raise Exception(f"AI का डाटा JSON नहीं है: {clean_text[:100]}...")
-
-    script = data.get('script', data.get('Script', ''))
-    if not script:
-         raise Exception(f"'script' नहीं मिली! डाटा: {str(data)[:100]}...")
-
-    return script.replace("*", ""), data.get('prompts', [])[:8], data.get('captions', [])[:8], data.get('gadget_name', '')
-
+# 4. तस्वीरें बनाना
 def fetch_ai_images(prompts):
     print("✅ हाई-क्वालिटी 8K तस्वीरें जनरेट हो रही हैं...")
     image_files = []
@@ -198,6 +124,7 @@ def fetch_ai_images(prompts):
                 time.sleep(3)
     return image_files
 
+# 5. आवाज़ बनाना
 def create_human_voice(text, filename):
     print("✅ वॉइसओवर रिकॉर्ड हो रहा है...")
     async def _generate():
@@ -205,27 +132,24 @@ def create_human_voice(text, filename):
         await communicate.save(filename)
     asyncio.run(_generate())
 
+# 6. वीडियो बनाना
 def make_video(image_files, captions, final_vid, audio_file):
     print("✅ वीडियो रेंडर हो रहा है...")
-    
-    # 🛑 100x बैकटेस्ट फिक्स: अगर तस्वीरें न बनें तो क्रैश से बचाना
     if not image_files or len(image_files) == 0:
         raise Exception("एक भी तस्वीर जनरेट नहीं हुई! वीडियो नहीं बन सकता।")
         
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
     
-    # 🛑 100x बैकटेस्ट फिक्स: अगर ऑडियो फेल हो जाए
     if audio_duration <= 0:
         raise Exception("ऑडियो फाइल करप्ट है या उसकी लंबाई 0 है।")
         
     time_per_image = audio_duration / len(image_files)
-    
     clips = []
+    
     for i, img in enumerate(image_files):
         base_clip = ImageClip(img)
         w, h = base_clip.size
-        
         if w / h > 1080 / 1920: 
             base_clip = base_clip.resize(height=1920)
         else: 
@@ -234,18 +158,8 @@ def make_video(image_files, captions, final_vid, audio_file):
         base_clip = base_clip.crop(x_center=base_clip.size[0]/2, y_center=base_clip.size[1]/2, width=1080, height=1920)
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.05 * (t / time_per_image)).set_duration(time_per_image)
         
-        # सेफ कैप्शन इंडेक्स
         cap_text = captions[i] if i < len(captions) else ""
-        
-        txt_clip = TextClip(
-            cap_text, 
-            fontsize=85, 
-            color='yellow', 
-            bg_color='black', 
-            font=FONT_PATH, 
-            method='caption', 
-            size=(900, None)
-        )
+        txt_clip = TextClip(cap_text, fontsize=85, color='yellow', bg_color='black', font=FONT_PATH, method='caption', size=(900, None))
         txt_clip = txt_clip.set_position(('center', 'bottom')).set_duration(time_per_image).margin(bottom=300, opacity=0)
         
         final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center')), txt_clip], size=(1080, 1920)).set_duration(time_per_image)
@@ -258,6 +172,7 @@ def make_video(image_files, captions, final_vid, audio_file):
     video.close()
     final.close()
 
+# 7. यूट्यूब अपलोड
 def upload_video(token, filename, title, description, tags, category):
     print("✅ यूट्यूब पर वीडियो अपलोड किया जा रहा है...")
     from google.oauth2.credentials import Credentials
@@ -272,6 +187,7 @@ def upload_video(token, filename, title, description, tags, category):
     )
     request.execute()
 
+# 8. सेफ रनर
 def run_channel_safely(channel_type):
     max_attempts = 3
     for attempt in range(max_attempts):
@@ -307,7 +223,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 फाइनल इंजन चालू हो गया है...")
+    print("🚀 नया Groq इंजन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ ब्रेक...\n")
     time.sleep(30)
