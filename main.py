@@ -47,7 +47,20 @@ TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 GADGET_TOPICS = ["स्मार्ट किचन हैक्स", "मच्छर भगाने वाला गैजेट", "स्मार्ट लाइट्स", "कार गैजेट", "स्टूडेंट गैजेट", "पोर्टेबल हीटर"]
 MYSTIC_TOPICS = ["बरमूडा ट्राएंगल का सच", "पिरामिडों के नीचे क्या है?", "एलियंस के सबूत", "समुद्र का रहस्य", "समय यात्रा", "ब्लैक होल"]
 
-# 3. नया Groq (Llama 3) स्क्रिप्ट जनरेटर
+# 🌟 पक्का JSON कटर (ताकि कोई एरर न आए)
+def extract_json_safely(raw_text):
+    raw_text = str(raw_text).strip()
+    if "```json" in raw_text:
+        raw_text = raw_text.split("```json")[1].split("```")[0]
+    elif "```" in raw_text:
+        raw_text = raw_text.split("```")[1].split("```")[0]
+    
+    match = re.search(r'\{[\s\S]*\}', raw_text)
+    if match:
+        return match.group(0)
+    return raw_text
+
+# 3. नया Groq स्क्रिप्ट जनरेटर (अपडेटेड मॉडल के साथ)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n✅ Groq AI स्क्रिप्ट तैयार कर रहा है: {topic}")
     
@@ -60,7 +73,8 @@ def get_script_and_prompts(topic, is_gadget=False):
     prompt += """
     IMPORTANT: For the 'prompts' array, describe the scene. 
     Add exactly this to the end of EVERY image prompt: ", hyper-realistic, 8k resolution, shot on DSLR, lifelike photography, extreme detail, NO TEXT, textless, no words, no letters".
-    Return ONLY JSON:
+    
+    Return ONLY valid JSON:
     {
       "script": "Hindi voiceover text...",
       "captions": ["शॉकिंग सच! 😲", "क्या आपको पता है?", "खतरनाक गैजेट 🔥", "लिंक बायो में है!", "कैप्शन 5", "कैप्शन 6", "कैप्शन 7", "कैप्शन 8"],
@@ -75,14 +89,13 @@ def get_script_and_prompts(topic, is_gadget=False):
         "Content-Type": "application/json"
     }
     
-    # Llama-3 का सबसे पॉवरफुल मॉडल इस्तेमाल कर रहे हैं
+    # 🟢 स्टेबल मॉडल इस्तेमाल कर रहे हैं और 400 एरर से बचने के लिए फॉर्मेटिंग को फ्लेक्सिबल कर दिया है
     data = {
-        "model": "llama3-70b-8192",
+        "model": "mixtral-8x7b-32768",
         "messages": [
-            {"role": "system", "content": "You are a helpful JSON generator. Output valid JSON only."},
+            {"role": "system", "content": "You are a data assistant. Always output purely the requested JSON object without any additional conversational text."},
             {"role": "user", "content": prompt}
-        ],
-        "response_format": {"type": "json_object"}
+        ]
     }
     
     try:
@@ -90,9 +103,9 @@ def get_script_and_prompts(topic, is_gadget=False):
         response.raise_for_status()
         result = response.json()
         
-        # Groq से मिला हुआ JSON निकालना
         content = result['choices'][0]['message']['content']
-        parsed_data = json.loads(content)
+        clean_json = extract_json_safely(content) # JSON कटर से सफाई
+        parsed_data = json.loads(clean_json)
         
         script = parsed_data.get('script', '')
         if not script:
@@ -100,6 +113,9 @@ def get_script_and_prompts(topic, is_gadget=False):
             
         return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('gadget_name', '')
         
+    except requests.exceptions.HTTPError as err:
+        print(f"🚨 Groq HTTP Error: {err.response.text}")
+        raise Exception("API रिजेक्ट हो गई।")
     except Exception as e:
         raise Exception(f"Groq AI फेल हो गया: {e}")
 
