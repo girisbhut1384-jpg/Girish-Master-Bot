@@ -53,9 +53,9 @@ def extract_json_safely(raw_text):
     match = re.search(r'\{[\s\S]*\}', raw_text)
     if match:
         return match.group(0)
-    return "{}" # अगर कुछ न मिले तो खाली डिब्बा भेजेगा ताकि क्रैश न हो
+    return "{}"
 
-# 3. 🛡️ ऑटोमैटिक मॉडल चेंज इंजन (Auto-Fallback)
+# 3. 🛡️ ऑटोमैटिक मॉडल चेंज इंजन (नए Llama 3.1 और 3.2 के साथ)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n✅ Groq AI स्क्रिप्ट तैयार कर रहा है: {topic}")
     
@@ -85,8 +85,13 @@ def get_script_and_prompts(topic, is_gadget=False):
         "Content-Type": "application/json"
     }
     
-    # 🌟 अगर एक मॉडल फेल हुआ तो मशीन खुद दूसरा चुनेगी (No Decommission Error)
-    models_to_try = ["llama3-8b-8192", "llama3-70b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"]
+    # 🟢 दुनिया के सबसे नए और 100% चालू मॉडल्स की लिस्ट
+    models_to_try = [
+        "llama-3.1-8b-instant", 
+        "llama-3.1-70b-versatile", 
+        "llama-3.2-3b-preview", 
+        "gemma2-9b-it"
+    ]
     
     for model_name in models_to_try:
         print(f"🔄 ट्राइंग मॉडल: {model_name}...")
@@ -110,14 +115,15 @@ def get_script_and_prompts(topic, is_gadget=False):
                     print(f"🎯 सफलता! {model_name} ने सही स्क्रिप्ट दी।")
                     return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('gadget_name', '')
             else:
-                print(f"⚠️ {model_name} फेल हुआ (Status: {response.status_code}). अगला ट्राई कर रहे हैं...")
+                # 🛑 अब मशीन बताएगी कि Groq ने 400 एरर क्यों दिया!
+                print(f"⚠️ {model_name} फेल हुआ (Status: {response.status_code}). कारण: {response.text[:150]}")
         except Exception as e:
-            print(f"⚠️ {model_name} में एरर आया: {e}. अगला ट्राई कर रहे हैं...")
+            print(f"⚠️ {model_name} में इंटरनेट एरर आया: {e}. अगला ट्राई कर रहे हैं...")
             time.sleep(2)
             
     raise Exception("🚨 सभी AI मॉडल्स फेल हो गए! कृपया बाद में कोशिश करें।")
 
-# 4. 🛡️ तस्वीरें बनाना (Retries के साथ)
+# 4. 🛡️ तस्वीरें बनाना
 def fetch_ai_images(prompts):
     print("✅ हाई-क्वालिटी 8K तस्वीरें जनरेट हो रही हैं...")
     image_files = []
@@ -127,7 +133,6 @@ def fetch_ai_images(prompts):
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         
-        # 3 बार कोशिश करने का कवच
         success = False
         for attempt in range(3): 
             try:
@@ -144,7 +149,7 @@ def fetch_ai_images(prompts):
             print(f"⚠️ तस्वीर {i} जनरेट नहीं हो पाई, स्किप कर रहे हैं।")
     return image_files
 
-# 5. 🛡️ आवाज़ बनाना (Retries के साथ)
+# 5. 🛡️ आवाज़ बनाना
 def create_human_voice(text, filename):
     print("✅ वॉइसओवर रिकॉर्ड हो रहा है...")
     async def _generate():
@@ -158,7 +163,6 @@ def create_human_voice(text, filename):
                 await asyncio.sleep(5)
         raise Exception("वॉइस सर्वर डाउन है।")
     
-    # Run the async loop
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
@@ -254,7 +258,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 मास्टर बुलेटप्रूफ इंजन चालू हो गया है...")
+    print("🚀 मास्टर बुलेटप्रूफ इंजन 2.0 चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ ब्रेक...\n")
     time.sleep(30)
