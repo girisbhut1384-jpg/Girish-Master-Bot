@@ -14,7 +14,7 @@ import PIL.Image
 if not hasattr(PIL.Image, 'ANTIALIAS'):
     PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
 
-from moviepy.editor import ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip, TextClip
+from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip, TextClip
 from moviepy.config import change_settings
 
 # 1. सिक्योरिटी दीवार हटाना
@@ -47,20 +47,15 @@ TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 GADGET_TOPICS = ["स्मार्ट किचन हैक्स", "मच्छर भगाने वाला गैजेट", "स्मार्ट लाइट्स", "कार गैजेट", "स्टूडेंट गैजेट", "पोर्टेबल हीटर"]
 MYSTIC_TOPICS = ["बरमूडा ट्राएंगल का सच", "पिरामिडों के नीचे क्या है?", "एलियंस के सबूत", "समुद्र का रहस्य", "समय यात्रा", "ब्लैक होल"]
 
-# 🌟 पक्का JSON कटर (ताकि कोई एरर न आए)
+# 🌟 सुपर JSON कटर
 def extract_json_safely(raw_text):
     raw_text = str(raw_text).strip()
-    if "```json" in raw_text:
-        raw_text = raw_text.split("```json")[1].split("```")[0]
-    elif "```" in raw_text:
-        raw_text = raw_text.split("```")[1].split("```")[0]
-    
     match = re.search(r'\{[\s\S]*\}', raw_text)
     if match:
         return match.group(0)
-    return raw_text
+    return "{}" # अगर कुछ न मिले तो खाली डिब्बा भेजेगा ताकि क्रैश न हो
 
-# 3. नया Groq स्क्रिप्ट जनरेटर (अपडेटेड मॉडल के साथ)
+# 3. 🛡️ ऑटोमैटिक मॉडल चेंज इंजन (Auto-Fallback)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n✅ Groq AI स्क्रिप्ट तैयार कर रहा है: {topic}")
     
@@ -71,15 +66,16 @@ def get_script_and_prompts(topic, is_gadget=False):
         prompt += "End EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'. "
     
     prompt += """
-    IMPORTANT: For the 'prompts' array, describe the scene. 
+    IMPORTANT: For the 'prompts' array, describe the scene for AI image generation. 
     Add exactly this to the end of EVERY image prompt: ", hyper-realistic, 8k resolution, shot on DSLR, lifelike photography, extreme detail, NO TEXT, textless, no words, no letters".
     
-    Return ONLY valid JSON:
+    Return ONLY valid JSON format exactly like this:
     {
-      "script": "Hindi voiceover text...",
-      "captions": ["शॉकिंग सच! 😲", "क्या आपको पता है?", "खतरनाक गैजेट 🔥", "लिंक बायो में है!", "कैप्शन 5", "कैप्शन 6", "कैप्शन 7", "कैप्शन 8"],
-      "prompts": ["Image 1 prompt...", "Image 2 prompt...", "...", "...", "...", "...", "...", "..."],
-      "gadget_name": "Amazon search name or empty."
+      "topic": "topic name",
+      "script": "Hindi voiceover text here...",
+      "captions": ["caption 1", "caption 2", "caption 3", "caption 4", "caption 5", "caption 6", "caption 7", "caption 8"],
+      "prompts": ["Image 1 prompt", "Image 2 prompt", "Image 3 prompt", "Image 4 prompt", "Image 5 prompt", "Image 6 prompt", "Image 7 prompt", "Image 8 prompt"],
+      "gadget_name": "Amazon search name or empty"
     }
     """
     
@@ -89,37 +85,39 @@ def get_script_and_prompts(topic, is_gadget=False):
         "Content-Type": "application/json"
     }
     
-    # 🟢 स्टेबल मॉडल इस्तेमाल कर रहे हैं और 400 एरर से बचने के लिए फॉर्मेटिंग को फ्लेक्सिबल कर दिया है
-    data = {
-        "model": "mixtral-8x7b-32768",
-        "messages": [
-            {"role": "system", "content": "You are a data assistant. Always output purely the requested JSON object without any additional conversational text."},
-            {"role": "user", "content": prompt}
-        ]
-    }
+    # 🌟 अगर एक मॉडल फेल हुआ तो मशीन खुद दूसरा चुनेगी (No Decommission Error)
+    models_to_try = ["llama3-8b-8192", "llama3-70b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"]
     
-    try:
-        response = requests.post(url, headers=headers, json=data, timeout=60)
-        response.raise_for_status()
-        result = response.json()
-        
-        content = result['choices'][0]['message']['content']
-        clean_json = extract_json_safely(content) # JSON कटर से सफाई
-        parsed_data = json.loads(clean_json)
-        
-        script = parsed_data.get('script', '')
-        if not script:
-            raise Exception("स्क्रिप्ट नहीं मिली!")
+    for model_name in models_to_try:
+        print(f"🔄 ट्राइंग मॉडल: {model_name}...")
+        data = {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": "You are a JSON generator. Never add conversational text."},
+                {"role": "user", "content": prompt}
+            ]
+        }
+        try:
+            response = requests.post(url, headers=headers, json=data, timeout=40)
+            if response.status_code == 200:
+                result = response.json()
+                content = result['choices'][0]['message']['content']
+                clean_json = extract_json_safely(content)
+                parsed_data = json.loads(clean_json)
+                
+                script = parsed_data.get('script', '')
+                if script and len(parsed_data.get('prompts', [])) >= 4:
+                    print(f"🎯 सफलता! {model_name} ने सही स्क्रिप्ट दी।")
+                    return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('gadget_name', '')
+            else:
+                print(f"⚠️ {model_name} फेल हुआ (Status: {response.status_code}). अगला ट्राई कर रहे हैं...")
+        except Exception as e:
+            print(f"⚠️ {model_name} में एरर आया: {e}. अगला ट्राई कर रहे हैं...")
+            time.sleep(2)
             
-        return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('gadget_name', '')
-        
-    except requests.exceptions.HTTPError as err:
-        print(f"🚨 Groq HTTP Error: {err.response.text}")
-        raise Exception("API रिजेक्ट हो गई।")
-    except Exception as e:
-        raise Exception(f"Groq AI फेल हो गया: {e}")
+    raise Exception("🚨 सभी AI मॉडल्स फेल हो गए! कृपया बाद में कोशिश करें।")
 
-# 4. तस्वीरें बनाना
+# 4. 🛡️ तस्वीरें बनाना (Retries के साथ)
 def fetch_ai_images(prompts):
     print("✅ हाई-क्वालिटी 8K तस्वीरें जनरेट हो रही हैं...")
     image_files = []
@@ -128,25 +126,42 @@ def fetch_ai_images(prompts):
         safe_prompt = urllib.parse.quote(p)
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
-        for _ in range(3): 
+        
+        # 3 बार कोशिश करने का कवच
+        success = False
+        for attempt in range(3): 
             try:
-                res = requests.get(url, timeout=40) 
+                res = requests.get(url, timeout=30) 
                 if res.status_code == 200: 
                     with open(filename, "wb") as f: 
                         f.write(res.content)
                     image_files.append(filename)
+                    success = True
                     break
             except Exception: 
                 time.sleep(3)
+        if not success:
+            print(f"⚠️ तस्वीर {i} जनरेट नहीं हो पाई, स्किप कर रहे हैं।")
     return image_files
 
-# 5. आवाज़ बनाना
+# 5. 🛡️ आवाज़ बनाना (Retries के साथ)
 def create_human_voice(text, filename):
     print("✅ वॉइसओवर रिकॉर्ड हो रहा है...")
     async def _generate():
-        communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+10%")
-        await communicate.save(filename)
-    asyncio.run(_generate())
+        for attempt in range(3):
+            try:
+                communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+10%")
+                await communicate.save(filename)
+                return True
+            except Exception as e:
+                print(f"⚠️ वॉइस एरर: {e}. 5 सेकंड बाद फिर कोशिश कर रहे हैं...")
+                await asyncio.sleep(5)
+        raise Exception("वॉइस सर्वर डाउन है।")
+    
+    # Run the async loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(_generate())
 
 # 6. वीडियो बनाना
 def make_video(image_files, captions, final_vid, audio_file):
@@ -239,7 +254,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 नया Groq इंजन चालू हो गया है...")
+    print("🚀 मास्टर बुलेटप्रूफ इंजन चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ ब्रेक...\n")
     time.sleep(30)
