@@ -20,9 +20,9 @@ print("🔓 सिक्योरिटी दीवार हटाई जा �
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
-print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
+print("📦 सिस्टम के अंदर फॉन्ट इंस्टॉल हो रहे हैं...")
 os.system("sudo apt-get update -y")
-os.system("sudo apt-get install -y fonts-indic fonts-noto-core libraqm-dev")
+os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
 
 sys_fonts = glob.glob("/usr/share/fonts/**/*.ttf", recursive=True)
 hindi_fonts = [f for f in sys_fonts if "Devanagari" in f or "Samyak" in f or "Gargi" in f or "Nakula" in f]
@@ -54,9 +54,9 @@ def get_script_and_prompts(topic, is_gadget=False):
     prompt = f"""You are an expert YouTube Shorts director. Generate a highly logical JSON response for a short video about: "{topic}".
 
     REQUIREMENTS:
-    1. SCRIPT: Write a 50-60 word Hindi script. It MUST make logical sense. No random or meaningless words.
-    2. CAPTIONS: 8 short, meaningful Hindi captions summarizing the current sentence.
-    3. PROMPTS (English): 8 image generation prompts. Each prompt MUST visually match the exact sentence being spoken.
+    1. SCRIPT (Voiceover): Write a 50-60 word HINDI script. It MUST make logical sense. No random words.
+    2. CAPTIONS (On-screen text): Write 8 short, punchy captions in ENGLISH (summarizing the Hindi sentence). MUST BE STRICTLY IN ENGLISH ALPHABETS.
+    3. PROMPTS (English): 8 image generation prompts. Each prompt MUST visually match the exact sentence.
     """
 
     if is_gadget:
@@ -79,7 +79,7 @@ def get_script_and_prompts(topic, is_gadget=False):
     {
       "topic": "topic name",
       "script": "Hindi script here...",
-      "captions": ["caption 1", "caption 2", "caption 3", "caption 4", "caption 5", "caption 6", "caption 7", "caption 8"],
+      "captions": ["SHOCKING TRUTH!", "Amazing Gadget", "Mind Blown", "Awesome Tech", "Caption 5", "Caption 6", "Caption 7", "Link in Bio!"],
       "prompts": ["Image 1 prompt", "Image 2 prompt", "Image 3 prompt", "Image 4 prompt", "Image 5 prompt", "Image 6 prompt", "Image 7 prompt", "Image 8 prompt"],
       "gadget_name": "Amazon search name of the gadget (or empty if mystery)"
     }
@@ -88,6 +88,7 @@ def get_script_and_prompts(topic, is_gadget=False):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
     
+    # 🟢 सिर्फ 70B मॉडल्स (कचरा मॉडल्स हटा दिए गए हैं)
     models_to_try = ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile"]
     
     for model_name in models_to_try:
@@ -110,7 +111,7 @@ def get_script_and_prompts(topic, is_gadget=False):
                 
                 script = parsed_data.get('script', '')
                 if script and len(parsed_data.get('prompts', [])) >= 4:
-                    print(f"🎯 सफलता! {model_name} ने एकदम सही और लॉजिकल स्क्रिप्ट दी।")
+                    print(f"🎯 सफलता! {model_name} ने एकदम सही स्क्रिप्ट और इंग्लिश कैप्शंस दिए।")
                     return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('gadget_name', '')
             else:
                 print(f"⚠️ {model_name} फेल (Status: {response.status_code}).")
@@ -161,8 +162,8 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
-# 🟢 नया 100% परफेक्ट हिंदी टेक्स्ट जनरेटर
-def create_hindi_text_clip(text, font_path, duration):
+# 🟢 इंग्लिश टेक्स्ट के लिए जनरेटर
+def create_text_clip(text, font_path, duration):
     canvas_w, canvas_h = 1080, 400
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
@@ -216,8 +217,7 @@ def make_video(image_files, captions, final_vid, audio_file):
         
         if cap_text:
             try:
-                # 🟢 ImageMagick की जगह Pillow से परफेक्ट हिंदी टेक्स्ट 
-                txt_clip = create_hindi_text_clip(cap_text, FONT_PATH, time_per_image)
+                txt_clip = create_text_clip(cap_text, FONT_PATH, time_per_image)
                 txt_clip = txt_clip.set_position(('center', 'bottom')).margin(bottom=300, opacity=0)
                 final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center')), txt_clip], size=(1080, 1920)).set_duration(time_per_image)
             except Exception as e:
@@ -282,7 +282,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 70B प्रो-इंजन चालू हो गया है...")
+    print("🚀 70B प्रो-इंजन चालू हो गया है (इंग्लिश टेक्स्ट के साथ)...")
     run_channel_safely("GADGETS")
     time.sleep(30)
     run_channel_safely("MYSTIC")
