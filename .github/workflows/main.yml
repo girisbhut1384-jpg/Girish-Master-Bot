@@ -3,7 +3,7 @@ name: Auto YouTube Shorts Generator
 on:
   workflow_dispatch: # यह आपको मैन्युअल 'Run workflow' का बटन देगा
   schedule:
-    - cron: '0 4 * * *' # यह मशीन को रोज़ ऑटोमैटिक चलाएगा
+    - cron: '0 */6 * * *' # 🟢 यह मशीन को ठीक हर 6 घंटे में 1 बार अपने आप चलाएगा
 
 jobs:
   build_and_upload:
@@ -31,10 +31,10 @@ jobs:
 
     - name: Run Video Generator Script
       env:
-        # 🛑 यहाँ हमने नई Groq चाबी को अंदर जाने का रास्ता दे दिया है
+        # 🛑 नई Groq चाबी
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         
-        # यूट्यूब अपलोड करने वाली पुरानी चाबियां
+        # यूट्यूब अपलोड करने वाली चाबियां
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
