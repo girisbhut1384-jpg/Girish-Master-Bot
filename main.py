@@ -10,33 +10,27 @@ import random
 import glob
 import re
 
-import PIL.Image
-if not hasattr(PIL.Image, 'ANTIALIAS'):
-    PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
+from PIL import Image, ImageDraw, ImageFont
+if not hasattr(Image, 'ANTIALIAS'):
+    Image.ANTIALIAS = Image.LANCZOS
 
-from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip, TextClip
-from moviepy.config import change_settings
+from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip
 
-# 1. सिक्योरिटी दीवार हटाना
 print("🔓 सिक्योरिटी दीवार हटाई जा रही है...")
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
-# 2. हिंदी फॉन्ट इंस्टॉल करना
 print("📦 सिस्टम के अंदर ऑफिशियल हिंदी फॉन्ट इंस्टॉल हो रहे हैं...")
 os.system("sudo apt-get update -y")
-os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
+os.system("sudo apt-get install -y fonts-indic fonts-noto-core libraqm-dev")
 
 sys_fonts = glob.glob("/usr/share/fonts/**/*.ttf", recursive=True)
 hindi_fonts = [f for f in sys_fonts if "Devanagari" in f or "Samyak" in f or "Gargi" in f or "Nakula" in f]
 FONT_PATH = hindi_fonts[0] if hindi_fonts else (sys_fonts[0] if sys_fonts else "Arial")
 
-change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
-
-# 🛑 Groq की चाबी चेक करना
 GROQ_KEY = os.environ.get("GROQ_API_KEY")
 if not GROQ_KEY:
-    print("❌ एरर: GROQ_API_KEY गिटहब सीक्रेट्स में नहीं मिली!")
+    print("❌ एरर: GROQ_API_KEY नहीं मिली!")
     sys.exit(1)
 
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
@@ -44,10 +38,9 @@ CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 
-GADGET_TOPICS = ["स्मार्ट किचन हैक्स", "मच्छर भगाने वाला गैजेट", "स्मार्ट लाइट्स", "कार गैजेट", "स्टूडेंट गैजेट", "पोर्टेबल हीटर"]
-MYSTIC_TOPICS = ["बरमूडा ट्राएंगल का सच", "पिरामिडों के नीचे क्या है?", "एलियंस के सबूत", "समुद्र का रहस्य", "समय यात्रा", "ब्लैक होल"]
+GADGET_TOPICS = ["स्मार्ट किचन गैजेट", "मच्छर भगाने वाला इलेक्ट्रॉनिक गैजेट", "स्मार्ट रूम लाइट्स", "कार के लिए गैजेट", "पोर्टेबल हीटर गैजेट"]
+MYSTIC_TOPICS = ["बरमूडा ट्राएंगल का रहस्य", "मिस्र के पिरामिडों का सच", "समुद्र की सबसे गहरी जगह", "ब्लैक होल का रहस्य", "क्या एलियंस हैं?"]
 
-# 🌟 सुपर JSON कटर
 def extract_json_safely(raw_text):
     raw_text = str(raw_text).strip()
     match = re.search(r'\{[\s\S]*\}', raw_text)
@@ -55,61 +48,60 @@ def extract_json_safely(raw_text):
         return match.group(0)
     return "{}"
 
-# 3. 🛡️ ऑटोमैटिक मॉडल चेंज इंजन (अलग-अलग प्रॉम्प्ट्स के साथ)
 def get_script_and_prompts(topic, is_gadget=False):
-    print(f"\n✅ Groq AI स्क्रिप्ट तैयार कर रहा है: {topic}")
+    print(f"\n✅ 70B AI इंजन स्क्रिप्ट तैयार कर रहा है: {topic}")
     
-    prompt = f"Write a VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking hook. STRICTLY 50-60 words. "
-    
-    # 🟢 गैजेट्स और मिस्ट्री के लिए अलग-अलग तस्वीर बनाने का सख्त आदेश
-    if is_gadget: 
-        prompt += "End EXACTLY with: 'खरीदने का लिंक चैनल के बायो में है।'.\n"
+    prompt = f"""You are an expert YouTube Shorts director. Generate a highly logical JSON response for a short video about: "{topic}".
+
+    REQUIREMENTS:
+    1. SCRIPT: Write a 50-60 word Hindi script. It MUST make logical sense. No random or meaningless words.
+    2. CAPTIONS: 8 short, meaningful Hindi captions summarizing the current sentence.
+    3. PROMPTS (English): 8 image generation prompts. Each prompt MUST visually match the exact sentence being spoken.
+    """
+
+    if is_gadget:
         prompt += """
-        IMPORTANT for 'prompts' array: Describe ONLY the GADGET/PRODUCT. STRICTLY NO HUMANS, NO FACES, NO PEOPLE. 
-        Add exactly this to the end of EVERY image prompt: ", professional product photography, 8k resolution, macro close-up shot, modern studio lighting, highly detailed tech gadget, NO HUMANS, NO FACES, NO TEXT, textless".
+    - SCRIPT ENDING: The script MUST end EXACTLY with: 'खरीदने का लिंक चैनल के बायो में है।'
+    - IMAGE STRICT RULES: Describe ONLY the physical gadget/product. 
+    - CRITICAL BAN: NO HUMANS, NO FACES, NO PEOPLE, NO ANIMALS.
+    - Add exactly this to the end of EVERY image prompt: ", highly detailed product photography, 8k resolution, macro close-up, modern studio lighting, STRICTLY NO HUMANS, NO FACES, NO ANIMALS, NO TEXT, textless"
         """
-    else: 
-        prompt += "End EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'.\n"
+    else:
         prompt += """
-        IMPORTANT for 'prompts' array: Describe the mysterious scene, cinematic landscape, or concept.
-        Add exactly this to the end of EVERY image prompt: ", cinematic shot, hyper-realistic, 8k resolution, lifelike photography, mysterious atmosphere, extreme detail, NO TEXT, textless".
+    - SCRIPT ENDING: The script MUST end EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'
+    - IMAGE STRICT RULES: Describe realistic cinematic scenes that match the mystery exactly. 
+    - CRITICAL BAN: NO HUMANS, NO FACES, NO ANIMALS, NO TIGERS, NO LIONS. ONLY LANDSCAPES, SHIPS, PLANETS, OR MYSTERIOUS OBJECTS.
+    - Add exactly this to the end of EVERY image prompt: ", cinematic masterpiece, hyper-realistic, 8k resolution, mysterious atmosphere, extreme detail, NO HUMANS, NO ANIMALS, NO TEXT, textless"
         """
-    
+
     prompt += """
-    Return ONLY valid JSON format exactly like this (DO NOT USE EMOJIS IN CAPTIONS):
+    Return ONLY valid JSON format exactly like this (NO conversational text outside JSON):
     {
       "topic": "topic name",
-      "script": "Hindi voiceover text here...",
+      "script": "Hindi script here...",
       "captions": ["caption 1", "caption 2", "caption 3", "caption 4", "caption 5", "caption 6", "caption 7", "caption 8"],
       "prompts": ["Image 1 prompt", "Image 2 prompt", "Image 3 prompt", "Image 4 prompt", "Image 5 prompt", "Image 6 prompt", "Image 7 prompt", "Image 8 prompt"],
-      "gadget_name": "Amazon search name or empty"
+      "gadget_name": "Amazon search name of the gadget (or empty if mystery)"
     }
     """
     
     url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {GROQ_KEY}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
     
-    models_to_try = [
-        "llama-3.1-8b-instant", 
-        "llama-3.1-70b-versatile", 
-        "llama-3.2-3b-preview", 
-        "gemma2-9b-it"
-    ]
+    models_to_try = ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile"]
     
     for model_name in models_to_try:
-        print(f"🔄 ट्राइंग मॉडल: {model_name}...")
+        print(f"🔄 ट्राइंग पावरफुल मॉडल: {model_name}...")
         data = {
             "model": model_name,
             "messages": [
-                {"role": "system", "content": "You are a JSON generator. Never add conversational text."},
+                {"role": "system", "content": "You are a precise JSON generator. Output only perfectly formatted JSON."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            "temperature": 0.2 
         }
         try:
-            response = requests.post(url, headers=headers, json=data, timeout=40)
+            response = requests.post(url, headers=headers, json=data, timeout=50)
             if response.status_code == 200:
                 result = response.json()
                 content = result['choices'][0]['message']['content']
@@ -118,19 +110,18 @@ def get_script_and_prompts(topic, is_gadget=False):
                 
                 script = parsed_data.get('script', '')
                 if script and len(parsed_data.get('prompts', [])) >= 4:
-                    print(f"🎯 सफलता! {model_name} ने सही स्क्रिप्ट दी।")
+                    print(f"🎯 सफलता! {model_name} ने एकदम सही और लॉजिकल स्क्रिप्ट दी।")
                     return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('gadget_name', '')
             else:
-                print(f"⚠️ {model_name} फेल हुआ (Status: {response.status_code}).")
+                print(f"⚠️ {model_name} फेल (Status: {response.status_code}).")
         except Exception as e:
-            print(f"⚠️ {model_name} में इंटरनेट एरर आया. अगला ट्राई कर रहे हैं...")
+            print(f"⚠️ {model_name} में एरर: {e}")
             time.sleep(2)
             
-    raise Exception("🚨 सभी AI मॉडल्स फेल हो गए! कृपया बाद में कोशिश करें।")
+    raise Exception("🚨 70B मॉडल्स फेल हो गए! कृपया बाद में कोशिश करें।")
 
-# 4. 🛡️ तस्वीरें बनाना
 def fetch_ai_images(prompts):
-    print("✅ हाई-क्वालिटी 8K तस्वीरें जनरेट हो रही हैं...")
+    print("✅ हाई-क्वालिटी तस्वीरें जनरेट हो रही हैं...")
     image_files = []
     seed = random.randint(1000, 99999) 
     for i, p in enumerate(prompts):
@@ -151,10 +142,9 @@ def fetch_ai_images(prompts):
             except Exception: 
                 time.sleep(3)
         if not success:
-            print(f"⚠️ तस्वीर {i} जनरेट नहीं हो पाई, स्किप कर रहे हैं।")
+            print(f"⚠️ तस्वीर {i} स्किप की गई।")
     return image_files
 
-# 5. 🛡️ आवाज़ बनाना
 def create_human_voice(text, filename):
     print("✅ वॉइसओवर रिकॉर्ड हो रहा है...")
     async def _generate():
@@ -164,7 +154,6 @@ def create_human_voice(text, filename):
                 await communicate.save(filename)
                 return True
             except Exception as e:
-                print(f"⚠️ वॉइस एरर: {e}. 5 सेकंड बाद फिर कोशिश कर रहे हैं...")
                 await asyncio.sleep(5)
         raise Exception("वॉइस सर्वर डाउन है।")
     
@@ -172,23 +161,47 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
-# 6. 🛡️ वीडियो बनाना
+# 🟢 नया 100% परफेक्ट हिंदी टेक्स्ट जनरेटर
+def create_hindi_text_clip(text, font_path, duration):
+    canvas_w, canvas_h = 1080, 400
+    img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    
+    try:
+        font = ImageFont.truetype(font_path, 80)
+    except:
+        font = ImageFont.load_default()
+        
+    try:
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+    except Exception:
+        text_width, text_height = draw.textsize(text, font=font)
+        
+    x = (canvas_w - text_width) // 2
+    y = (canvas_h - text_height) // 2
+    
+    pad_x, pad_y = 30, 20
+    draw.rectangle([x - pad_x, y - pad_y, x + text_width + pad_x, y + text_height + pad_y], fill=(0, 0, 0, 200))
+    draw.text((x, y), text, font=font, fill="yellow")
+    
+    temp_filename = f"temp_caption_{random.randint(10000, 99999)}.png"
+    img.save(temp_filename)
+    return ImageClip(temp_filename).set_duration(duration)
+
 def make_video(image_files, captions, final_vid, audio_file):
     print("✅ वीडियो रेंडर हो रहा है...")
-    if not image_files or len(image_files) == 0:
-        raise Exception("एक भी तस्वीर जनरेट नहीं हुई! वीडियो नहीं बन सकता।")
+    if not image_files:
+        raise Exception("तस्वीरें नहीं मिलीं!")
         
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
-    
-    if audio_duration <= 0:
-        raise Exception("ऑडियो फाइल करप्ट है या उसकी लंबाई 0 है।")
-        
     time_per_image = audio_duration / len(image_files)
     clips = []
     
-    for i, img in enumerate(image_files):
-        base_clip = ImageClip(img)
+    for i, img_path in enumerate(image_files):
+        base_clip = ImageClip(img_path)
         w, h = base_clip.size
         if w / h > 1080 / 1920: 
             base_clip = base_clip.resize(height=1920)
@@ -203,10 +216,12 @@ def make_video(image_files, captions, final_vid, audio_file):
         
         if cap_text:
             try:
-                txt_clip = TextClip(cap_text, fontsize=85, color='yellow', bg_color='black', font=FONT_PATH, method='caption', size=(900, None))
-                txt_clip = txt_clip.set_position(('center', 'bottom')).set_duration(time_per_image).margin(bottom=300, opacity=0)
+                # 🟢 ImageMagick की जगह Pillow से परफेक्ट हिंदी टेक्स्ट 
+                txt_clip = create_hindi_text_clip(cap_text, FONT_PATH, time_per_image)
+                txt_clip = txt_clip.set_position(('center', 'bottom')).margin(bottom=300, opacity=0)
                 final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center')), txt_clip], size=(1080, 1920)).set_duration(time_per_image)
             except Exception as e:
+                print(f"⚠️ कैप्शन एरर: {e}")
                 final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center'))], size=(1080, 1920)).set_duration(time_per_image)
         else:
             final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center'))], size=(1080, 1920)).set_duration(time_per_image)
@@ -220,9 +235,8 @@ def make_video(image_files, captions, final_vid, audio_file):
     video.close()
     final.close()
 
-# 7. यूट्यूब अपलोड
 def upload_video(token, filename, title, description, tags, category):
-    print("✅ यूट्यूब पर वीडियो अपलोड किया जा रहा है...")
+    print("✅ यूट्यूब पर अपलोड हो रहा है...")
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
@@ -235,10 +249,8 @@ def upload_video(token, filename, title, description, tags, category):
     )
     request.execute()
 
-# 8. सेफ रनर
 def run_channel_safely(channel_type):
-    max_attempts = 3
-    for attempt in range(max_attempts):
+    for attempt in range(3):
         try:
             if channel_type == "GADGETS":
                 print(f"\n--- 📱 GADGETS चैनल प्रोसेसिंग ---")
@@ -249,7 +261,7 @@ def run_channel_safely(channel_type):
                 make_video(image_files, captions, "final_gadget.mp4", "voice_gadget.mp3")
                 desc = f"🔥 👉 गैजेट खरीदने का लिंक चैनल के Bio में है!\n🔍 अमेज़न पर सर्च करें: {gadget_name}\n\n{script}"
                 upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 {gadget_name} #shorts", desc, ["shorts", "gadgets", "amazon finds"], "28")
-                print("✅ GADGETS चैनल पर वीडियो लाइव हो गया।")
+                print("✅ GADGETS वीडियो लाइव हो गया।")
                 return True 
                 
             elif channel_type == "MYSTIC":
@@ -261,19 +273,17 @@ def run_channel_safely(channel_type):
                 make_video(image_files, captions, "final_mystic.mp4", "voice_mystic.mp3")
                 desc = f"🔥 👉 रहस्यमयी किताबें और गैजेट्स का लिंक चैनल के Bio में है!\n\n{script}"
                 upload_video(TOKEN_MYSTIC, "final_mystic.mp4", f"🤯 {topic} #shorts", desc, ["shorts", "mystery", "facts"], "28")
-                print("✅ MYSTIC चैनल पर वीडियो लाइव हो गया।")
+                print("✅ MYSTIC वीडियो लाइव हो गया।")
                 return True 
                 
         except Exception as e: 
-            print(f"🛑 एरर: {e}")
-            print(f"⚠️ सिस्टम रीस्टार्ट हो रहा है... (Attempt {attempt+1}/{max_attempts})")
+            print(f"🛑 एरर: {e}. रीस्टार्ट हो रहा है...")
             time.sleep(15) 
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 मास्टर बुलेटप्रूफ इंजन 4.0 चालू हो गया है...")
+    print("🚀 70B प्रो-इंजन चालू हो गया है...")
     run_channel_safely("GADGETS")
-    print("\n⏳ ब्रेक...\n")
     time.sleep(30)
     run_channel_safely("MYSTIC")
-    print("\n🎯 आज का काम पूरा हुआ।")
+    print("\n🎯 काम पूरा हुआ।")
