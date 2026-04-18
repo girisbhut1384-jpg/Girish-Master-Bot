@@ -51,10 +51,11 @@ def extract_json_safely(raw_text):
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n✅ 70B AI इंजन स्क्रिप्ट तैयार कर रहा है: {topic}")
     
+    # 🟢 हमने यहाँ AI का आलस दूर करने के लिए कड़े नियम लगा दिए हैं
     prompt = f"""You are an expert YouTube Shorts director. Generate a highly logical JSON response for a short video about: "{topic}".
 
-    REQUIREMENTS:
-    1. SCRIPT (Voiceover): Write a 50-60 word HINDI script. It MUST make logical sense. No random words.
+    CRITICAL REQUIREMENTS:
+    1. SCRIPT (Voiceover): You MUST write a detailed HINDI script containing at least 5 to 6 sentences (MINIMUM 60 WORDS). Do NOT write a 1-sentence script. Build suspense, explain the concept, and make it engaging.
     2. CAPTIONS (On-screen text): Write 8 short, punchy captions in ENGLISH (summarizing the Hindi sentence). MUST BE STRICTLY IN ENGLISH ALPHABETS.
     3. PROMPTS (English): 8 image generation prompts. Each prompt MUST visually match the exact sentence.
     """
@@ -78,7 +79,7 @@ def get_script_and_prompts(topic, is_gadget=False):
     Return ONLY valid JSON format exactly like this (NO conversational text outside JSON):
     {
       "topic": "topic name",
-      "script": "Hindi script here...",
+      "script": "Hindi script here... (MUST BE AT LEAST 5 SENTENCES LONG)",
       "captions": ["SHOCKING TRUTH!", "Amazing Gadget", "Mind Blown", "Awesome Tech", "Caption 5", "Caption 6", "Caption 7", "Link in Bio!"],
       "prompts": ["Image 1 prompt", "Image 2 prompt", "Image 3 prompt", "Image 4 prompt", "Image 5 prompt", "Image 6 prompt", "Image 7 prompt", "Image 8 prompt"],
       "gadget_name": "Amazon search name of the gadget (or empty if mystery)"
@@ -88,7 +89,6 @@ def get_script_and_prompts(topic, is_gadget=False):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
     
-    # 🟢 सिर्फ 70B मॉडल्स (कचरा मॉडल्स हटा दिए गए हैं)
     models_to_try = ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile"]
     
     for model_name in models_to_try:
@@ -99,7 +99,7 @@ def get_script_and_prompts(topic, is_gadget=False):
                 {"role": "system", "content": "You are a precise JSON generator. Output only perfectly formatted JSON."},
                 {"role": "user", "content": prompt}
             ],
-            "temperature": 0.2 
+            "temperature": 0.4 # 🟢 इसे बढ़ा दिया है ताकि कहानी 50-60 शब्दों की और मज़ेदार बने
         }
         try:
             response = requests.post(url, headers=headers, json=data, timeout=50)
@@ -162,7 +162,6 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
-# 🟢 इंग्लिश टेक्स्ट के लिए जनरेटर
 def create_text_clip(text, font_path, duration):
     canvas_w, canvas_h = 1080, 400
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
