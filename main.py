@@ -55,21 +55,28 @@ def extract_json_safely(raw_text):
         return match.group(0)
     return "{}"
 
-# 3. 🛡️ ऑटोमैटिक मॉडल चेंज इंजन (नए Llama 3.1 और 3.2 के साथ)
+# 3. 🛡️ ऑटोमैटिक मॉडल चेंज इंजन (अलग-अलग प्रॉम्प्ट्स के साथ)
 def get_script_and_prompts(topic, is_gadget=False):
     print(f"\n✅ Groq AI स्क्रिप्ट तैयार कर रहा है: {topic}")
     
     prompt = f"Write a VIRAL YouTube short script in Hindi about: {topic}. Start with a shocking hook. STRICTLY 50-60 words. "
+    
+    # 🟢 गैजेट्स और मिस्ट्री के लिए अलग-अलग तस्वीर बनाने का सख्त आदेश
     if is_gadget: 
-        prompt += "End EXACTLY with: 'खरीदने का लिंक चैनल के बायो में है।'. "
+        prompt += "End EXACTLY with: 'खरीदने का लिंक चैनल के बायो में है।'.\n"
+        prompt += """
+        IMPORTANT for 'prompts' array: Describe ONLY the GADGET/PRODUCT. STRICTLY NO HUMANS, NO FACES, NO PEOPLE. 
+        Add exactly this to the end of EVERY image prompt: ", professional product photography, 8k resolution, macro close-up shot, modern studio lighting, highly detailed tech gadget, NO HUMANS, NO FACES, NO TEXT, textless".
+        """
     else: 
-        prompt += "End EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'. "
+        prompt += "End EXACTLY with: 'रहस्यमयी किताबें खरीदने का लिंक बायो में है।'.\n"
+        prompt += """
+        IMPORTANT for 'prompts' array: Describe the mysterious scene, cinematic landscape, or concept.
+        Add exactly this to the end of EVERY image prompt: ", cinematic shot, hyper-realistic, 8k resolution, lifelike photography, mysterious atmosphere, extreme detail, NO TEXT, textless".
+        """
     
     prompt += """
-    IMPORTANT: For the 'prompts' array, describe the scene for AI image generation. 
-    Add exactly this to the end of EVERY image prompt: ", hyper-realistic, 8k resolution, shot on DSLR, lifelike photography, extreme detail, NO TEXT, textless, no words, no letters".
-    
-    Return ONLY valid JSON format exactly like this:
+    Return ONLY valid JSON format exactly like this (DO NOT USE EMOJIS IN CAPTIONS):
     {
       "topic": "topic name",
       "script": "Hindi voiceover text here...",
@@ -85,7 +92,6 @@ def get_script_and_prompts(topic, is_gadget=False):
         "Content-Type": "application/json"
     }
     
-    # 🟢 दुनिया के सबसे नए और 100% चालू मॉडल्स की लिस्ट
     models_to_try = [
         "llama-3.1-8b-instant", 
         "llama-3.1-70b-versatile", 
@@ -115,10 +121,9 @@ def get_script_and_prompts(topic, is_gadget=False):
                     print(f"🎯 सफलता! {model_name} ने सही स्क्रिप्ट दी।")
                     return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('gadget_name', '')
             else:
-                # 🛑 अब मशीन बताएगी कि Groq ने 400 एरर क्यों दिया!
-                print(f"⚠️ {model_name} फेल हुआ (Status: {response.status_code}). कारण: {response.text[:150]}")
+                print(f"⚠️ {model_name} फेल हुआ (Status: {response.status_code}).")
         except Exception as e:
-            print(f"⚠️ {model_name} में इंटरनेट एरर आया: {e}. अगला ट्राई कर रहे हैं...")
+            print(f"⚠️ {model_name} में इंटरनेट एरर आया. अगला ट्राई कर रहे हैं...")
             time.sleep(2)
             
     raise Exception("🚨 सभी AI मॉडल्स फेल हो गए! कृपया बाद में कोशिश करें।")
@@ -167,7 +172,7 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
-# 6. वीडियो बनाना
+# 6. 🛡️ वीडियो बनाना
 def make_video(image_files, captions, final_vid, audio_file):
     print("✅ वीडियो रेंडर हो रहा है...")
     if not image_files or len(image_files) == 0:
@@ -194,10 +199,18 @@ def make_video(image_files, captions, final_vid, audio_file):
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.05 * (t / time_per_image)).set_duration(time_per_image)
         
         cap_text = captions[i] if i < len(captions) else ""
-        txt_clip = TextClip(cap_text, fontsize=85, color='yellow', bg_color='black', font=FONT_PATH, method='caption', size=(900, None))
-        txt_clip = txt_clip.set_position(('center', 'bottom')).set_duration(time_per_image).margin(bottom=300, opacity=0)
+        cap_text = cap_text.strip()
         
-        final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center')), txt_clip], size=(1080, 1920)).set_duration(time_per_image)
+        if cap_text:
+            try:
+                txt_clip = TextClip(cap_text, fontsize=85, color='yellow', bg_color='black', font=FONT_PATH, method='caption', size=(900, None))
+                txt_clip = txt_clip.set_position(('center', 'bottom')).set_duration(time_per_image).margin(bottom=300, opacity=0)
+                final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center')), txt_clip], size=(1080, 1920)).set_duration(time_per_image)
+            except Exception as e:
+                final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center'))], size=(1080, 1920)).set_duration(time_per_image)
+        else:
+            final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center'))], size=(1080, 1920)).set_duration(time_per_image)
+            
         clips.append(final_clip)
         
     video = concatenate_videoclips(clips, method="compose")
@@ -258,7 +271,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 मास्टर बुलेटप्रूफ इंजन 2.0 चालू हो गया है...")
+    print("🚀 मास्टर बुलेटप्रूफ इंजन 4.0 चालू हो गया है...")
     run_channel_safely("GADGETS")
     print("\n⏳ ब्रेक...\n")
     time.sleep(30)
