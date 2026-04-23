@@ -21,7 +21,6 @@ print("🔓 सिक्योरिटी दीवार हटाई जा �
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
-# 🔑 सारी चाबियां (Keys)
 GROQ_KEY = os.environ.get("GROQ_API_KEY")
 RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY") 
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
@@ -33,9 +32,8 @@ if not GROQ_KEY:
     print("❌ एरर: GROQ_API_KEY नहीं मिली!")
     sys.exit(1)
 
-# 🟢 बीमारी 2 का इलाज: अब टॉपिक्स कभी रिपीट नहीं होंगे!
 GADGET_HOOKS = ["Amazon's Hidden Tech", "Crazy Gadgets Under 1000", "Must-Have Smart Home Items", "Secret Car Hacks", "Genius Kitchen Tools", "Futuristic Office Tech"]
-MYSTIC_HOOKS = ["Terrifying Space Facts", "Deep Sea Monsters", "Unsolved Crimes of History", "Lost Ancient Cities", "Creepy Government Secrets", "Time Travel Evidences"]
+MYSTIC_HOOKS = ["Terrifying Space Facts", "Deep Sea Monsters", "Unsolved Crimes of History", "Lost Ancient Cities", "Creepy Government Secrets"]
 
 def extract_json_safely(raw_text):
     raw_text = str(raw_text).strip()
@@ -46,52 +44,40 @@ def extract_json_safely(raw_text):
 def get_script_and_prompts(hook_theme, is_gadget=False):
     print(f"\n✅ 70B AI इंजन नया वायरल टॉपिक खोज रहा है: {hook_theme}")
     
-    prompt = f"""You are a master YouTube Shorts director. Your goal is 100% audience retention.
+    prompt = f"""You are a master YouTube Shorts director.
     THEME: "{hook_theme}".
     
-    CRITICAL INSTRUCTION: INVENT a highly specific, unique, and NEVER-BEFORE-USED sub-topic! Do NOT use generic examples.
-
     REQUIREMENTS:
-    1. SCRIPT (Voiceover): Write an aggressive HINDI script (MINIMUM 60 WORDS). 
-       - The FIRST sentence MUST be a shocking 3-second hook (e.g., "ये गैजेट आपको 2050 में ले जाएगा!" or "दुनिया की सबसे डरावनी जगह...").
-       - Keep the energy high and build extreme suspense.
-    2. CAPTIONS (On-screen text): Write 8 short, punchy captions strictly in ENGLISH ALPHABETS (e.g., "SHOCKING!", "MIND BLOWN", "BEST GADGET"). DO NOT USE HINDI SCRIPT FOR CAPTIONS.
+    1. SCRIPT (Voiceover): Write an aggressive HINDI script (MINIMUM 60 WORDS). FIRST sentence MUST be a shocking 3-second hook.
+    2. CAPTIONS: Write 8 short, punchy captions strictly in ENGLISH ALPHABETS.
     3. PROMPTS (English): 8 image generation prompts.
     """
 
     if is_gadget:
         prompt += """
     - SCRIPT ENDING: The script MUST end EXACTLY with: 'यह शानदार गैजेट अभी खरीदने का लिंक चैनल के बायो में है।'
-    - IMAGE RULES: Describe ONLY real physical products. NO HUMANS, NO FACES.
+    - AMAZON SEARCH TERM RULE: MUST be a simple, highly searchable real product name (e.g., 'Smart Watch', 'Spice Rack', 'Car Vacuum Cleaner'). Do NOT write abstract phrases.
         """
     else:
         prompt += """
     - SCRIPT ENDING: The script MUST end EXACTLY with: 'ऐसे ही खूंखार रहस्यों के लिए लिंक बायो में है।'
-    - IMAGE RULES: Hyper-realistic cinematic scenes. Creepy, dark, mysterious. NO TEXT.
         """
 
     prompt += """
     Return ONLY valid JSON format exactly like this:
     {
-      "topic": "your unique viral topic name",
-      "script": "Hindi script here... (MUST BE AT LEAST 60 WORDS)",
-      "captions": ["AMAZING FACT!", "LOOK AT THIS", "CRAZY TECH", "WAIT FOR IT...", "SHOCKING", "Caption 6", "Caption 7", "Link in Bio!"],
+      "topic": "your unique topic name",
+      "script": "Hindi script here...",
+      "captions": ["AMAZING FACT!", "LOOK AT THIS", "WAIT FOR IT...", "SHOCKING", "Caption 5", "Caption 6", "Caption 7", "Link in Bio!"],
       "prompts": ["Image 1 prompt", "Image 2 prompt", "Image 3 prompt", "Image 4 prompt", "Image 5 prompt", "Image 6 prompt", "Image 7 prompt", "Image 8 prompt"],
-      "amazon_search_term": "Exact 2-3 word Amazon India search keyword for this specific product (Leave empty if mystery)"
+      "amazon_search_term": "Simple 2-3 word real Amazon India product keyword (Leave empty if mystery)"
     }
     """
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
     
-    data = {
-        "model": "llama-3.3-70b-versatile",
-        "messages": [
-            {"role": "system", "content": "You are a precise JSON generator. Output only JSON."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.8 # 🟢 टेम्परेचर बढ़ा दिया ताकि AI हर बार कुछ नया और 'क्रेज़ी' सोचे!
-    }
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "system", "content": "Output only JSON."}, {"role": "user", "content": prompt}], "temperature": 0.7}
     for attempt in range(3):
         try:
             response = requests.post(url, headers=headers, json=data, timeout=50)
@@ -104,24 +90,18 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
                 if script:
                     print(f"🎯 सफलता! नया टॉपिक मिला: {parsed_data.get('topic')}")
                     return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('amazon_search_term', '')
-        except Exception as e:
-            print(f"⚠️ 70B एरर: {e}. फिर से कोशिश...")
-            time.sleep(2)
+        except: time.sleep(2)
     raise Exception("🚨 70B मॉडल फेल हो गया!")
 
-# 🟢 गैजेट्स के लिए 100% असली अमेज़न फोटो
-def fetch_amazon_images(query, fallback_prompts):
-    print(f"🛒 अमेज़न (India) से '{query}' की असली तस्वीरें निकाली जा रही हैं...")
+# 🟢 सख्त नियम: गैजेट्स के लिए 100% असली अमेज़न फोटो ही चाहिए, कोई AI शॉर्टकट नहीं!
+def fetch_amazon_images_strict(query):
+    print(f"🛒 अमेज़न (India) से '{query}' की बिल्कुल असली तस्वीरें निकाली जा रही हैं...")
     if not RAPIDAPI_KEY:
-        print("⚠️ RAPIDAPI_KEY नहीं मिली! AI तस्वीरों का बैकअप ले रहे हैं...")
-        return fetch_ai_images(fallback_prompts)
+        raise Exception("⚠️ RAPIDAPI_KEY नहीं मिली! गैजेट चैनल के लिए असली फोटो अनिवार्य है।")
 
     url = "https://real-time-amazon-data.p.rapidapi.com/search"
     querystring = {"query": query, "page": "1", "country": "IN", "sort_by": "RELEVANCE"}
-    headers = {
-        "x-rapidapi-key": RAPIDAPI_KEY,
-        "x-rapidapi-host": "real-time-amazon-data.p.rapidapi.com"
-    }
+    headers = {"x-rapidapi-key": RAPIDAPI_KEY, "x-rapidapi-host": "real-time-amazon-data.p.rapidapi.com"}
 
     image_files = []
     try:
@@ -135,38 +115,33 @@ def fetch_amazon_images(query, fallback_prompts):
                     img_res = requests.get(photo_url, timeout=15)
                     if img_res.status_code == 200:
                         filename = f"amazon_img_{i}.jpg"
-                        with open(filename, "wb") as f:
-                            f.write(img_res.content)
+                        with open(filename, "wb") as f: f.write(img_res.content)
                         image_files.append(filename)
             
             if len(image_files) >= 4:
                 print(f"✅ अमेज़न से {len(image_files)} असली तस्वीरें 100% डाउनलोड हो गईं!")
                 return image_files
             else:
-                print("⚠️ अमेज़न पर प्रोडक्ट नहीं मिला। AI बैकअप इस्तेमाल हो रहा है...")
-                return fetch_ai_images(fallback_prompts)
+                raise Exception(f"⚠️ अमेज़न पर '{query}' की पर्याप्त फोटो नहीं मिलीं।")
         else:
-            print(f"⚠️ RapidAPI एरर: {response.status_code}. AI बैकअप इस्तेमाल हो रहा है...")
-            return fetch_ai_images(fallback_prompts)
+            raise Exception(f"⚠️ RapidAPI एरर: {response.status_code}. शायद API लिमिट ख़त्म हो गई है।")
     except Exception as e:
-        print(f"⚠️ अमेज़न API में दिक्कत: {e}. AI बैकअप इस्तेमाल हो रहा है...")
-        return fetch_ai_images(fallback_prompts)
+        raise Exception(f"अमेज़न से असली फोटो लाने में फेल: {e}")
 
-# 🟢 मिस्ट्री चैनल के लिए डरावनी AI फोटो 
+# मिस्ट्री चैनल के लिए AI फोटो (यहाँ असली फोटो की ज़रूरत नहीं है)
 def fetch_ai_images(prompts):
-    print("🌌 AI से रहस्यमयी तस्वीरें जनरेट हो रही हैं...")
+    print("🌌 मिस्ट्री चैनल के लिए AI तस्वीरें जनरेट हो रही हैं...")
     image_files = []
     seed = random.randint(1000, 99999) 
     for i, p in enumerate(prompts):
-        safe_prompt = urllib.parse.quote(p + ", highly detailed, cinematic, 8k, textless, photorealistic")
+        safe_prompt = urllib.parse.quote(p + ", highly detailed, cinematic, 8k, textless")
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         for attempt in range(3): 
             try:
                 res = requests.get(url, timeout=30) 
                 if res.status_code == 200: 
-                    with open(filename, "wb") as f: 
-                        f.write(res.content)
+                    with open(filename, "wb") as f: f.write(res.content)
                     image_files.append(filename)
                     break
             except: time.sleep(3)
@@ -177,7 +152,7 @@ def create_human_voice(text, filename):
     async def _generate():
         for attempt in range(3):
             try:
-                communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+15%") # आवाज़ की स्पीड बढ़ाई ताकि एनर्जी लगे
+                communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+15%") 
                 await communicate.save(filename)
                 return True
             except: await asyncio.sleep(5)
@@ -186,16 +161,13 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
-# 🟢 बीमारी 1 का इलाज: पीले डब्बे ख़त्म! अब पक्की इंग्लिश फॉन्ट यूज़ होगी
 def create_centered_text_clip(text, duration):
     canvas_w, canvas_h = 1080, 400
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    
-    # गिटहब के सर्वर का झंझट ख़त्म, सीधा डिफ़ॉल्ट फॉन्ट लोड करेगा जो कभी डब्बे नहीं बनाता
     font = ImageFont.load_default() 
         
-    wrapped_text = textwrap.fill(text.upper(), width=22) # कैप्शंस बड़े अक्षरों (CAPITAL) में आएंगे
+    wrapped_text = textwrap.fill(text.upper(), width=22) 
     try:
         bbox = draw.multiline_textbbox((0, 0), wrapped_text, font=font, align='center')
         text_width = bbox[2] - bbox[0]
@@ -212,7 +184,6 @@ def create_centered_text_clip(text, duration):
     
     temp_filename = f"temp_caption_{random.randint(10000, 99999)}.png"
     img.save(temp_filename)
-    # टेक्स्ट को 4 गुना बड़ा (Resize) किया ताकि वीडियो में साफ दिखे
     return ImageClip(temp_filename).resize(4.0).set_duration(duration)
 
 def make_video(image_files, captions, final_vid, audio_file):
@@ -267,24 +238,26 @@ def upload_video(token, filename, title, description, tags, category):
     request.execute()
 
 def run_channel_safely(channel_type):
-    for attempt in range(3):
+    # अगर एरर आएगा, तो मशीन 5 बार अलग-अलग प्रोडक्ट ट्राई करेगी ताकि वीडियो बन सके!
+    for attempt in range(5):
         try:
             if channel_type == "GADGETS":
-                print(f"\n--- 📱 GADGETS चैनल प्रोसेसिंग ---")
+                print(f"\n--- 📱 GADGETS चैनल प्रोसेसिंग (Attempt {attempt+1}) ---")
                 hook = random.choice(GADGET_HOOKS)
                 script, prompts, captions, amazon_term = get_script_and_prompts(hook, is_gadget=True)
                 
-                image_files = fetch_amazon_images(amazon_term, prompts) 
+                # 🟢 सिर्फ 100% असली फोटो, वरना एरर दे देगा और दोबारा ट्राई करेगा
+                image_files = fetch_amazon_images_strict(amazon_term) 
                 
                 create_human_voice(script, "voice_gadget.mp3")
                 make_video(image_files, captions, "final_gadget.mp4", "voice_gadget.mp3")
                 desc = f"🔥 👉 यह शानदार गैजेट खरीदने का लिंक चैनल के Bio में है!\n🔍 अमेज़न पर सर्च करें: {amazon_term}\n\n{script}"
-                upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 Tech That Will Blow Your Mind! #shorts", desc, ["shorts", "gadgets", "amazon finds", "tech"], "28")
+                upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 Best {amazon_term} #shorts", desc, ["shorts", "gadgets", "amazon finds", "tech"], "28")
                 print("✅ GADGETS वीडियो लाइव हो गया।")
                 return True 
                 
             elif channel_type == "MYSTIC":
-                print(f"\n--- 🌌 MYSTIC चैनल प्रोसेसिंग ---")
+                print(f"\n--- 🌌 MYSTIC चैनल प्रोसेसिंग (Attempt {attempt+1}) ---")
                 hook = random.choice(MYSTIC_HOOKS)
                 script, prompts, captions, _ = get_script_and_prompts(hook, is_gadget=False)
                 
@@ -298,12 +271,12 @@ def run_channel_safely(channel_type):
                 return True 
                 
         except Exception as e: 
-            print(f"🛑 एरर: {e}. रीस्टार्ट हो रहा है...")
-            time.sleep(15) 
+            print(f"🛑 एरर: {e}. असली फोटो नहीं मिली, मशीन दूसरा प्रोडक्ट ढूंढ रही है...")
+            time.sleep(10) 
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 मास्टर ब्रह्मास्त्र इंजन v2.0 चालू हो गया है (No Error Guarantee)...")
+    print("🚀 मास्टर ब्रह्मास्त्र (Strict Amazon Mode) चालू हो गया है...")
     run_channel_safely("GADGETS")
     time.sleep(30)
     run_channel_safely("MYSTIC")
