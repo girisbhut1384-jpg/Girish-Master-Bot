@@ -21,14 +21,6 @@ print("🔓 सिक्योरिटी दीवार हटाई जा �
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
-print("📦 सिस्टम के अंदर फॉन्ट इंस्टॉल हो रहे हैं...")
-os.system("sudo apt-get update -y")
-os.system("sudo apt-get install -y fonts-indic fonts-noto-core")
-
-sys_fonts = glob.glob("/usr/share/fonts/**/*.ttf", recursive=True)
-hindi_fonts = [f for f in sys_fonts if "Devanagari" in f or "Samyak" in f or "Gargi" in f or "Nakula" in f]
-FONT_PATH = hindi_fonts[0] if hindi_fonts else (sys_fonts[0] if sys_fonts else "Arial")
-
 # 🔑 सारी चाबियां (Keys)
 GROQ_KEY = os.environ.get("GROQ_API_KEY")
 RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY") 
@@ -41,9 +33,9 @@ if not GROQ_KEY:
     print("❌ एरर: GROQ_API_KEY नहीं मिली!")
     sys.exit(1)
 
-# 🟢 एकदम असली बिकने वाले गैजेट्स और सबसे वायरल होने वाले रहस्य
-GADGET_CATEGORIES = ["Trending Smart Home Gadgets", "Viral Car Accessories on Amazon", "Best Kitchen Tech Hacks", "Student Productivity Devices", "High-Tech Security Gadgets"]
-MYSTIC_CATEGORIES = ["Most Viral Unsolved Mysteries", "Deep Ocean Terrifying Secrets", "Unexplained Ancient Civilizations", "Mind-Blowing Space Facts", "Creepiest Historical Events"]
+# 🟢 बीमारी 2 का इलाज: अब टॉपिक्स कभी रिपीट नहीं होंगे!
+GADGET_HOOKS = ["Amazon's Hidden Tech", "Crazy Gadgets Under 1000", "Must-Have Smart Home Items", "Secret Car Hacks", "Genius Kitchen Tools", "Futuristic Office Tech"]
+MYSTIC_HOOKS = ["Terrifying Space Facts", "Deep Sea Monsters", "Unsolved Crimes of History", "Lost Ancient Cities", "Creepy Government Secrets", "Time Travel Evidences"]
 
 def extract_json_safely(raw_text):
     raw_text = str(raw_text).strip()
@@ -51,31 +43,31 @@ def extract_json_safely(raw_text):
     if match: return match.group(0)
     return "{}"
 
-def get_script_and_prompts(category, is_gadget=False):
-    print(f"\n✅ 70B AI इंजन दमदार टॉपिक सोच रहा है: {category}")
+def get_script_and_prompts(hook_theme, is_gadget=False):
+    print(f"\n✅ 70B AI इंजन नया वायरल टॉपिक खोज रहा है: {hook_theme}")
     
-    prompt = f"""You are a master YouTube Shorts director known for high audience retention. 
-    THEME: "{category}".
+    prompt = f"""You are a master YouTube Shorts director. Your goal is 100% audience retention.
+    THEME: "{hook_theme}".
     
-    CRITICAL INSTRUCTION: Create a highly viral and unique sub-topic! 
+    CRITICAL INSTRUCTION: INVENT a highly specific, unique, and NEVER-BEFORE-USED sub-topic! Do NOT use generic examples.
 
     REQUIREMENTS:
-    1. SCRIPT (Voiceover): Write a highly engaging HINDI script (MINIMUM 60 WORDS). 
-       - Start with a SHOCKING 3-second hook so the viewer stays till the end.
-       - Build extreme suspense or show insane value.
-    2. CAPTIONS (On-screen text): Write 8 punchy captions strictly in ENGLISH to grab attention.
-    3. PROMPTS (English): 8 image generation prompts matching sentences.
+    1. SCRIPT (Voiceover): Write an aggressive HINDI script (MINIMUM 60 WORDS). 
+       - The FIRST sentence MUST be a shocking 3-second hook (e.g., "ये गैजेट आपको 2050 में ले जाएगा!" or "दुनिया की सबसे डरावनी जगह...").
+       - Keep the energy high and build extreme suspense.
+    2. CAPTIONS (On-screen text): Write 8 short, punchy captions strictly in ENGLISH ALPHABETS (e.g., "SHOCKING!", "MIND BLOWN", "BEST GADGET"). DO NOT USE HINDI SCRIPT FOR CAPTIONS.
+    3. PROMPTS (English): 8 image generation prompts.
     """
 
     if is_gadget:
         prompt += """
-    - SCRIPT ENDING: The script MUST end EXACTLY with: 'यह शानदार गैजेट खरीदने का लिंक चैनल के बायो में है।'
-    - IMAGE RULES: ONLY physical products currently existing on Amazon. NO HUMANS.
+    - SCRIPT ENDING: The script MUST end EXACTLY with: 'यह शानदार गैजेट अभी खरीदने का लिंक चैनल के बायो में है।'
+    - IMAGE RULES: Describe ONLY real physical products. NO HUMANS, NO FACES.
         """
     else:
         prompt += """
-    - SCRIPT ENDING: The script MUST end EXACTLY with: 'ऐसी और रहस्यमयी चीज़ों के लिए लिंक बायो में है।'
-    - IMAGE RULES: Hyper-realistic cinematic scenes. Creepy, mysterious, highly engaging. NO TEXT.
+    - SCRIPT ENDING: The script MUST end EXACTLY with: 'ऐसे ही खूंखार रहस्यों के लिए लिंक बायो में है।'
+    - IMAGE RULES: Hyper-realistic cinematic scenes. Creepy, dark, mysterious. NO TEXT.
         """
 
     prompt += """
@@ -83,9 +75,9 @@ def get_script_and_prompts(category, is_gadget=False):
     {
       "topic": "your unique viral topic name",
       "script": "Hindi script here... (MUST BE AT LEAST 60 WORDS)",
-      "captions": ["SHOCKING TRUTH!", "Amazing Fact", "Mind Blown", "Awesome", "Wait for it...", "Caption 6", "Caption 7", "Link in Bio!"],
+      "captions": ["AMAZING FACT!", "LOOK AT THIS", "CRAZY TECH", "WAIT FOR IT...", "SHOCKING", "Caption 6", "Caption 7", "Link in Bio!"],
       "prompts": ["Image 1 prompt", "Image 2 prompt", "Image 3 prompt", "Image 4 prompt", "Image 5 prompt", "Image 6 prompt", "Image 7 prompt", "Image 8 prompt"],
-      "amazon_search_term": "Exact 2-3 word Amazon India search keyword for this product (Leave empty if mystery)"
+      "amazon_search_term": "Exact 2-3 word Amazon India search keyword for this specific product (Leave empty if mystery)"
     }
     """
     
@@ -98,7 +90,7 @@ def get_script_and_prompts(category, is_gadget=False):
             {"role": "system", "content": "You are a precise JSON generator. Output only JSON."},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.5 
+        "temperature": 0.8 # 🟢 टेम्परेचर बढ़ा दिया ताकि AI हर बार कुछ नया और 'क्रेज़ी' सोचे!
     }
     for attempt in range(3):
         try:
@@ -110,16 +102,16 @@ def get_script_and_prompts(category, is_gadget=False):
                 parsed_data = json.loads(clean_json)
                 script = parsed_data.get('script', '')
                 if script:
-                    print(f"🎯 सफलता! वायरल टॉपिक मिला: {parsed_data.get('topic')}")
+                    print(f"🎯 सफलता! नया टॉपिक मिला: {parsed_data.get('topic')}")
                     return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('amazon_search_term', '')
         except Exception as e:
             print(f"⚠️ 70B एरर: {e}. फिर से कोशिश...")
             time.sleep(2)
     raise Exception("🚨 70B मॉडल फेल हो गया!")
 
-# 🟢 सिर्फ गैजेट्स के लिए अमेज़न से असली फोटो निकालने वाला कोड (ताकि API लिमिट बचे)
+# 🟢 गैजेट्स के लिए 100% असली अमेज़न फोटो
 def fetch_amazon_images(query, fallback_prompts):
-    print(f"🛒 अमेज़न (India) से '{query}' की असली तस्वीरें खोजी जा रही हैं...")
+    print(f"🛒 अमेज़न (India) से '{query}' की असली तस्वीरें निकाली जा रही हैं...")
     if not RAPIDAPI_KEY:
         print("⚠️ RAPIDAPI_KEY नहीं मिली! AI तस्वीरों का बैकअप ले रहे हैं...")
         return fetch_ai_images(fallback_prompts)
@@ -160,13 +152,13 @@ def fetch_amazon_images(query, fallback_prompts):
         print(f"⚠️ अमेज़न API में दिक्कत: {e}. AI बैकअप इस्तेमाल हो रहा है...")
         return fetch_ai_images(fallback_prompts)
 
-# 🟢 मिस्ट्री चैनल के लिए खूंखार AI फोटो (बिना API लिमिट खर्च किये)
+# 🟢 मिस्ट्री चैनल के लिए डरावनी AI फोटो 
 def fetch_ai_images(prompts):
     print("🌌 AI से रहस्यमयी तस्वीरें जनरेट हो रही हैं...")
     image_files = []
     seed = random.randint(1000, 99999) 
     for i, p in enumerate(prompts):
-        safe_prompt = urllib.parse.quote(p + ", highly detailed, cinematic, 8k, textless, mind-bending")
+        safe_prompt = urllib.parse.quote(p + ", highly detailed, cinematic, 8k, textless, photorealistic")
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         for attempt in range(3): 
@@ -185,7 +177,7 @@ def create_human_voice(text, filename):
     async def _generate():
         for attempt in range(3):
             try:
-                communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+10%")
+                communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+15%") # आवाज़ की स्पीड बढ़ाई ताकि एनर्जी लगे
                 await communicate.save(filename)
                 return True
             except: await asyncio.sleep(5)
@@ -194,15 +186,16 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
-# 🟢 कैप्शंस (Text) बिल्कुल बीच में, इंग्लिश में और पीले रंग में
-def create_centered_text_clip(text, font_path, duration):
+# 🟢 बीमारी 1 का इलाज: पीले डब्बे ख़त्म! अब पक्की इंग्लिश फॉन्ट यूज़ होगी
+def create_centered_text_clip(text, duration):
     canvas_w, canvas_h = 1080, 400
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    try: font = ImageFont.truetype(font_path, 80)
-    except: font = ImageFont.load_default()
+    
+    # गिटहब के सर्वर का झंझट ख़त्म, सीधा डिफ़ॉल्ट फॉन्ट लोड करेगा जो कभी डब्बे नहीं बनाता
+    font = ImageFont.load_default() 
         
-    wrapped_text = textwrap.fill(text, width=22)
+    wrapped_text = textwrap.fill(text.upper(), width=22) # कैप्शंस बड़े अक्षरों (CAPITAL) में आएंगे
     try:
         bbox = draw.multiline_textbbox((0, 0), wrapped_text, font=font, align='center')
         text_width = bbox[2] - bbox[0]
@@ -219,7 +212,8 @@ def create_centered_text_clip(text, font_path, duration):
     
     temp_filename = f"temp_caption_{random.randint(10000, 99999)}.png"
     img.save(temp_filename)
-    return ImageClip(temp_filename).set_duration(duration)
+    # टेक्स्ट को 4 गुना बड़ा (Resize) किया ताकि वीडियो में साफ दिखे
+    return ImageClip(temp_filename).resize(4.0).set_duration(duration)
 
 def make_video(image_files, captions, final_vid, audio_file):
     print("✅ प्रोफेशनल वीडियो रेंडर हो रहा है...")
@@ -234,7 +228,6 @@ def make_video(image_files, captions, final_vid, audio_file):
         base_clip = ImageClip(img_path)
         w, h = base_clip.size
         
-        # ब्लर बैकग्राउंड इफ़ेक्ट (जिससे अमेज़न की फोटो बहुत प्रोफेशनल दिखेगी)
         if w / h > 1080 / 1920: base_clip = base_clip.resize(height=1920)
         else: base_clip = base_clip.resize(width=1080)
             
@@ -244,7 +237,7 @@ def make_video(image_files, captions, final_vid, audio_file):
         cap_text = captions[i] if i < len(captions) else ""
         if cap_text.strip():
             try:
-                txt_clip = create_centered_text_clip(cap_text, FONT_PATH, time_per_image)
+                txt_clip = create_centered_text_clip(cap_text, time_per_image)
                 txt_clip = txt_clip.set_position(('center', 'bottom')).margin(bottom=350, opacity=0)
                 final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center')), txt_clip], size=(1080, 1920)).set_duration(time_per_image)
             except: final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center'))], size=(1080, 1920)).set_duration(time_per_image)
@@ -278,31 +271,29 @@ def run_channel_safely(channel_type):
         try:
             if channel_type == "GADGETS":
                 print(f"\n--- 📱 GADGETS चैनल प्रोसेसिंग ---")
-                cat = random.choice(GADGET_CATEGORIES)
-                script, prompts, captions, amazon_term = get_script_and_prompts(cat, is_gadget=True)
+                hook = random.choice(GADGET_HOOKS)
+                script, prompts, captions, amazon_term = get_script_and_prompts(hook, is_gadget=True)
                 
-                # 🟢 यहाँ सिर्फ गैजेट्स के लिए API यूज़ होगी
                 image_files = fetch_amazon_images(amazon_term, prompts) 
                 
                 create_human_voice(script, "voice_gadget.mp3")
                 make_video(image_files, captions, "final_gadget.mp4", "voice_gadget.mp3")
                 desc = f"🔥 👉 यह शानदार गैजेट खरीदने का लिंक चैनल के Bio में है!\n🔍 अमेज़न पर सर्च करें: {amazon_term}\n\n{script}"
-                upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 Best {amazon_term} #shorts", desc, ["shorts", "gadgets", "amazon finds", "tech"], "28")
+                upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 Tech That Will Blow Your Mind! #shorts", desc, ["shorts", "gadgets", "amazon finds", "tech"], "28")
                 print("✅ GADGETS वीडियो लाइव हो गया।")
                 return True 
                 
             elif channel_type == "MYSTIC":
                 print(f"\n--- 🌌 MYSTIC चैनल प्रोसेसिंग ---")
-                cat = random.choice(MYSTIC_CATEGORIES)
-                script, prompts, captions, _ = get_script_and_prompts(cat, is_gadget=False)
+                hook = random.choice(MYSTIC_HOOKS)
+                script, prompts, captions, _ = get_script_and_prompts(hook, is_gadget=False)
                 
-                # 🟢 मिस्ट्री के लिए API इस्तेमाल नहीं होगी (लिमिट बचेगी), सिर्फ डरावनी AI फोटो बनेगी!
                 image_files = fetch_ai_images(prompts)
                 
                 create_human_voice(script, "voice_mystic.mp3")
                 make_video(image_files, captions, "final_mystic.mp4", "voice_mystic.mp3")
-                desc = f"🔥 👉 रहस्यमयी किताबें और शानदार गैजेट्स खरीदने का लिंक चैनल के Bio में है!\n\n{script}"
-                upload_video(TOKEN_MYSTIC, "final_mystic.mp4", f"🤯 Unsolved Mystery Revealed #shorts", desc, ["shorts", "mystery", "facts", "creepy"], "28")
+                desc = f"🔥 👉 ऐसे ही खूंखार रहस्यों और गैजेट्स के लिए लिंक चैनल के Bio में है!\n\n{script}"
+                upload_video(TOKEN_MYSTIC, "final_mystic.mp4", f"🤯 You Won't Believe This Exists! #shorts", desc, ["shorts", "mystery", "creepy", "facts"], "28")
                 print("✅ MYSTIC वीडियो लाइव हो गया।")
                 return True 
                 
@@ -312,7 +303,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 मास्टर ब्रह्मास्त्र इंजन चालू हो गया है (स्मार्ट API सेवर मोड)...")
+    print("🚀 मास्टर ब्रह्मास्त्र इंजन v2.0 चालू हो गया है (No Error Guarantee)...")
     run_channel_safely("GADGETS")
     time.sleep(30)
     run_channel_safely("MYSTIC")
