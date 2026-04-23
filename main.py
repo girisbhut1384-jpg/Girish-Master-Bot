@@ -32,8 +32,9 @@ if not GROQ_KEY:
     print("❌ एरर: GROQ_API_KEY नहीं मिली!")
     sys.exit(1)
 
+# एकदम असली बिकने वाले गैजेट्स और रहस्य (ताकि वीडियो कभी रिपीट न हो)
 GADGET_HOOKS = ["Amazon's Hidden Tech", "Crazy Gadgets Under 1000", "Must-Have Smart Home Items", "Secret Car Hacks", "Genius Kitchen Tools", "Futuristic Office Tech"]
-MYSTIC_HOOKS = ["Terrifying Space Facts", "Deep Sea Monsters", "Unsolved Crimes of History", "Lost Ancient Cities", "Creepy Government Secrets"]
+MYSTIC_HOOKS = ["Terrifying Space Facts", "Deep Sea Monsters", "Unsolved Crimes of History", "Lost Ancient Cities", "Creepy Government Secrets", "Time Travel Evidences"]
 
 def extract_json_safely(raw_text):
     raw_text = str(raw_text).strip()
@@ -44,19 +45,22 @@ def extract_json_safely(raw_text):
 def get_script_and_prompts(hook_theme, is_gadget=False):
     print(f"\n✅ 70B AI इंजन नया वायरल टॉपिक खोज रहा है: {hook_theme}")
     
-    prompt = f"""You are a master YouTube Shorts director.
+    prompt = f"""You are a master YouTube Shorts director. Your goal is 100% audience retention.
     THEME: "{hook_theme}".
-    
+    CRITICAL INSTRUCTION: INVENT a highly specific, unique, and NEVER-BEFORE-USED sub-topic!
+
     REQUIREMENTS:
-    1. SCRIPT (Voiceover): Write an aggressive HINDI script (MINIMUM 60 WORDS). FIRST sentence MUST be a shocking 3-second hook.
-    2. CAPTIONS: Write 8 short, punchy captions strictly in ENGLISH ALPHABETS.
+    1. SCRIPT (Voiceover): Write an aggressive HINDI script (MINIMUM 60 WORDS). 
+       - The FIRST sentence MUST be a shocking 3-second hook.
+       - Keep the energy high and build extreme suspense.
+    2. CAPTIONS (On-screen text): Write 8 short, punchy captions strictly in ENGLISH ALPHABETS.
     3. PROMPTS (English): 8 image generation prompts.
     """
 
     if is_gadget:
         prompt += """
     - SCRIPT ENDING: The script MUST end EXACTLY with: 'यह शानदार गैजेट अभी खरीदने का लिंक चैनल के बायो में है।'
-    - AMAZON SEARCH TERM RULE: MUST be a simple, highly searchable real product name (e.g., 'Smart Watch', 'Spice Rack', 'Car Vacuum Cleaner'). Do NOT write abstract phrases.
+    - AMAZON SEARCH TERM RULE: MUST be a simple, highly searchable real product name on Amazon India (e.g., 'Smart Watch', 'Spice Rack', 'Car Vacuum Cleaner'). Do NOT write abstract phrases.
         """
     else:
         prompt += """
@@ -66,7 +70,7 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
     prompt += """
     Return ONLY valid JSON format exactly like this:
     {
-      "topic": "your unique topic name",
+      "topic": "your unique viral topic name",
       "script": "Hindi script here...",
       "captions": ["AMAZING FACT!", "LOOK AT THIS", "WAIT FOR IT...", "SHOCKING", "Caption 5", "Caption 6", "Caption 7", "Link in Bio!"],
       "prompts": ["Image 1 prompt", "Image 2 prompt", "Image 3 prompt", "Image 4 prompt", "Image 5 prompt", "Image 6 prompt", "Image 7 prompt", "Image 8 prompt"],
@@ -77,7 +81,7 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
     
-    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "system", "content": "Output only JSON."}, {"role": "user", "content": prompt}], "temperature": 0.7}
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "system", "content": "Output only JSON."}, {"role": "user", "content": prompt}], "temperature": 0.8}
     for attempt in range(3):
         try:
             response = requests.post(url, headers=headers, json=data, timeout=50)
@@ -90,10 +94,10 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
                 if script:
                     print(f"🎯 सफलता! नया टॉपिक मिला: {parsed_data.get('topic')}")
                     return script.replace("*", ""), parsed_data.get('prompts', [])[:8], parsed_data.get('captions', [])[:8], parsed_data.get('amazon_search_term', '')
-        except: time.sleep(2)
+        except Exception as e: time.sleep(2)
     raise Exception("🚨 70B मॉडल फेल हो गया!")
 
-# 🟢 सख्त नियम: गैजेट्स के लिए 100% असली अमेज़न फोटो ही चाहिए, कोई AI शॉर्टकट नहीं!
+# 🟢 100% असली अमेज़न फोटो का कड़ा नियम
 def fetch_amazon_images_strict(query):
     print(f"🛒 अमेज़न (India) से '{query}' की बिल्कुल असली तस्वीरें निकाली जा रही हैं...")
     if not RAPIDAPI_KEY:
@@ -128,13 +132,13 @@ def fetch_amazon_images_strict(query):
     except Exception as e:
         raise Exception(f"अमेज़न से असली फोटो लाने में फेल: {e}")
 
-# मिस्ट्री चैनल के लिए AI फोटो (यहाँ असली फोटो की ज़रूरत नहीं है)
+# 🟢 मिस्ट्री चैनल के लिए AI फोटो (यहाँ लिमिट बचेगी)
 def fetch_ai_images(prompts):
     print("🌌 मिस्ट्री चैनल के लिए AI तस्वीरें जनरेट हो रही हैं...")
     image_files = []
     seed = random.randint(1000, 99999) 
     for i, p in enumerate(prompts):
-        safe_prompt = urllib.parse.quote(p + ", highly detailed, cinematic, 8k, textless")
+        safe_prompt = urllib.parse.quote(p + ", highly detailed, cinematic, 8k, textless, mind-bending")
         url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1080&height=1920&nologo=true&seed={seed+i}"
         filename = f"ai_scene_{i}.jpg"
         for attempt in range(3): 
@@ -161,6 +165,7 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
+# 🟢 पीले डब्बों का 100% इलाज 
 def create_centered_text_clip(text, duration):
     canvas_w, canvas_h = 1080, 400
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
@@ -238,7 +243,6 @@ def upload_video(token, filename, title, description, tags, category):
     request.execute()
 
 def run_channel_safely(channel_type):
-    # अगर एरर आएगा, तो मशीन 5 बार अलग-अलग प्रोडक्ट ट्राई करेगी ताकि वीडियो बन सके!
     for attempt in range(5):
         try:
             if channel_type == "GADGETS":
@@ -246,7 +250,7 @@ def run_channel_safely(channel_type):
                 hook = random.choice(GADGET_HOOKS)
                 script, prompts, captions, amazon_term = get_script_and_prompts(hook, is_gadget=True)
                 
-                # 🟢 सिर्फ 100% असली फोटो, वरना एरर दे देगा और दोबारा ट्राई करेगा
+                # 🟢 सिर्फ असली फोटो, अगर नहीं मिली तो एरर देकर 5 बार दूसरा प्रोडक्ट ढूंढेगा
                 image_files = fetch_amazon_images_strict(amazon_term) 
                 
                 create_human_voice(script, "voice_gadget.mp3")
@@ -276,7 +280,7 @@ def run_channel_safely(channel_type):
     sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 मास्टर ब्रह्मास्त्र (Strict Amazon Mode) चालू हो गया है...")
+    print("🚀 मास्टर ब्रह्मास्त्र (Strict Amazon Mode & Fixed Captions) चालू हो गया है...")
     run_channel_safely("GADGETS")
     time.sleep(30)
     run_channel_safely("MYSTIC")
