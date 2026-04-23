@@ -18,7 +18,7 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install System Dependencies (ImageMagick, Fonts & Raqm for Perfect Hindi)
+    - name: Install System Dependencies (ImageMagick, Fonts)
       run: |
         sudo apt-get update -y
         sudo apt-get install -y imagemagick fonts-indic fonts-noto-core libraqm-dev
