@@ -132,7 +132,7 @@ def fetch_amazon_images_strict(query):
     except Exception as e:
         raise Exception(f"अमेज़न से असली फोटो लाने में फेल: {e}")
 
-# 🟢 मिस्ट्री चैनल के लिए AI फोटो (यहाँ लिमिट बचेगी)
+# 🟢 मिस्ट्री चैनल के लिए AI फोटो
 def fetch_ai_images(prompts):
     print("🌌 मिस्ट्री चैनल के लिए AI तस्वीरें जनरेट हो रही हैं...")
     image_files = []
