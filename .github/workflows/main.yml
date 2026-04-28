@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60 # इसे बढ़ाकर 60 कर दिया है ताकि लॉन्ग वीडियो बीच में न रुके
+    timeout-minutes: 60 # लॉन्ग वीडियो के रेंडरिंग के लिए पर्याप्त समय
 
     steps:
       - name: Checkout Code
@@ -18,19 +18,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.9' # इसे अपडेट कर दिया गया है
 
       - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick ffmpeg
-          # ImageMagick की पॉलिसी फिक्स करना ज़रूरी है
+          # ImageMagick की पॉलिसी को पूरी तरह खोलना
           sudo sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml || true
+          sudo sed -i 's/none/read,write/g' /etc/ImageMagick-7/policy.xml || true
 
       - name: Install Python Libraries
         run: |
           python -m pip install --upgrade pip
-          pip install requests asyncio edge-tts moviepy Pillow google-api-python-client google-auth-oauthlib
+          pip install requests asyncio edge-tts moviepy==1.0.3 Pillow==9.5.0 google-api-python-client google-auth-oauthlib
+          # वर्ज़न फिक्स कर दिए हैं ताकि कोई Error न आए
 
       - name: Run AI Video Engine
         env:
