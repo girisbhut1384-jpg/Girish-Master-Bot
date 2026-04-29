@@ -1,44 +1,41 @@
-name: 24/7 AI Video Factory Pro
+name: Auto YouTube Shorts Generator
 
 on:
   schedule:
     - cron: '0 */6 * * *' # हर 6 घंटे में शॉर्ट्स के लिए
-    - cron: '30 16 * * *' # रात 10:00 PM IST पर लॉन्ग वीडियो के लिए (UTC 16:30)
-  workflow_dispatch: # ताकि आप हाथ से भी चालू कर सकें
+    - cron: '30 16 * * *' # रात 10:00 PM IST पर लॉन्ग वीडियो के लिए (16:30 UTC)
+  workflow_dispatch:
 
 jobs:
-  build:
+  build_and_upload:
     runs-on: ubuntu-latest
-    timeout-minutes: 60 # लॉन्ग वीडियो के रेंडरिंग के लिए पर्याप्त समय
+    timeout-minutes: 90 # लॉन्ग वीडियो के लिए ज़्यादा समय
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    - name: Checkout Repository
+      uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9' # इसे अपडेट कर दिया गया है
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick ffmpeg
-          # ImageMagick की पॉलिसी को पूरी तरह खोलना
-          sudo sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml || true
-          sudo sed -i 's/none/read,write/g' /etc/ImageMagick-7/policy.xml || true
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y imagemagick fonts-indic fonts-noto-core libraqm-dev
+        sudo rm -f /etc/ImageMagick-6/policy.xml
+        sudo rm -f /etc/ImageMagick-7/policy.xml
 
-      - name: Install Python Libraries
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests asyncio edge-tts moviepy==1.0.3 Pillow==9.5.0 google-api-python-client google-auth-oauthlib
-          # वर्ज़न फिक्स कर दिए हैं ताकि कोई Error न आए
+    - name: Install Python Libraries
+      run: |
+        pip install requests edge-tts moviepy==1.0.3 pillow==9.5.0 google-api-python-client google-auth-oauthlib google-auth-httplib2 urllib3==1.26.15
 
-      - name: Run AI Video Engine
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
-        run: python main.py
+    - name: Run Video Generator Script
+      env:
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
+      run: python main.py
