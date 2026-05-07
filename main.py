@@ -9,6 +9,7 @@ import json
 import random
 import re
 import textwrap
+import io  # 🟢 UPDATE: यह लाइन छूट गई थी, अब जोड़ दी गई है!
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 if not hasattr(Image, 'Resampling'):
@@ -90,7 +91,7 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.8} # Temperature badhaya variety ke liye
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.8}
     
     for attempt in range(3):
         try:
@@ -104,7 +105,6 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
     raise Exception("🚨 AI Model Failed!")
 
 def fetch_amazon_images_strict(query):
-    # 🟢 UPDATE: Query saaf kar di taki API error na de
     clean_query = re.sub(r'[^a-zA-Z0-9 ]', '', str(query)).strip()
     print(f"🛒 Amazon se '{clean_query}' ki photos nikali ja rahi hain...")
     if not RAPIDAPI_KEY: raise Exception("⚠️ RAPIDAPI_KEY Missing!")
@@ -162,7 +162,6 @@ def create_centered_text_clip(text, duration):
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     
-    # 🟢 UPDATE: Font aur bada kiya gaya hai viral look ke liye
     try: font = ImageFont.truetype("Roboto-Black.ttf", 150) 
     except: font = ImageFont.load_default()
         
@@ -175,7 +174,6 @@ def create_centered_text_clip(text, duration):
         
     x, y = (canvas_w - text_w) // 2, (canvas_h - text_h) // 2
     
-    # Yellow text with Thick Black Outline (Stroke)
     draw.multiline_text((x, y), wrapped_text, font=font, fill="#FFE81F", stroke_width=10, stroke_fill="black", align='center')
     
     temp_filename = f"temp_caption_{random.randint(10000, 99999)}.png"
@@ -255,7 +253,6 @@ def run_channel_safely(channel_type):
                 create_human_voice(script, "voice_gadget.mp3")
                 make_video(image_files, captions, "final_gadget.mp4", "voice_gadget.mp3")
                 
-                # 🟢 UPDATE: असली अमेज़न लिंक यहाँ जेनरेट होगा
                 clean_term = re.sub(r'[^a-zA-Z0-9 ]', '', str(amazon_term)).strip()
                 amz_link = f"https://www.amazon.in/s?k={urllib.parse.quote(clean_term)}&tag=girishbhut07-21"
                 
@@ -270,7 +267,6 @@ def run_channel_safely(channel_type):
                 create_human_voice(script, "voice_mystic.mp3")
                 make_video(image_files, captions, "final_mystic.mp4", "voice_mystic.mp3")
                 
-                # 🟢 Mystic ke liye general link
                 general_link = "https://www.amazon.in/?tag=girishbhut07-21"
                 desc = f"🔥 👉 रहस्यमयी किताबें और गैजेट्स यहाँ देखें: {general_link}\n\n{script}"
                 
