@@ -12,19 +12,19 @@ import textwrap
 import io  
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-if not hasattr(Image, 'Resampling'):
-    Image.Resampling = getattr(Image, 'LANCZOS', 1)
+# 🟢 PIL Fixes
+if not hasattr(Image, 'ANTIALIAS'): Image.ANTIALIAS = getattr(Image, 'LANCZOS', 1)
+if not hasattr(Image, 'Resampling'): Image.Resampling = getattr(Image, 'LANCZOS', 1)
 
-# 🟢 UPDATE: Latin-1 एरर को रोकने के लिए पक्का फिक्स
+# 🟢 Unicode Hindi Fix
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip
 
-print("🔓 5-Channel Smart Delay Setup chalu ho raha hai...")
+print("🚀 5-Channel Superfast 2-Part System Active!")
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
-# 100% Pukka Font Downloader
 if not os.path.exists("Roboto-Black.ttf"):
     os.system("wget -qO Roboto-Black.ttf https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Black.ttf")
 
@@ -44,14 +44,13 @@ if not GROQ_KEY:
     print("❌ Error: GROQ_API_KEY nahi mili!")
     sys.exit(1)
 
-# 🟢 Links & Comments
+# 🟢 Links & Hooks
 AMAZON_TAG = "girishbhut07-21"
 GUMROAD_LINK = "https://girisbhut.gumroad.com/l/ajhzk"
 MARKETING_COMMENT = f"🔥 अपना खुद का ऑटोमैटिक AI चैनल शुरू करें और सोते हुए कमाई करें! कोड यहाँ से डाउनलोड करें: {GUMROAD_LINK}"
 
-# 🟢 Hooks Variety
-GADGET_HOOKS = ["Secret Amazon Hacks", "Crazy Gadgets Under 500", "Smart Home Magic", "Genius Survival Tools"]
-MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Time Travel Proof", "Creepy Historical Events"]
+GADGET_HOOKS = ["Secret Amazon Hacks", "Crazy Gadgets Under 500", "Smart Home Magic", "Genius Survival Tools", "Car Gadgets You Need", "Hidden Kitchen Tech"]
+MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Ghost Towns of India", "Time Travel Proof", "Dark Web Secrets", "Creepy Historical Events"]
 WEALTH_HOOKS = ["Make Money Sleeping", "Quit 9 to 5 Job", "Passive Income Secret", "AI Robot Earning"]
 ZEROTOUCH_HOOKS = ["Zero Editing Needed", "No Camera YouTube", "Magic AI Tool", "100% Autopilot System"]
 EMPIRE_HOOKS = ["AI Running My Channel", "Robots Doing Hard Work", "Stop Manual Editing", "Tech Future Now"]
@@ -61,8 +60,9 @@ def extract_json_safely(raw_text):
     return match.group(0) if match else "{}"
 
 def get_script_and_prompts(channel_type, hook_theme):
-    print(f"\n✅ AI Engine 40+ second ki dumdaar script likh raha hai ({channel_type})...")
+    print(f"\n✅ AI Engine script likh raha hai ({channel_type} - {hook_theme})...")
     
+    # 🟢 V14 SPEED: Now asking for EXACTLY 6 captions and 6 prompts
     if channel_type == "GADGETS":
         prompt = f"""You are a top Amazon affiliate marketer. THEME: "{hook_theme}". WRITE A 90-100 WORD HINDI SCRIPT.
         RULES: 1. NO INTRO. SHOCKING 3-SEC HOOK! 2. Describe frustrating problem. 3. Reveal product. 
@@ -76,36 +76,36 @@ def get_script_and_prompts(channel_type, hook_theme):
     elif channel_type == "WEALTH":
         prompt = f"""You are selling an AI YouTube automation bot. THEME: "{hook_theme}". WRITE A 90-100 WORD HINDI SCRIPT.
         RULES: 1. NO INTRO. Hook about passive income and relaxing at home while AI works. 
-        2. NO MENTION OF SURAT OR CODE LINES. Emphasize freedom from 9 to 5.
+        2. NO MENTION OF CITIES OR CODE LINES. Emphasize freedom from 9 to 5.
         3. END EXACTLY WITH: 'मेरा यह ऑटोमैटिक AI सेटअप अभी डाउनलोड करें! लिंक डिस्क्रिप्शन और कमेंट में है!'
-        AMAZON SEARCH TERM: Leave empty (""). PROMPTS: 8 images about luxury, robots working, passive income."""
+        AMAZON SEARCH TERM: Leave empty ("")."""
     elif channel_type == "ZEROTOUCH":
         prompt = f"""You are selling an AI YouTube automation bot. THEME: "{hook_theme}". WRITE A 90-100 WORD HINDI SCRIPT.
         RULES: 1. NO INTRO. Hook about running a channel with ZERO camera and ZERO editing.
         2. NO MENTION OF CITIES OR CODE LINES. Highlight the magic of the AI tool doing all the work.
         3. END EXACTLY WITH: 'यह सीक्रेट ऑटोमेशन कोड अभी डाउनलोड करें, लिंक डिस्क्रिप्शन और कमेंट बॉक्स में है!'
-        AMAZON SEARCH TERM: Leave empty (""). PROMPTS: 8 images about futuristic technology, hacker screens, money raining."""
+        AMAZON SEARCH TERM: Leave empty ("")."""
     elif channel_type == "EMPIRE":
         prompt = f"""You are selling an AI YouTube automation bot. THEME: "{hook_theme}". WRITE A 90-100 WORD HINDI SCRIPT.
         RULES: 1. NO INTRO. Hook proving that an AI robot can run channels automatically and get Amazon sales.
         2. NO MENTION OF CITIES OR CODE LINES. Challenge people who still edit manually.
         3. END EXACTLY WITH: 'मेरा पूरा रेडी-टू-अर्न सेटअप डाउनलोड करें और आज ही अपना चैनल शुरू करें! लिंक डिस्क्रिप्शन और कमेंट में है!'
-        AMAZON SEARCH TERM: Leave empty (""). PROMPTS: 8 images about AI brains, YouTube analytics going up, money."""
+        AMAZON SEARCH TERM: Leave empty ("")."""
 
     prompt += """
-    Return ONLY valid JSON:
+    Return ONLY valid JSON with EXACTLY 6 captions and 6 prompts:
     {
       "topic": "viral topic name",
       "script": "Hindi script here (min 90 words)...",
-      "captions": ["SHOCKING", "DAILY PROBLEM", "THE SOLUTION", "WAIT FOR IT", "AMAZING TECH", "MIND BLOWN", "STOCK ENDING", "LINK IN BIO"],
-      "prompts": ["Image 1", "Image 2", "Image 3", "Image 4", "Image 5", "Image 6", "Image 7", "Image 8"],
+      "captions": ["Caption 1", "Caption 2", "Caption 3", "Caption 4", "Caption 5", "Caption 6"],
+      "prompts": ["Image 1", "Image 2", "Image 3", "Image 4", "Image 5", "Image 6"],
       "amazon_search_term": "Product name"
     }
     """
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.8}
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.5}
     
     for attempt in range(3):
         try:
@@ -114,13 +114,13 @@ def get_script_and_prompts(channel_type, hook_theme):
                 parsed = json.loads(extract_json_safely(response.json()['choices'][0]['message']['content']))
                 if parsed.get('script'):
                     print(f"🎯 Script Ready for {channel_type}!")
-                    return parsed['script'].replace("*", ""), parsed['prompts'][:8], parsed['captions'][:8], parsed.get('amazon_search_term', 'Gadget')
+                    return parsed['script'].replace("*", ""), parsed['prompts'][:6], parsed['captions'][:6], parsed.get('amazon_search_term', 'Gadget')
         except: time.sleep(5)
     raise Exception(f"🚨 AI Model Failed for {channel_type}!")
 
 def fetch_amazon_images_strict(query, channel_type):
     clean_query = re.sub(r'[^a-zA-Z0-9 ]', '', str(query)).strip()
-    print(f"🛒 Amazon se '{clean_query}' ki photos nikali ja rahi hain...")
+    print(f"🛒 Amazon se '{clean_query}' ki photos nikal rahi hain...")
     if not RAPIDAPI_KEY: raise Exception("⚠️ RAPIDAPI_KEY Missing!")
     url, headers = "https://real-time-amazon-data.p.rapidapi.com/search", {"x-rapidapi-key": RAPIDAPI_KEY, "x-rapidapi-host": "real-time-amazon-data.p.rapidapi.com"}
     image_files = []
@@ -128,7 +128,7 @@ def fetch_amazon_images_strict(query, channel_type):
         response = requests.get(url, headers=headers, params={"query": clean_query, "page": "1", "country": "IN", "sort_by": "RELEVANCE"}, timeout=40)
         if response.status_code == 200:
             for i, prod in enumerate(response.json().get("data", {}).get("products", [])):
-                if len(image_files) >= 8: break
+                if len(image_files) >= 6: break # 🟢 Max 6 images for V14 Speed
                 photo_url = prod.get("product_photo")
                 if photo_url:
                     img_res = requests.get(photo_url, timeout=15)
@@ -206,7 +206,7 @@ def process_image_for_video(img_path, output_path):
     return output_path
 
 def make_video(image_files, captions, final_vid, audio_file, channel_type):
-    print("✅ Professional Video Render ho raha hai...")
+    print("✅ Professional Video Render ho raha hai (V14 Speed Mode)...")
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
     time_per_image = audio_duration / len(image_files)
@@ -229,12 +229,12 @@ def make_video(image_files, captions, final_vid, audio_file, channel_type):
         
     video = concatenate_videoclips(clips, method="compose")
     final = video.set_audio(main_audio).subclip(0, audio_duration)
-    # 🟢 Threads=4 lagaya hai taaki render fast ho
-    final.write_videofile(final_vid, fps=30, codec="libx264", audio_codec="aac", preset="ultrafast", threads=4, logger=None)
+    # 🟢 V14 SPEED: fps=24, threads=4
+    final.write_videofile(final_vid, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", threads=4, logger=None)
     main_audio.close()
     video.close()
-    # 🟢 UPDATE: Yahan se 'final.close()' hata diya gaya hai jisse error aata tha
 
+# 🟢 AUTO-COMMENT FUNCTION INTEGRATED
 def upload_video_and_comment(token, filename, title, description, tags, category, auto_comment=""):
     if not token:
         print("⚠️ Token missing, skipping upload.")
@@ -267,7 +267,7 @@ def upload_video_and_comment(token, filename, title, description, tags, category
             print(f"⚠️ Comment fail hua (par video dal gaya): {e}")
 
 def run_channel_safely(channel_type):
-    for attempt in range(3):
+    for attempt in range(2): 
         try:
             print(f"\n🚀 Starting Process for {channel_type}")
             if channel_type == "GADGETS":
@@ -326,22 +326,22 @@ def run_channel_safely(channel_type):
 
 if __name__ == "__main__":
     print("\n" + "="*50)
-    print("🚀 PHASE 1: Purane Channels (Gadgets aur Mystic)")
+    print("🚀 PHASE 1: Purane Regular Channels (Gadgets & Mystic)")
     print("="*50)
     
     run_channel_safely("GADGETS")
     time.sleep(30)
     run_channel_safely("MYSTIC")
 
-    # 🟢 30 Minute ka Smart Delay (1800 seconds)
+    # 🟢 15 Minute ka Smart Delay (900 seconds)
     print("\n" + "="*50)
-    print("⏳ MACHINE 30 MINUTE KA AARAM LE RAHI HAI...")
-    print("👉 Fayda: YouTube Spam nahi manega aur API limit bachegi!")
+    print("⏳ SMART BREAK: Machine 15 minute ke liye shant ho rahi hai...")
+    print("👉 Fayda: YouTube Spam nahi manega aur GitHub ki limit bhi nahi tutegi!")
     print("="*50)
     
-    for i in range(30, 0, -1):
-        print(f"⏳ Baki samay: {i} minute...")
-        time.sleep(60) # 1 minute rukega, phir message print karega
+    for i in range(15, 0, -1):
+        print(f"⏳ Phase 2 shuru hone mein samay baki: {i} minute...")
+        time.sleep(60) 
 
     print("\n" + "="*50)
     print("🚀 PHASE 2: Naye AI Marketing Channels (Gumroad Sales)")
@@ -353,4 +353,4 @@ if __name__ == "__main__":
     time.sleep(30)
     run_channel_safely("EMPIRE")
     
-    print("\n✅ MISSION SUCCESSFUL! Sabhi 5 channels par video upload ho chuke hain.")
+    print("\n✅ MISSION SUCCESSFUL! 5-Channel Superfast Upload Complete!")
