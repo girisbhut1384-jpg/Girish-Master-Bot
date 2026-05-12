@@ -141,7 +141,9 @@ def fetch_amazon_images_strict(query, channel_type):
     except Exception as e: raise Exception(f"Amazon Fail: {e}")
 
 def fetch_ai_images(prompts, channel_type):
-    image_files, seed = random.randint(1000, 99999), []
+    # 🟢 यह रहा वो बग जो फिक्स कर दिया गया है! 
+    image_files = []
+    seed = random.randint(1000, 99999)
     headers = {"User-Agent": "Mozilla/5.0"}
     for i, p in enumerate(prompts):
         url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + ', highly detailed, 8k')}?width=1080&height=1920&nologo=true&seed={seed+i}"
@@ -273,7 +275,7 @@ def run_channel_safely(channel_type):
                 try:
                     image_files = fetch_amazon_images_strict(amazon_term, channel_type) 
                 except Exception as e:
-                    print(f"⚠️ Amazon API Failed ({e}). Gadgets skip kar rahe hain, machine crash nahi hogi!")
+                    print(f"⚠️ Amazon API Failed (Amazon Fail: ⚠️ API Error). Gadgets skip kar rahe hain, machine crash nahi hogi!")
                     return False
                     
                 create_human_voice(script, f"voice_{channel_type}.mp3")
