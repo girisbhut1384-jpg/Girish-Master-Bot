@@ -2,12 +2,13 @@ name: Auto YouTube Shorts Generator
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
+    - cron: '0 */6 * * *' # हर 6 घंटे में मशीन अपने-आप चलेगी
+  workflow_dispatch: # बटन दबाकर खुद चलाने की सुविधा
 
 jobs:
   build_and_upload:
     runs-on: ubuntu-latest
+    timeout-minutes: 120 # 🟢 गिटहब को 120 मिनट तक चलने की अनुमति
 
     steps:
     - name: Checkout Repository
@@ -18,22 +19,30 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install System Dependencies (ImageMagick, Fonts)
+    - name: Install System Dependencies
       run: |
-        sudo apt-get update -y
-        sudo apt-get install -y imagemagick fonts-indic fonts-noto-core libraqm-dev
-        sudo rm -f /etc/ImageMagick-6/policy.xml
-        sudo rm -f /etc/ImageMagick-7/policy.xml
+        sudo apt-get update
+        sudo apt-get install -y imagemagick
 
     - name: Install Python Libraries
+      # 🟢 moviepy का पुराना वर्ज़न फिक्स किया है ताकि एरर न आए
       run: |
-        pip install requests edge-tts moviepy==1.0.3 pillow==9.5.0 google-api-python-client google-auth-oauthlib google-auth-httplib2 urllib3==1.26.15
+        pip install requests moviepy==1.0.3 edge_tts pillow google-api-python-client google-auth-oauthlib google-auth
 
     - name: Run Video Generator Script
       env:
+        # 🟢 मुख्य चाबियाँ
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        
+        # 🟢 पुराने 2 चैनलों के टोकन
         YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
+        
+        # 🟢 नए 3 AI मार्केटिंग चैनलों के टोकन
+        YOUTUBE_TOKEN_EMPIRE: ${{ secrets.YOUTUBE_TOKEN_EMPIRE }}
+        YOUTUBE_TOKEN_WEALTH: ${{ secrets.YOUTUBE_TOKEN_WEALTH }}
+        YOUTUBE_TOKEN_ZEROTOUCH: ${{ secrets.YOUTUBE_TOKEN_ZEROTOUCH }}
+        
       run: python main.py
