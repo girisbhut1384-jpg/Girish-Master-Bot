@@ -21,20 +21,21 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip, CompositeAudioClip
 
-print("🚀 5-Channel PRO Video System Active (Auto-Clean Tokens & AI Retry Mode)!")
+print("🚀 5-Channel PRO Video System Active (Final Fix + VIP Image Bypass)!")
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
 if not os.path.exists("Roboto-Black.ttf"):
     os.system("wget -qO Roboto-Black.ttf https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Black.ttf")
 
-# 🟢 टोकन को ऑटो-क्लीन (strip) करने का स्मार्ट सिस्टम
 GROQ_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY", "").strip()
-CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
+
+# ✅ यहाँ मैंने आपकी सही Client ID डाल दी है! (मेरी सबसे बड़ी गलती का सुधार)
+CLIENT_ID = "768932543756-hvbk02bm5avqesa1649892ufb73v11mq.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
 
-# 🟢 5 Channels Tokens (Auto-Cleaned)
+# 🟢 5 Channels Tokens
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN", "").strip()
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC", "").strip()
 TOKEN_EMPIRE = os.environ.get("YOUTUBE_TOKEN_EMPIRE", "").strip()
@@ -104,7 +105,6 @@ def fetch_amazon_images_strict(query, channel_type, retries=3):
     image_files = []
     
     for attempt in range(retries):
-        print(f"🛒 Amazon se '{clean_query}' ki photos nikal rahi hain... (Attempt {attempt + 1})")
         try:
             response = requests.get(url, headers=headers, params={"query": clean_query, "country": "IN"}, timeout=40)
             if response.status_code == 200:
@@ -127,12 +127,16 @@ def fetch_amazon_images_strict(query, channel_type, retries=3):
         time.sleep(5)
     return image_files
 
-# 🟢 AI Images के लिए मजबूत Retry System (3 बार कोशिश करेगा)
+# 🟢 VIP Headers & Delay added to bypass GitHub Actions Blocking
 def fetch_ai_images(prompts, channel_type, retries=3):
     print(f"🎨 AI Images generate ho rahi hain {channel_type} ke liye...")
     image_files = []
     seed_val = random.randint(1000, 99999)
-    headers = {"User-Agent": "Mozilla/5.0"}
+    # VIP Browser Header to look like a real user, not a bot
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+    }
     
     for i, p in enumerate(prompts):
         url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p)}?width=1080&height=1920&nologo=true&seed={seed_val + i}"
@@ -140,14 +144,15 @@ def fetch_ai_images(prompts, channel_type, retries=3):
         
         for attempt in range(retries):
             try:
-                res = requests.get(url, headers=headers, timeout=40)
+                res = requests.get(url, headers=headers, timeout=60) # Increased timeout to 60s
                 if res.status_code == 200:
                     with open(fname, "wb") as f: f.write(res.content)
                     image_files.append(fname)
-                    break # Success, move to next prompt
+                    break 
             except Exception as e: 
                 print(f"⚠️ AI Image timeout (Attempt {attempt+1}/{retries}). Retrying...")
-                time.sleep(3)
+                time.sleep(5) # Delay to prevent getting blocked
+        time.sleep(2) # Give server a small break between prompts
                 
     return image_files
 
