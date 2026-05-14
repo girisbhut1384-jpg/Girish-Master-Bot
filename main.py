@@ -21,24 +21,25 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip, CompositeAudioClip
 
-print("🚀 5-Channel PRO Video Editing System Active (Hormozi Captions + Zoom Effect)!")
+print("🚀 5-Channel PRO Video System Active (Auto-Clean Tokens & AI Retry Mode)!")
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
 if not os.path.exists("Roboto-Black.ttf"):
     os.system("wget -qO Roboto-Black.ttf https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Black.ttf")
 
-GROQ_KEY = os.environ.get("GROQ_API_KEY")
-RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY") 
+# 🟢 टोकन को ऑटो-क्लीन (strip) करने का स्मार्ट सिस्टम
+GROQ_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY", "").strip()
 CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
-CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
 
-# 🟢 5 Channels Tokens
-TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
-TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
-TOKEN_EMPIRE = os.environ.get("YOUTUBE_TOKEN_EMPIRE")
-TOKEN_ZEROTOUCH = os.environ.get("YOUTUBE_TOKEN_ZEROTOUCH")
-TOKEN_WEALTH = os.environ.get("YOUTUBE_TOKEN_WEALTH")
+# 🟢 5 Channels Tokens (Auto-Cleaned)
+TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN", "").strip()
+TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC", "").strip()
+TOKEN_EMPIRE = os.environ.get("YOUTUBE_TOKEN_EMPIRE", "").strip()
+TOKEN_ZEROTOUCH = os.environ.get("YOUTUBE_TOKEN_ZEROTOUCH", "").strip()
+TOKEN_WEALTH = os.environ.get("YOUTUBE_TOKEN_WEALTH", "").strip()
 
 if not GROQ_KEY:
     print("❌ Error: GROQ_API_KEY nahi mili!")
@@ -126,24 +127,33 @@ def fetch_amazon_images_strict(query, channel_type, retries=3):
         time.sleep(5)
     return image_files
 
-def fetch_ai_images(prompts, channel_type):
+# 🟢 AI Images के लिए मजबूत Retry System (3 बार कोशिश करेगा)
+def fetch_ai_images(prompts, channel_type, retries=3):
+    print(f"🎨 AI Images generate ho rahi hain {channel_type} ke liye...")
     image_files = []
     seed_val = random.randint(1000, 99999)
     headers = {"User-Agent": "Mozilla/5.0"}
+    
     for i, p in enumerate(prompts):
         url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p)}?width=1080&height=1920&nologo=true&seed={seed_val + i}"
         fname = f"ai_scene_{channel_type}_{i}.jpg"
-        try:
-            res = requests.get(url, headers=headers, timeout=30)
-            if res.status_code == 200:
-                with open(fname, "wb") as f: f.write(res.content)
-                image_files.append(fname)
-        except: pass
+        
+        for attempt in range(retries):
+            try:
+                res = requests.get(url, headers=headers, timeout=40)
+                if res.status_code == 200:
+                    with open(fname, "wb") as f: f.write(res.content)
+                    image_files.append(fname)
+                    break # Success, move to next prompt
+            except Exception as e: 
+                print(f"⚠️ AI Image timeout (Attempt {attempt+1}/{retries}). Retrying...")
+                time.sleep(3)
+                
     return image_files
 
 def create_human_voice(text, filename):
     async def _generate():
-        communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+15%") # 🟢 आवाज़ को थोड़ा फ़ास्ट (Pattern Interrupt) किया
+        communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+15%") 
         await communicate.save(filename)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -153,12 +163,11 @@ def create_centered_text_clip(text, duration, channel_type, text_color="#FFE81F"
     canvas_w, canvas_h = 1080, 800
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    try: font = ImageFont.truetype("Roboto-Black.ttf", 160) # 🟢 फॉन्ट साइज़ बड़ा किया
+    try: font = ImageFont.truetype("Roboto-Black.ttf", 160)
     except: font = ImageFont.load_default()
     wrapped_text = textwrap.fill(text.upper(), width=10)
     bbox = draw.multiline_textbbox((0, 0), wrapped_text, font=font, align='center')
     text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    # 🟢 हॉरमोज़ी स्टाइल कलर और शैडो
     draw.multiline_text(((canvas_w - text_w) // 2, (canvas_h - text_h) // 2), wrapped_text, font=font, fill=text_color, stroke_width=12, stroke_fill="black", align='center')
     temp_filename = f"temp_cap_{channel_type}_{random.randint(100,999)}.png"
     img.save(temp_filename)
@@ -169,8 +178,6 @@ def make_video(image_files, script, final_vid, audio_file, channel_type):
         raise ValueError(f"❌ Error: {channel_type} ke liye images download nahi hui!")
         
     main_audio = AudioFileClip(audio_file)
-    
-    # 🎵 BGM Logic: अगर गिटहब में bgm.mp3 फाइल है, तो उसे आवाज़ के साथ मिक्स करेगा
     bgm_path = f"bgm_{channel_type}.mp3"
     if os.path.exists(bgm_path):
         bgm = AudioFileClip(bgm_path).volumex(0.1).set_duration(main_audio.duration)
@@ -178,7 +185,6 @@ def make_video(image_files, script, final_vid, audio_file, channel_type):
     else:
         final_audio = main_audio
 
-    # 🎬 1. Visuals & Zoom Effect
     dur_per_img = main_audio.duration / len(image_files)
     base_clips = []
     for i, img_path in enumerate(image_files):
@@ -190,28 +196,24 @@ def make_video(image_files, script, final_vid, audio_file, channel_type):
         fixed_path = f"f_{channel_type}_{i}.jpg"
         bg.save(fixed_path)
         
-        # 🟢 Ken Burns (Zoom-in) Effect
         clip = ImageClip(fixed_path).set_duration(dur_per_img)
         clip = clip.resize(lambda t: 1 + 0.02 * t).set_position(('center', 'center'))
         base_clips.append(clip)
         
     base_video = concatenate_videoclips(base_clips)
 
-    # 📝 2. Hormozi Fast-Paced Word-by-Word Captions
     words = script.split()
-    chunk_size = 2 # 🟢 हर 2 शब्द एक साथ स्क्रीन पर आएंगे (तेज़ स्पीड के लिए)
+    chunk_size = 2 
     chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
     dur_per_chunk = main_audio.duration / len(chunks)
     
     text_clips = []
     for i, chunk in enumerate(chunks):
-        # 🟢 रंग बदलें: एक बार पीला, एक बार हरा (Hormozi Style)
         color = "#FFE81F" if i % 2 == 0 else "#00FF00" 
         txt = create_centered_text_clip(chunk, dur_per_chunk, channel_type, color)
         txt = txt.set_start(i * dur_per_chunk).set_position(('center', 'center'))
         text_clips.append(txt)
 
-    # 🎬 3. फाइनल रेंडर (विज़ुअल + फास्ट टेक्स्ट + आवाज़/BGM)
     final = CompositeVideoClip([base_video] + text_clips).set_audio(final_audio)
     final.write_videofile(final_vid, fps=24, codec="libx264", preset="ultrafast", logger=None)
 
@@ -255,7 +257,7 @@ def run_channel_safely(channel_type):
             tokens = {"WEALTH": TOKEN_WEALTH, "ZEROTOUCH": TOKEN_ZEROTOUCH, "EMPIRE": TOKEN_EMPIRE}
             script, prompts, _ = get_script_and_prompts(channel_type, random.choice(WEALTH_HOOKS if channel_type=="WEALTH" else EMPIRE_HOOKS))
             imgs = fetch_ai_images(prompts, channel_type[0])
-            if not imgs: raise ValueError("AI Images failed.")
+            if not imgs: raise ValueError("AI Images failed after 3 retries.")
             create_human_voice(script, "v.mp3")
             make_video(imgs, script, "f.mp4", "v.mp3", channel_type[0])
             upload_video_and_comment(tokens[channel_type], "f.mp4", f"AI {channel_type} Money! #shorts", script, ["ai"], "28", MARKETING_COMMENT)
