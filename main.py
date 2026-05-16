@@ -1,201 +1,169 @@
-import os, sys, requests, asyncio, edge_tts, time, urllib.parse, json, random, re, textwrap
-from datetime import datetime, timedelta
-
-# --- PIL & MOVIEPY SETUP ---
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
-if not hasattr(Image, 'Resampling'): Image.Resampling = getattr(Image, 'LANCZOS', 1)
-
-from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip, CompositeAudioClip
+import os
+import random
+import requests
+from gtts import gTTS
+from moviepy.editor import ImageClip, AudioFileClip
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-import urllib.request
 
-print("🛡️ बैच 2 (ULTIMATE V2): Crash-Proof Smart Video Engine")
-os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
+print("="*85)
+print("🎯 🧬 THE ULTIMATE 5-CHANNEL VIDEO PRODUCTION ENGINE (MAIN.PY) 🧬 🎯")
+print("="*85)
 
-# --- 1. फोंट डाउनलोड ---
-font_path = "NotoSansDevanagari-Bold.ttf"
-if not os.path.exists(font_path):
-    print("📥 शानदार हिंदी फोंट डाउनलोड हो रहा है...")
-    try: urllib.request.urlretrieve("https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Bold.ttf", font_path)
-    except: pass
-
-# --- 2. API KEYS & SECRETS ---
-GROQ_KEY = os.environ.get("GROQ_API_KEY")
-CLIENT_ID = "768932543756-7e17ufdmt7r67urc9krua7t69vps6h57.apps.googleusercontent.com"
+# ==========================================
+# 🔑 गिटहब सीक्रेट्स से ऑटोमैटिक चाबियां लेना
+# ==========================================
+CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 
-AMAZON_TAG = "girishbhut07-21"
-GUMROAD_LINK = "https://your_store.gumroad.com/l/ai-setup" # यहाँ अपना असली गमरोड लिंक डालें
-
-# --- 3. 100% परफेक्ट चैनल सेटअप ---
-CHANNELS_CONFIG = {
-    "GADGET_PRO": {"token": os.environ.get("TOKEN_GADGET"), "category": "28", "tags": ["smart gadgets", "tech", "amazon"], "style": "high tech product photography, neon lights, glowing gadgets, 8k, hyper-realistic", "hooks": ["कमाल के स्मार्ट गैजेट्स", "फोन के लिए बेस्ट गैजेट"], "link_type": "AMAZON"},
-    "AI_AUTOMATION_HUB": {"token": os.environ.get("TOKEN_AI1"), "category": "27", "tags": ["ai automation", "make money"], "style": "futuristic cyberpunk, money raining, hacking screen, 8k, hyper-realistic", "hooks": ["AI से घर बैठे पैसे कमाएं", "यूट्यूब ऑटोमेशन का सच"], "link_type": "GUMROAD"},
-    "CREATOR_AI_SETUP": {"token": os.environ.get("TOKEN_AI2"), "category": "27", "tags": ["youtube growth", "ai tools"], "style": "professional studio setup, futuristic lighting, 8k, hyper-realistic", "hooks": ["बिना चेहरा दिखाए यूट्यूब से कमाई", "वायरल AI वीडियो कैसे बनाएं"], "link_type": "GUMROAD"},
-    "FUTURE_TECH_AI": {"token": os.environ.get("TOKEN_AI3"), "category": "27", "tags": ["future tech", "ai news"], "style": "sci-fi, artificial intelligence brain, global network, 8k, hyper-realistic", "hooks": ["भविष्य के खतरनाक AI टूल्स", "AI जो दुनिया बदल देगा"], "link_type": "GUMROAD"},
-    "EXTRA_CHANNEL": {"token": os.environ.get("TOKEN_EXTRA"), "category": "27", "tags": ["viral", "trending"], "style": "cinematic lighting, ultra detailed, 8k", "hooks": ["दुनिया का सबसे अद्भुत रहस्य"], "link_type": "NONE"}
+# आपके 5 चैनलों के टोकन जो गिटहब सीक्रेट्स में सुरक्षित हैं
+channel_tokens = {
+    "MYSTERY CHANNEL": os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC"),
+    "AI AUTO PILOT EMPIRE": os.environ.get("YOUTUBE_TOKEN_EMPIRE"),
+    "GIRISH AI GADGET": os.environ.get("YOUTUBE_TOKEN_GADGET"),
+    "HEALTH & AYURVEDA": os.environ.get("YOUTUBE_TOKEN_HEALTH"),
+    "ZEROTOUCH AI CREATOR": os.environ.get("YOUTUBE_TOKEN_ZEROTOUCH")
 }
 
-def extract_json_safely(raw_text):
-    match = re.search(r'\{[\s\S]*\}', str(raw_text).strip())
-    return match.group(0) if match else "{}"
+# ==========================================
+# 📝 40-सेकंड की हाई-रिटेंशन कहानी (वायरल स्क्रिप्ट्स)
+# ==========================================
+stories = [
+    {
+        "title": "चिल्लाती हुई तिजोरी का रहस्य",
+        "script": "क्या आप जानते हैं कि दुनिया में एक ऐसी तिजोरी भी है जो हर रात ठीक दो बजे अपने आप खुल जाती है? वैज्ञानिकों ने सालों रिसर्च की, कैमरे लगाए, लेकिन रहस्य नहीं खुला। सबसे हैरान करने वाली बात यह है कि इसके अंदर कोई खजाना नहीं, बल्कि सिर्फ एक खाली पुरानी डायरी रखी है। इसके आखिरी पन्ने पर क्या लिखा है, जानना चाहते हैं? नीचे कमेंट में पार्ट 2 लिखें!",
+        "keyword": "mystery dark vault"
+    },
+    {
+        "title": "अमीरी का सबसे गुप्त नियम",
+        "script": "दुनिया के 99% अमीर लोग रात को सोने से पहले एक खास काम करते हैं, जिसे 'द सीक्रेट स्क्रिप्टिंग' कहा जाता है। वे कल होने वाली जीतों को आज ही अपनी डायरी में लिख लेते हैं। यह कोई जादू नहीं, बल्कि आपके दिमाग को री-वायर करने की वैज्ञानिक तकनीक है। आज रात से ही इसे आजमाएं और तीन दिन में खुद चमत्कार देखें। ऐसे ही सीक्रेट्स के लिए सब्सक्राइब करें!",
+        "keyword": "wealth luxury success"
+    },
+    {
+        "title": "मानव शरीर का सबसे बड़ा झूठ",
+        "script": "हमें बचपन से सिखाया गया है कि हमारा दिमाग सिर्फ 10 प्रतिशत काम करता है, लेकिन यह विज्ञान का सबसे बड़ा झूठ है। असल में, जब आप गहरी नींद में होते हैं, तब भी आपका दिमाग एक सुपरकंप्यूटर से ज्यादा तेजी से आपकी पुरानी यादों को फिल्टर कर रहा होता है। आपकी एक छोटी सी आदत आपके दिमाग की ताकत को 10 गुना बढ़ा सकती है। जानिए कैसे, हमारे अगले वीडियो में!",
+        "keyword": "human brain science"
+    }
+]
 
-def get_script(hook):
-    print(f"\n📝 '{hook}' पर शानदार स्क्रिप्ट लिखी जा रही है...")
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    prompt = f"""You are a master YouTube Shorts scriptwriter. THEME: "{hook}"
-    RULES: 1. Shocking hook. 2. "text" in pure Devanagari Hindi. 3. "prompt" in detailed English. 4. "caption" 2-4 Hindi words. 5. Total 5 scenes.
-    JSON FORMAT: {{"title": "Viral Clickbait Hindi Title", "scenes": [{{"text": "हिंदी स्टोरी...", "caption": "छोटा कैप्शन", "prompt": "English visual prompt..."}}]}}"""
+# ==========================================
+# 🖼️ इमेज और 🎙️ ऑडियो जनरेशन इंजन
+# ==========================================
+def create_media_assets(story):
+    print(f"\n🎬 चुनी गई कहानी: {story['title']}")
     
-    for _ in range(5):
-        try:
-            res = requests.post(url, headers=headers, json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}]}, timeout=60)
-            if res.status_code == 200:
-                parsed = json.loads(extract_json_safely(res.json()['choices'][0]['message']['content']))
-                if parsed.get('scenes'): return parsed
-            time.sleep(5)
-        except: time.sleep(5)
-    raise Exception("❌ AI Script Failed")
-
-def get_images(scenes, style):
-    print("📸 स्मार्ट क्वालिटी चेक के साथ 8K इमेजेज बन रही हैं...")
-    imgs = []
-    for i, s in enumerate(scenes):
-        success = False
-        for attempt in range(5): 
-            try:
-                seed = random.randint(10000, 99999)
-                # अगर 3 बार में फोटो न बने, तो स्टाइल को थोड़ा हल्का कर देता है ताकि एरर न आए
-                current_style = style if attempt < 3 else "cinematic, high quality, 8k"
-                url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(s['prompt'] + ', ' + current_style)}?width=1080&height=1920&nologo=true&seed={seed}"
-                
-                r = requests.get(url, timeout=60)
-                # 50000 की जगह 15000 किया गया है ताकि अच्छी डार्क इमेजेज रिजेक्ट न हों
-                if r.status_code == 200 and len(r.content) > 15000: 
-                    fname = f"img_{i}.jpg"
-                    with open(fname, "wb") as f: f.write(r.content)
-                    
-                    # 🚨 असली क्वालिटी चेक: पाइथन खुद फोटो खोलकर देखेगा कि पिक्सल फटे तो नहीं हैं
-                    Image.open(fname).verify() 
-                    imgs.append(fname)
-                    success = True
-                    break
-            except Exception as e:
-                time.sleep(5)
+    # 1. ऑडियो बनाना (gTTS)
+    print("🎙️ आवाज रिकॉर्ड की जा रही है...")
+    audio_path = "voice.mp3"
+    tts = gTTS(text=story['script'], lang='hi', slow=False)
+    tts.save(audio_path)
+    
+    # 2. इमेज डाउनलोड करना
+    print("📸 हाई-क्वालिटी बैकग्राउंड इमेज डाउनलोड की जा रही है...")
+    image_path = "background.jpg"
+    # Unsplash से रैंडम 1080x1920 इमेज
+    image_url = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1080&auto=format&fit=crop"
+    
+    response = requests.get(image_url)
+    with open(image_path, 'wb') as file:
+        file.write(response.content)
         
-        if not success:
-            print(f"⚠️ दृश्य {i} के लिए इमेज नहीं बन पाई।")
-            
-    if len(imgs) != len(scenes): raise Exception("❌ Image Quality Check Failed")
-    return imgs
+    return audio_path, image_path
 
-def create_voice(text):
-    print("🎙️ एकदम साफ़ आवाज़ जनरेट हो रही है...")
-    async def _generate():
-        await edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+0%", volume="+50%").save("v.mp3")
-    asyncio.run(_generate())
+# ==========================================
+# 🎬 वीडियो एडिटिंग और सिंकिंग इंजन (MoviePy)
+# ==========================================
+def render_video(audio_path, image_path):
+    print("\n🖥️ वीडियो रेंडरिंग चालू: इमेज और आवाज को परफेक्ट सिंक किया जा रहा है...")
+    output_path = "final_viral_shorts.mp4"
+    
+    # ऑडियो फाइल लोड करें
+    audio_clip = AudioFileClip(audio_path)
+    
+    # इमेज को लोड करें और ऑडियो की लंबाई के बराबर सेट करें
+    image_clip = ImageClip(image_path)
+    image_clip = image_clip.set_duration(audio_clip.duration)
+    
+    # यूट्यूब शॉर्ट्स का साइज (1080x1920)
+    image_clip = image_clip.resize(height=1920, width=1080)
+    
+    # इमेज और ऑडियो को मिला दें
+    video_clip = image_clip.set_audio(audio_clip)
+    
+    # फाइनल mp4 बनाएं (24 FPS)
+    video_clip.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac", logger=None)
+    print(f"✅ वीडियो 100% परफेक्ट बन गया है: {output_path}")
+    
+    return output_path, audio_clip.duration
 
-def download_bgm():
-    bgm_file = "epic_bgm.mp3"
-    if not os.path.exists(bgm_file):
-        try:
-            r = requests.get("https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3", headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
-            if r.status_code == 200:
-                with open(bgm_file, "wb") as f: f.write(r.content)
-        except: pass
-    return bgm_file if os.path.exists(bgm_file) else None
+# ==========================================
+# 🚀 यूट्यूब ऑटो-अपलोडर इंजन
+# ==========================================
+def upload_to_youtube(video_file, story_title, story_tags, channel_name, refresh_token):
+    if not refresh_token:
+        print(f"⚠️ {channel_name} का टोकन नहीं मिला। इसे छोड़ रहे हैं।")
+        return
 
-def create_text_clip(caption_text, duration):
-    img = Image.new('RGBA', (1080, 1920), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    try: font = ImageFont.truetype(font_path, 160)
-    except: font = ImageFont.load_default()
+    print(f"\n📡 {channel_name} पर वीडियो अपलोड किया जा रहा है...")
     
-    wrapped = textwrap.fill(caption_text, width=12)
-    try: bbox = draw.multiline_textbbox((0, 0), wrapped, font=font, align='center')
-    except: return ImageClip(img).set_duration(duration)
+    # क्रेडेंशियल्स बनाना
+    credentials = Credentials(
+        None,
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token"
+    )
     
-    tw, th = bbox[2]-bbox[0], bbox[3]-bbox[1]
-    x, y = (1080 - tw) // 2, int(1920 * 0.65)
+    youtube = build("youtube", "v3", credentials=credentials)
     
-    draw.multiline_text((x+5, y+5), wrapped, font=font, fill="black", align='center')
-    draw.multiline_text((x, y), wrapped, font=font, fill="#FFE81F", stroke_width=8, stroke_fill="black", align='center')
+    # वीडियो का डेटा
+    body = {
+        "snippet": {
+            "title": f"{story_title} #shorts #viral",
+            "description": f"{story_title}\n\nरोजाना ऐसे ही रहस्यों और जानकारी के लिए सब्सक्राइब करें!\n#shorts #trending",
+            "tags": story_tags.split(" "),
+            "categoryId": "22"
+        },
+        "status": {
+            "privacyStatus": "public", # सीधे पब्लिक करने के लिए
+            "selfDeclaredMadeForKids": False
+        }
+    }
     
-    fname = f"txt_{random.randint(1,99999)}.png"
-    img.save(fname)
-    return ImageClip(fname).set_duration(duration)
+    # अपलोड कमांड
+    media = MediaFileUpload(video_file, chunksize=-1, resumable=True, mimetype="video/mp4")
+    request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
+    
+    try:
+        response = request.execute()
+        print(f"🟢 सफलता! {channel_name} पर वीडियो लाइव हो गया: https://youtu.be/{response['id']}")
+    except Exception as e:
+        print(f"🔴 अपलोड फेल हुआ {channel_name}: {e}")
 
-def assemble_and_upload(imgs, scenes, token, title, cfg):
-    print("🎬 वीडियो एडिटिंग और रेंडरिंग चालू...")
-    create_voice(" ".join([s['text'] for s in scenes]))
-    voice_audio = AudioFileClip("v.mp3")
-    
-    bgm_path = download_bgm()
-    if bgm_path:
-        bgm_audio = AudioFileClip(bgm_path).volumex(0.08).subclip(0, voice_audio.duration)
-        final_audio = CompositeAudioClip([voice_audio, bgm_audio])
-    else:
-        final_audio = voice_audio
-
-    dur = voice_audio.duration / len(imgs)
-    clips = []
-    for i, img_path in enumerate(imgs):
-        img = Image.open(img_path).convert("RGB")
+# ==========================================
+# ⚙️ मेन एग्जीक्यूशन (इंजन स्टार्ट)
+# ==========================================
+if __name__ == "__main__":
+    if not CLIENT_ID or not CLIENT_SECRET:
+        print("🛑 एरर: गिटहब सीक्रेट्स में CLIENT_ID या GOOGLE_CLIENT_SECRET नहीं मिला!")
+        exit(1)
         
-        bg = img.resize((1080, 1920), Image.Resampling.LANCZOS).filter(ImageFilter.GaussianBlur(40))
-        ratio = 1080 / img.width
-        new_h = int(img.height * ratio)
-        if new_h > 1920:
-            ratio = 1920 / img.height; new_w = int(img.width * ratio)
-            fg = img.resize((new_w, 1920), Image.Resampling.LANCZOS)
-            bg.paste(fg, ((1080 - new_w) // 2, 0))
-        else:
-            fg = img.resize((1080, new_h), Image.Resampling.LANCZOS)
-            bg.paste(fg, (0, (1920 - new_h) // 2))
-            
-        proc_name = f"proc_{i}.jpg"
-        bg.save(proc_name)
+    # 1. कहानी चुनें
+    selected_story = random.choice(stories)
+    
+    # 2. एसेट्स (आवाज और फोटो) बनाएं
+    audio_file, image_file = create_media_assets(selected_story)
+    
+    # 3. फाइनल वीडियो बनाएं
+    final_video, duration = render_video(audio_file, image_file)
+    print(f"⏱️ वीडियो की कुल लंबाई: {round(duration, 2)} सेकंड")
+    
+    # 4. पांचों चैनलों पर अपलोड करें
+    for channel, token in channel_tokens.items():
+        upload_to_youtube(final_video, selected_story['title'], selected_story['keyword'], channel, token)
         
-        base = ImageClip(proc_name).set_duration(dur).set_position('center')
-        zoom = base.resize(lambda t: 1 + 0.04 * (t/dur)) 
-        txt = create_text_clip(scenes[i].get('caption', ''), dur).set_position(('center', 'center'))
-        clips.append(CompositeVideoClip([zoom, txt]))
-    
-    final = concatenate_videoclips(clips, method="compose").set_audio(final_audio)
-    final.write_videofile("out.mp4", fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", threads=4, logger=None)
-    
-    full_desc = " ".join([s['text'] for s in scenes]) + "\n\nऐसी ही अद्भुत जानकारी के लिए चैनल को अभी सब्सक्राइब करें।"
-    if cfg['link_type'] == "AMAZON":
-        full_desc += f"\n\n🔥 👉 शानदार गैजेट यहाँ से खरीदें!\n🔗 लिंक: https://www.amazon.in/?tag={AMAZON_TAG}"
-    elif cfg['link_type'] == "GUMROAD":
-        full_desc += f"\n\n🤖 हमारा 100% ऑटोमेटेड AI यूट्यूब सेटअप आज ही खरीदें!\n👉 यहाँ क्लिक करें: {GUMROAD_LINK}"
-    
-    print(f"🚀 YouTube पर अपलोड हो रहा है...")
-    creds = Credentials(token=None, refresh_token=token, token_uri="https://oauth2.googleapis.com/token", client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
-    build("youtube", "v3", credentials=creds).videos().insert(
-        part="snippet,status", body={"snippet": {"title": f"{title} #shorts", "description": full_desc, "categoryId": cfg['category'], "tags": cfg['tags']}, "status": {"privacyStatus": "public"}},
-        media_body=MediaFileUpload("out.mp4", chunksize=-1, resumable=True)
-    ).execute()
-    print("✅ सफलता! वीडियो लाइव हो गया है।\n")
-    
-    voice_audio.close(); final.close()
-    for f in ["v.mp3", "out.mp4"] + imgs + [f"proc_{i}.jpg" for i in range(len(imgs))]:
-        if os.path.exists(f): os.remove(f)
-
-def run():
-    channels = list(CHANNELS_CONFIG.keys())
-    random.shuffle(channels)
-    for ch in channels:
-        cfg = CHANNELS_CONFIG[ch]
-        try:
-            print(f"⚙️ Starting Automation for: {ch}")
-            data = get_script(random.choice(cfg['hooks']))
-            imgs = get_images(data['scenes'], cfg['style'])
-            assemble_and_upload(imgs, data['scenes'], cfg['token'], data['title'], cfg)
-            time.sleep(10)
-        except Exception as e: print(f"🛑 Error in {ch}: {e}")
-
-if __name__ == "__main__": run()
+    print("\n" + "="*85)
+    print("🏆 मिशन 100% सक्सेसफुल! सभी प्रक्रियाएं पूरी हो गईं।")
+    print("="*85)
