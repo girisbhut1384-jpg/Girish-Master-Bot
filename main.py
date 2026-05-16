@@ -11,10 +11,10 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import urllib.request
 
-print("🛡️ बैच 2 (ULTIMATE): 100% Perfect Video Engine (Gadgets & AI Sales)")
+print("🛡️ बैच 2 (ULTIMATE V2): Crash-Proof Smart Video Engine")
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 
-# --- 1. फोंट डाउनलोड (स्क्रीन पर टेक्स्ट लिखने के लिए) ---
+# --- 1. फोंट डाउनलोड ---
 font_path = "NotoSansDevanagari-Bold.ttf"
 if not os.path.exists(font_path):
     print("📥 शानदार हिंदी फोंट डाउनलोड हो रहा है...")
@@ -61,19 +61,34 @@ def get_script(hook):
     raise Exception("❌ AI Script Failed")
 
 def get_images(scenes, style):
-    print("📸 हाई-क्वालिटी (8K) इमेजेज बन रही हैं...")
+    print("📸 स्मार्ट क्वालिटी चेक के साथ 8K इमेजेज बन रही हैं...")
     imgs = []
     for i, s in enumerate(scenes):
+        success = False
         for attempt in range(5): 
             try:
                 seed = random.randint(10000, 99999)
-                url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(s['prompt'] + ', ' + style)}?width=1080&height=1920&nologo=true&enhance=true&seed={seed}"
+                # अगर 3 बार में फोटो न बने, तो स्टाइल को थोड़ा हल्का कर देता है ताकि एरर न आए
+                current_style = style if attempt < 3 else "cinematic, high quality, 8k"
+                url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(s['prompt'] + ', ' + current_style)}?width=1080&height=1920&nologo=true&seed={seed}"
+                
                 r = requests.get(url, timeout=60)
-                if r.status_code == 200 and len(r.content) > 50000: # 100% Quality Check
+                # 50000 की जगह 15000 किया गया है ताकि अच्छी डार्क इमेजेज रिजेक्ट न हों
+                if r.status_code == 200 and len(r.content) > 15000: 
                     fname = f"img_{i}.jpg"
                     with open(fname, "wb") as f: f.write(r.content)
-                    imgs.append(fname); break
-            except: time.sleep(5)
+                    
+                    # 🚨 असली क्वालिटी चेक: पाइथन खुद फोटो खोलकर देखेगा कि पिक्सल फटे तो नहीं हैं
+                    Image.open(fname).verify() 
+                    imgs.append(fname)
+                    success = True
+                    break
+            except Exception as e:
+                time.sleep(5)
+        
+        if not success:
+            print(f"⚠️ दृश्य {i} के लिए इमेज नहीं बन पाई।")
+            
     if len(imgs) != len(scenes): raise Exception("❌ Image Quality Check Failed")
     return imgs
 
@@ -106,7 +121,6 @@ def create_text_clip(caption_text, duration):
     tw, th = bbox[2]-bbox[0], bbox[3]-bbox[1]
     x, y = (1080 - tw) // 2, int(1920 * 0.65)
     
-    # Text Outline & Stroke for Viral Look
     draw.multiline_text((x+5, y+5), wrapped, font=font, fill="black", align='center')
     draw.multiline_text((x, y), wrapped, font=font, fill="#FFE81F", stroke_width=8, stroke_fill="black", align='center')
     
@@ -131,7 +145,6 @@ def assemble_and_upload(imgs, scenes, token, title, cfg):
     for i, img_path in enumerate(imgs):
         img = Image.open(img_path).convert("RGB")
         
-        # Perfect Aspect Ratio Fix (Blur Background)
         bg = img.resize((1080, 1920), Image.Resampling.LANCZOS).filter(ImageFilter.GaussianBlur(40))
         ratio = 1080 / img.width
         new_h = int(img.height * ratio)
@@ -154,7 +167,6 @@ def assemble_and_upload(imgs, scenes, token, title, cfg):
     final = concatenate_videoclips(clips, method="compose").set_audio(final_audio)
     final.write_videofile("out.mp4", fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", threads=4, logger=None)
     
-    # 💰 Automatic Affiliate/Gumroad Links
     full_desc = " ".join([s['text'] for s in scenes]) + "\n\nऐसी ही अद्भुत जानकारी के लिए चैनल को अभी सब्सक्राइब करें।"
     if cfg['link_type'] == "AMAZON":
         full_desc += f"\n\n🔥 👉 शानदार गैजेट यहाँ से खरीदें!\n🔗 लिंक: https://www.amazon.in/?tag={AMAZON_TAG}"
@@ -169,7 +181,6 @@ def assemble_and_upload(imgs, scenes, token, title, cfg):
     ).execute()
     print("✅ सफलता! वीडियो लाइव हो गया है।\n")
     
-    # Cleanup Memory
     voice_audio.close(); final.close()
     for f in ["v.mp3", "out.mp4"] + imgs + [f"proc_{i}.jpg" for i in range(len(imgs))]:
         if os.path.exists(f): os.remove(f)
