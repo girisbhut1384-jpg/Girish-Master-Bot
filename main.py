@@ -3,14 +3,13 @@ import sys
 import subprocess
 
 # =====================================================================================
-# 🛠️ स्टेप 0: गिटहब सर्वर में बैकएंड टूल्स ऑटो-इंस्टॉलर (Zero Error Fix)
-# यह हिस्सा कोड को चलने से पहले सारे टूल्स खुद डाउनलोड करने की ताकत देता है
+# 🛠️ स्टेप 0: गिटहब सर्वर में बैकएंड टूल्स ऑटो-इंस्टॉलर (Pillow Error Fixed)
 # =====================================================================================
 print("⏳ [सिस्टम अपडेट] गिटहब में सभी जरूरी टूल्स इंस्टॉल किए जा रहे हैं, कृपया प्रतीक्षा करें...")
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "gTTS", "requests", "moviepy==1.0.3", "google-api-python-client", "google-auth-oauthlib", "Pillow"])
+# यहाँ Pillow==9.5.0 कर दिया गया है ताकि ANTIALIAS वाला एरर जिंदगी में कभी ना आए
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "gTTS", "requests", "moviepy==1.0.3", "google-api-python-client", "google-auth-oauthlib", "Pillow==9.5.0"])
 print("✅ [सिस्टम अपडेट] सभी टूल्स सफलतापूर्वक इंस्टॉल हो गए! अब इंजन चालू हो रहा है...\n")
 
-# टूल्स इंस्टॉल होने के बाद ही उन्हें इम्पोर्ट करें
 import random
 import requests
 from gtts import gTTS
