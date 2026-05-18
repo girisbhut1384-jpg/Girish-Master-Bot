@@ -29,21 +29,19 @@ if not os.path.exists("Roboto-Black.ttf"):
 GROQ_KEY = os.environ.get("GROQ_API_KEY")
 RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY") 
 CLIENT_ID = "768932543756-ndfvqmbb0p7ffa1r1cg6bmmuimim98n6.apps.googleusercontent.com"
-# नए स्क्रीनशॉट के हिसाब से आपका क्लाइंट सीक्रेट
 CLIENT_SECRET = os.environ.get("YT_CLIENT_SECRET_JSON") or os.environ.get("GOOGLE_CLIENT_SECRET")
 
-# 🔑 आपके नए गिटहब (myautobot) सीक्रेट्स के बिल्कुल सटीक नाम
-TOKEN_GADGET = os.environ.get("TOKEN_GADGET")
-TOKEN_MYSTIC = os.environ.get("TOKEN_MYSTIC")
-TOKEN_EMPIRE = os.environ.get("TOKEN_EMPIRE")
-TOKEN_WEALTH = os.environ.get("TOKEN_WEALTH")       # 👈 हेल्थ की जगह वेल्थ आ गया!
-TOKEN_ZEROTOUCH = os.environ.get("TOKEN_ZEROTOUCH")
+# 🔑 अब ये नाम आपकी Girish-Master-Bot तिजोरी से 100% मैच करेंगे
+TOKEN_GADGET = os.environ.get("YOUTUBE_TOKEN_GADGET")
+TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
+TOKEN_EMPIRE = os.environ.get("YOUTUBE_TOKEN_EMPIRE")
+TOKEN_WEALTH = os.environ.get("YOUTUBE_TOKEN_WEALTH")
+TOKEN_ZEROTOUCH = os.environ.get("YOUTUBE_TOKEN_ZEROTOUCH")
 
 if not GROQ_KEY:
     print("❌ Error: GROQ_API_KEY nahi mili!")
     sys.exit(1)
 
-# 📝 हुक्स में भारी वैरायटी ताकि रिपीट न हो
 GADGET_HOOKS = ["Weird Amazon Tech", "Spy Gadgets Under 500", "Smart Home Magic", "Genius Survival Tools", "Car Gadgets You Need", "Hidden Kitchen Tech", "Future Tech 2026"]
 MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Ghost Towns of India", "Time Travel Proof", "Dark Web Secrets", "Creepy Historical Events"]
 WEALTH_HOOKS = ["Secret Habits of Billionaires", "Hidden Wealth Rules", "How to Make Money Sleeping", "Dark Psychology of Money", "The 1% Rule"]
@@ -56,7 +54,6 @@ def extract_json_safely(raw_text):
 def get_script_and_prompts(hook_theme, category):
     print(f"\n✅ AI Engine 40+ second ki dumdaar script likh raha hai: {hook_theme}")
     
-    # 🧠 AI को स्ट्रिक्ट आर्डर: कोई भी टॉपिक रिपीट नहीं होना चाहिए
     base_rules = "CRITICAL: Pick a highly obscure, UNIQUE, and rarely talked about topic. DO NOT repeat common examples. Create massive suspense."
     
     if category == "GADGET":
@@ -87,7 +84,7 @@ def get_script_and_prompts(hook_theme, category):
         PROMPTS: 8 professional wealth/AI related image prompts.
         AMAZON SEARCH TERM: Leave empty ("").
         """
-    else: # MYSTERY & WEALTH
+    else: 
         prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
         WRITE A 90-100 WORD HINDI SCRIPT.
         {base_rules}
@@ -115,7 +112,7 @@ def get_script_and_prompts(hook_theme, category):
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9} # 👈 Temperature बढाया ताकि रिपीट न हो
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9} 
     
     for attempt in range(3):
         try:
@@ -280,7 +277,6 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 
                 clean_term = re.sub(r'[^a-zA-Z0-9 ]', '', str(amazon_term)).strip()
                 amz_link = f"https://www.amazon.in/s?k={urllib.parse.quote(clean_term)}&tag=girishbhut07-21"
-                # 👇 प्रोडक्ट का सीधा लिंक डिस्क्रिप्शन में!
                 desc = f"🔥 👉 यह शानदार गैजेट आउट ऑफ़ स्टॉक होने से पहले यहाँ से खरीदें!\n🔗 लिंक: {amz_link}\n\n{script}"
                 
                 upload_video(token, video_file, f"🤯 Best {amazon_term}! #shorts", desc, ["shorts", "gadgets", "amazon finds", "tech"], "28")
@@ -292,13 +288,12 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 make_video(image_files, captions, video_file, voice_file)
                 
                 gumroad_link = "https://girisbhut.gumroad.com/l/ajhzk"
-                # 👇 गमरोड का सेल लिंक डिस्क्रिप्शन में!
                 desc = f"🚀 👉 मेरा यह पूरा 100% ऑटोमैटिक YouTube Setup अभी खरीदें!\n🔗 यहाँ क्लिक करें: {gumroad_link}\n\n{script}"
                 
                 upload_video(token, video_file, f"🤯 AI makes me Money while I sleep! #shorts", desc, ["shorts", "automation", "ai", "money"], "28")
                 print("✅ AI SELL Video Live with Gumroad Link!")
 
-            else: # WEALTH or MYSTERY
+            else: 
                 image_files = fetch_ai_images(prompts)
                 create_human_voice(script, voice_file)
                 make_video(image_files, captions, video_file, voice_file)
@@ -317,13 +312,12 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
     return False
 
 if __name__ == "__main__":
-    # 5 चैनल की लिस्ट (नाम, टोकन, हुक्स, केटेगरी)
     channels = [
         ("GIRISH AI GADGET", TOKEN_GADGET, GADGET_HOOKS, "GADGET"),
         ("MYSTERY CHANNEL", TOKEN_MYSTIC, MYSTIC_HOOKS, "MYSTERY"),
-        ("FACELESS AI WEALTH", TOKEN_WEALTH, WEALTH_HOOKS, "WEALTH"),             # नया वेल्थ चैनल
-        ("AI AUTO PILOT EMPIRE", TOKEN_EMPIRE, AI_SELL_HOOKS, "AI_SELL"),         # गमरोड सेल चैनल
-        ("ZEROTOUCH AI CREATOR", TOKEN_ZEROTOUCH, AI_SELL_HOOKS, "AI_SELL")       # गमरोड सेल चैनल
+        ("FACELESS AI WEALTH", TOKEN_WEALTH, WEALTH_HOOKS, "WEALTH"),             
+        ("AI AUTO PILOT EMPIRE", TOKEN_EMPIRE, AI_SELL_HOOKS, "AI_SELL"),         
+        ("ZEROTOUCH AI CREATOR", TOKEN_ZEROTOUCH, AI_SELL_HOOKS, "AI_SELL")       
     ]
     
     for name, token, hooks, cat in channels:
