@@ -35,9 +35,9 @@ jobs:
         RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
         YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-        TOKEN_MYSTIC: ${{ secrets.TOKEN_MYSTIC }}
-        TOKEN_EMPIRE: ${{ secrets.TOKEN_EMPIRE }}
-        TOKEN_GADGET: ${{ secrets.TOKEN_GADGET }}
-        TOKEN_WEALTH: ${{ secrets.TOKEN_WEALTH }}
-        TOKEN_ZEROTOUCH: ${{ secrets.TOKEN_ZEROTOUCH }}
+        YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
+        YOUTUBE_TOKEN_EMPIRE: ${{ secrets.YOUTUBE_TOKEN_EMPIRE }}
+        YOUTUBE_TOKEN_GADGET: ${{ secrets.YOUTUBE_TOKEN_GADGET }}
+        YOUTUBE_TOKEN_WEALTH: ${{ secrets.YOUTUBE_TOKEN_WEALTH }}
+        YOUTUBE_TOKEN_ZEROTOUCH: ${{ secrets.YOUTUBE_TOKEN_ZEROTOUCH }}
       run: python main.py
