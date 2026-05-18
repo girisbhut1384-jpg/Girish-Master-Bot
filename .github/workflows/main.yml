@@ -33,10 +33,11 @@ jobs:
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+        YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-        YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
-        YOUTUBE_TOKEN_EMPIRE: ${{ secrets.YOUTUBE_TOKEN_EMPIRE }}
-        YOUTUBE_TOKEN_GADGET: ${{ secrets.YOUTUBE_TOKEN_GADGET }}
-        YOUTUBE_TOKEN_HEALTH: ${{ secrets.YOUTUBE_TOKEN_HEALTH }}
-        YOUTUBE_TOKEN_ZEROTOUCH: ${{ secrets.YOUTUBE_TOKEN_ZEROTOUCH }}
+        TOKEN_MYSTIC: ${{ secrets.TOKEN_MYSTIC }}
+        TOKEN_EMPIRE: ${{ secrets.TOKEN_EMPIRE }}
+        TOKEN_GADGET: ${{ secrets.TOKEN_GADGET }}
+        TOKEN_WEALTH: ${{ secrets.TOKEN_WEALTH }}
+        TOKEN_ZEROTOUCH: ${{ secrets.TOKEN_ZEROTOUCH }}
       run: python main.py
