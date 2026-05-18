@@ -31,7 +31,7 @@ RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY")
 CLIENT_ID = "768932543756-ndfvqmbb0p7ffa1r1cg6bmmuimim98n6.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("YT_CLIENT_SECRET_JSON") or os.environ.get("GOOGLE_CLIENT_SECRET")
 
-# 🔑 अब ये नाम आपकी Girish-Master-Bot तिजोरी से 100% मैच करेंगे
+# 🔑 आपकी तिजोरी के टोकन
 TOKEN_GADGET = os.environ.get("YOUTUBE_TOKEN_GADGET")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 TOKEN_EMPIRE = os.environ.get("YOUTUBE_TOKEN_EMPIRE")
@@ -42,10 +42,11 @@ if not GROQ_KEY:
     print("❌ Error: GROQ_API_KEY nahi mili!")
     sys.exit(1)
 
+# हुक्स (Hooks)
 GADGET_HOOKS = ["Weird Amazon Tech", "Spy Gadgets Under 500", "Smart Home Magic", "Genius Survival Tools", "Car Gadgets You Need", "Hidden Kitchen Tech", "Future Tech 2026"]
 MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Ghost Towns of India", "Time Travel Proof", "Dark Web Secrets", "Creepy Historical Events"]
-WEALTH_HOOKS = ["Secret Habits of Billionaires", "Hidden Wealth Rules", "How to Make Money Sleeping", "Dark Psychology of Money", "The 1% Rule"]
-AI_SELL_HOOKS = ["YouTube Automation Proof", "How I Make Money with AI", "Faceless Channel Secrets", "Make Money While Sleeping AI", "Zero Touch Income"]
+# 🟢 AI Sell हुक्स को और डायनामिक कर दिया गया है
+AI_SELL_HOOKS = ["Escape the Matrix", "Faceless YouTube Empire", "Make Money While Sleeping", "AI Replaced My Job", "Zero Touch Income", "Secret of the 1%"]
 
 def extract_json_safely(raw_text):
     match = re.search(r'\{[\s\S]*\}', str(raw_text).strip())
@@ -75,13 +76,13 @@ def get_script_and_prompts(hook_theme, category):
         WRITE A 90-100 WORD HINDI SCRIPT.
         {base_rules}
         RULES:
-        1. START DIRECTLY WITH INCOME/AUTOMATION PROOF HOOK!
-        2. Explain how AI is running a faceless empire for you automatically.
-        3. Create urgency to buy the setup.
+        1. START DIRECTLY WITH A MIND-BLOWING HOOK about freedom or smart work!
+        2. CRITICAL: DO NOT use the boring "I make 10 lakhs a month" story. VARY YOUR ANGLE. Talk about escaping the 9-to-5, or passive income while traveling, or how bots work 24/7 without a face.
+        3. Explain how AI is running a faceless empire automatically.
         4. END EXACTLY WITH: 'मेरा यह पूरा यूट्यूब ऑटोमेशन सेटअप खरीदने के लिए डिस्क्रिप्शन में दिए गए गमरोड लिंक पर क्लिक करें।'
         
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 professional wealth/AI related image prompts.
+        PROMPTS: 8 highly cinematic image prompts. RULE: DO NOT INCLUDE HUMAN FACES OR HANDS. Focus on glowing server rooms, neon tech, luxury cars, aesthetic offices, or robot arms typing.
         AMAZON SEARCH TERM: Leave empty ("").
         """
     else: 
@@ -95,7 +96,7 @@ def get_script_and_prompts(hook_theme, category):
         4. END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को सब्सक्राइब करें।'
         
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 dark/creepy image generation prompts.
+        PROMPTS: 8 dark/creepy image prompts without complex human faces.
         AMAZON SEARCH TERM: Leave empty ("").
         """
 
@@ -151,8 +152,11 @@ def fetch_amazon_images_strict(query):
 def fetch_ai_images(prompts):
     image_files, seed = [], random.randint(1000, 99999)
     headers = {"User-Agent": "Mozilla/5.0"}
+    # 🟢 AI इमेज को फटने से बचाने के लिए 'सिनेमैटिक और नो ह्यूमन्स' का कमांड जोड़ा गया है
+    style_modifier = ", cinematic photography, luxury, hyperrealistic, 8k, no humans, no deformed faces"
+    
     for i, p in enumerate(prompts):
-        url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + ', highly detailed, 8k')}?width=1080&height=1920&nologo=true&seed={seed+i}"
+        url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + style_modifier)}?width=1080&height=1920&nologo=true&seed={seed+i}"
         fname = f"ai_scene_{i}.jpg"
         for _ in range(3): 
             try:
@@ -299,7 +303,7 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 make_video(image_files, captions, video_file, voice_file)
                 
                 desc = f"🔥 👉 ऐसे ही खूंखार रहस्यों और जानकारी के लिए सब्सक्राइब करें!\n\n{script}"
-                upload_video(token, video_file, f"🤯 Secret They Hid From You! #shorts", desc, ["shorts", "mystery", "creepy", "facts", "wealth"], "28")
+                upload_video(token, video_file, f"🤯 Secret They Hid From You! #shorts", desc, ["shorts", "mystery", "creepy", "facts"], "28")
                 print(f"✅ {channel_name} Video Live!")
                 
             return True 
@@ -315,7 +319,8 @@ if __name__ == "__main__":
     channels = [
         ("GIRISH AI GADGET", TOKEN_GADGET, GADGET_HOOKS, "GADGET"),
         ("MYSTERY CHANNEL", TOKEN_MYSTIC, MYSTIC_HOOKS, "MYSTERY"),
-        ("FACELESS AI WEALTH", TOKEN_WEALTH, WEALTH_HOOKS, "WEALTH"),             
+        # 🟢 अब वेल्थ चैनल को भी AI_SELL (गमरोड) की केटेगरी में डाल दिया गया है!
+        ("FACELESS AI WEALTH", TOKEN_WEALTH, AI_SELL_HOOKS, "AI_SELL"),             
         ("AI AUTO PILOT EMPIRE", TOKEN_EMPIRE, AI_SELL_HOOKS, "AI_SELL"),         
         ("ZEROTOUCH AI CREATOR", TOKEN_ZEROTOUCH, AI_SELL_HOOKS, "AI_SELL")       
     ]
