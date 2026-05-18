@@ -30,7 +30,8 @@ if not os.path.exists("Roboto-Black.ttf"):
 
 GROQ_KEY = os.environ.get("GROQ_API_KEY")
 RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY") 
-CLIENT_ID = "768932543756-30vbto7a15hqosjmpnbh99bfkbfsngj1.apps.googleusercontent.com"
+# 👇 यहाँ आपका नया CLIENT_ID अपडेट कर दिया गया है
+CLIENT_ID = "768932543756-ndfvqmbb0p7ffa1r1cg6bmmuimim98n6.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
@@ -128,7 +129,8 @@ def fetch_amazon_images_strict(query):
     except Exception as e: raise Exception(f"Amazon Fail: {e}")
 
 def fetch_ai_images(prompts):
-    image_files, seed = [], random.randint(1000, 99999)
+    image_files, seed = random.randint(1000, 99999)
+    image_files = []
     headers = {"User-Agent": "Mozilla/5.0"}
     for i, p in enumerate(prompts):
         url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + ', highly detailed, 8k')}?width=1080&height=1920&nologo=true&seed={seed+i}"
