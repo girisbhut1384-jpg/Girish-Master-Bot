@@ -30,19 +30,27 @@ if not os.path.exists("Roboto-Black.ttf"):
 
 GROQ_KEY = os.environ.get("GROQ_API_KEY")
 RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY") 
-# 👇 यहाँ आपका नया CLIENT_ID अपडेट कर दिया गया है
+# 👇 आपका नया CLIENT_ID यहाँ एकदम परफेक्ट सेट कर दिया गया है
 CLIENT_ID = "768932543756-ndfvqmbb0p7ffa1r1cg6bmmuimim98n6.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-TOKEN_GADGETS = os.environ.get("YOUTUBE_REFRESH_TOKEN")
+
+# 🔑 आपके 5 चैनलों के टोकन (GitHub Secrets के अनुसार)
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
+TOKEN_EMPIRE = os.environ.get("YOUTUBE_TOKEN_EMPIRE")
+TOKEN_GADGET = os.environ.get("YOUTUBE_TOKEN_GADGET")
+TOKEN_HEALTH = os.environ.get("YOUTUBE_TOKEN_HEALTH")
+TOKEN_ZEROTOUCH = os.environ.get("YOUTUBE_TOKEN_ZEROTOUCH")
 
 if not GROQ_KEY:
     print("❌ Error: GROQ_API_KEY nahi mili!")
     sys.exit(1)
 
-# 🟢 UPDATE: भारी वैरायटी (Variety) ताकि एक जैसे वीडियो न बनें
-GADGET_HOOKS = ["Secret Amazon Hacks", "Crazy Gadgets Under 500", "Smart Home Magic", "Genius Survival Tools", "Car Gadgets You Need", "Hidden Kitchen Tech"]
-MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Ghost Towns of India", "Time Travel Proof", "Dark Web Secrets", "Creepy Historical Events"]
+# 📝 हर चैनल के लिए आपके पुराने स्टाइल के हुक्स
+GADGET_HOOKS = ["Amazon's Hidden Tech", "Crazy Gadgets Under 1000", "Must-Have Smart Home Items", "Secret Car Hacks", "Genius Kitchen Tools"]
+MYSTIC_HOOKS = ["Terrifying Space Facts", "Deep Sea Monsters", "Unsolved Crimes of History", "Lost Ancient Cities", "Creepy Government Secrets"]
+EMPIRE_HOOKS = ["Secret Habits of Billionaires", "How to Build a Business Empire", "Hidden Wealth Rules", "Money Making AI Hacks"]
+HEALTH_HOOKS = ["Ayurveda Secrets for Longevity", "Hidden Benefits of Indian Spices", "Human Body Unknown Facts", "Natural Remedies That Work"]
+ZEROTOUCH_HOOKS = ["Mind Blowing AI Tools", "Future of Artificial Intelligence", "Robots Taking Over Jobs", "Secret Tech Websites"]
 
 def extract_json_safely(raw_text):
     match = re.search(r'\{[\s\S]*\}', str(raw_text).strip())
@@ -59,11 +67,11 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
         2. Describe a frustrating daily problem.
         3. Reveal the product as the ultimate mind-blowing solution.
         4. Create massive URGENCY at the end.
-        5. END EXACTLY WITH: 'यह शानदार गैजेट अभी आउट ऑफ़ स्टॉक होने से पहले नीचे दिए गए लिंक से खरीदें।'
+        5. END EXACTLY WITH: 'यह शानदार गैजेट अभी आउट ऑफ़ स्टॉक होने से पहले चैनल के बायो से खरीदें।'
         
         CAPTIONS: 8 short punchy English captions.
         PROMPTS: 8 simple image generation prompts.
-        AMAZON SEARCH TERM: Simple 2-3 word real English product name.
+        AMAZON SEARCH TERM: Simple 2-3 word real product name.
         """
     else:
         prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
@@ -71,8 +79,9 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
         RULES:
         1. NO INTRODUCTIONS. START DIRECTLY WITH A CREEPY/SHOCKING HOOK!
         2. Build extreme suspense and mystery throughout.
-        3. Reveal a shocking fact or theory. MUST BE UNIQUE, NOT JUST OCEAN OR GOVERNMENT.
-        4. END EXACTLY WITH: 'ऐसे ही खूंखार रहस्यों के लिए चैनल को सब्सक्राइब करें और लिंक बायो में देखें।'
+        3. Reveal a shocking fact or theory.
+        4. DO NOT TALK ABOUT BUYING, SELLING, OR STOCK.
+        5. END EXACTLY WITH: 'ऐसे ही खूंखार रहस्यों के लिए चैनल को सब्सक्राइब करें और लिंक बायो में देखें।'
         
         CAPTIONS: 8 short punchy English captions.
         PROMPTS: 8 creepy image generation prompts.
@@ -92,7 +101,7 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.8}
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.7}
     
     for attempt in range(3):
         try:
@@ -101,18 +110,17 @@ def get_script_and_prompts(hook_theme, is_gadget=False):
                 parsed = json.loads(extract_json_safely(response.json()['choices'][0]['message']['content']))
                 if parsed.get('script'):
                     print("🎯 Script Ready!")
-                    return parsed['script'].replace("*", ""), parsed['prompts'][:8], parsed['captions'][:8], parsed.get('amazon_search_term', 'Gadget')
+                    return parsed['script'].replace("*", ""), parsed['prompts'][:8], parsed['captions'][:8], parsed.get('amazon_search_term', '')
         except: time.sleep(2)
     raise Exception("🚨 AI Model Failed!")
 
 def fetch_amazon_images_strict(query):
-    clean_query = re.sub(r'[^a-zA-Z0-9 ]', '', str(query)).strip()
-    print(f"🛒 Amazon se '{clean_query}' ki photos nikali ja rahi hain...")
+    print(f"🛒 Amazon se '{query}' ki photos nikali ja rahi hain...")
     if not RAPIDAPI_KEY: raise Exception("⚠️ RAPIDAPI_KEY Missing!")
     url, headers = "https://real-time-amazon-data.p.rapidapi.com/search", {"x-rapidapi-key": RAPIDAPI_KEY, "x-rapidapi-host": "real-time-amazon-data.p.rapidapi.com"}
     image_files = []
     try:
-        response = requests.get(url, headers=headers, params={"query": clean_query, "page": "1", "country": "IN", "sort_by": "RELEVANCE"}, timeout=40)
+        response = requests.get(url, headers=headers, params={"query": query, "page": "1", "country": "IN", "sort_by": "RELEVANCE"}, timeout=40)
         if response.status_code == 200:
             for i, prod in enumerate(response.json().get("data", {}).get("products", [])):
                 if len(image_files) >= 8: break
@@ -129,8 +137,7 @@ def fetch_amazon_images_strict(query):
     except Exception as e: raise Exception(f"Amazon Fail: {e}")
 
 def fetch_ai_images(prompts):
-    image_files, seed = random.randint(1000, 99999)
-    image_files = []
+    image_files, seed = [], random.randint(1000, 99999)
     headers = {"User-Agent": "Mozilla/5.0"}
     for i, p in enumerate(prompts):
         url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + ', highly detailed, 8k')}?width=1080&height=1920&nologo=true&seed={seed+i}"
@@ -158,16 +165,15 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
-# 🟢 HUGE Text, Perfect Stroke, Center Bottom
 def create_centered_text_clip(text, duration):
     canvas_w, canvas_h = 1080, 800
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     
-    try: font = ImageFont.truetype("Roboto-Black.ttf", 150) 
+    try: font = ImageFont.truetype("Roboto-Black.ttf", 130)
     except: font = ImageFont.load_default()
         
-    wrapped_text = textwrap.fill(text.upper(), width=12) 
+    wrapped_text = textwrap.fill(text.upper(), width=15) 
     try:
         bbox = draw.multiline_textbbox((0, 0), wrapped_text, font=font, align='center')
         text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
@@ -175,8 +181,7 @@ def create_centered_text_clip(text, duration):
         text_w, text_h = draw.textsize(wrapped_text, font=font)
         
     x, y = (canvas_w - text_w) // 2, (canvas_h - text_h) // 2
-    
-    draw.multiline_text((x, y), wrapped_text, font=font, fill="#FFE81F", stroke_width=10, stroke_fill="black", align='center')
+    draw.multiline_text((x, y), wrapped_text, font=font, fill="#FFE81F", stroke_width=8, stroke_fill="black", align='center')
     
     temp_filename = f"temp_caption_{random.randint(10000, 99999)}.png"
     img.save(temp_filename)
@@ -203,7 +208,7 @@ def process_image_for_video(img_path, output_path):
     return output_path
 
 def make_video(image_files, captions, final_vid, audio_file):
-    print("✅ Professional Video Render ho raha hai...")
+    print(f"✅ Professional Video Render ho raha hai: {final_vid}")
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
     time_per_image = audio_duration / len(image_files)
@@ -246,42 +251,63 @@ def upload_video(token, filename, title, description, tags, category):
     )
     request.execute()
 
-def run_channel_safely(channel_type):
+def run_channel_safely(channel_name, token, hook_list, is_gadget=False):
+    if not token:
+        print(f"⚠️ {channel_name} ka token nahi mila. Isko skip kar rahe hain.")
+        return False
+        
+    print(f"\n==============================================")
+    print(f"🚀 STARTING CHANNEL: {channel_name}")
+    print(f"==============================================")
+    
     for attempt in range(5):
         try:
-            if channel_type == "GADGETS":
-                script, prompts, captions, amazon_term = get_script_and_prompts(random.choice(GADGET_HOOKS), is_gadget=True)
+            hook = random.choice(hook_list)
+            script, prompts, captions, amazon_term = get_script_and_prompts(hook, is_gadget=is_gadget)
+            
+            # File names unique rakhne ke liye
+            prefix = channel_name.replace(" ", "_").lower()
+            voice_file = f"voice_{prefix}.mp3"
+            video_file = f"final_{prefix}.mp4"
+
+            if is_gadget:
                 image_files = fetch_amazon_images_strict(amazon_term) 
-                create_human_voice(script, "voice_gadget.mp3")
-                make_video(image_files, captions, "final_gadget.mp4", "voice_gadget.mp3")
-                
-                clean_term = re.sub(r'[^a-zA-Z0-9 ]', '', str(amazon_term)).strip()
-                amz_link = f"https://www.amazon.in/s?k={urllib.parse.quote(clean_term)}&tag=girishbhut07-21"
-                
-                desc = f"🔥 👉 यह शानदार गैजेट आउट ऑफ़ स्टॉक होने से पहले यहाँ से खरीदें!\n🔗 लिंक: {amz_link}\n\n{script}"
-                upload_video(TOKEN_GADGETS, "final_gadget.mp4", f"🤯 Best {amazon_term}! #shorts", desc, ["shorts", "gadgets", "amazon finds", "tech"], "28")
-                print("✅ GADGETS Video Live with Amazon Link!")
-                return True 
-                
-            elif channel_type == "MYSTIC":
-                script, prompts, captions, _ = get_script_and_prompts(random.choice(MYSTIC_HOOKS), is_gadget=False)
+                create_human_voice(script, voice_file)
+                make_video(image_files, captions, video_file, voice_file)
+                desc = f"🔥 👉 यह शानदार गैजेट आउट ऑफ़ स्टॉक होने से पहले चैनल के Bio से खरीदें!\n🔍 अमेज़न पर सर्च करें: {amazon_term}\n\n{script}"
+                title = f"🤯 Best {amazon_term}! #shorts"
+                upload_video(token, video_file, title, desc, ["shorts", "gadgets", "amazon finds", "tech"], "28")
+            else:
                 image_files = fetch_ai_images(prompts)
-                create_human_voice(script, "voice_mystic.mp3")
-                make_video(image_files, captions, "final_mystic.mp4", "voice_mystic.mp3")
+                create_human_voice(script, voice_file)
+                make_video(image_files, captions, video_file, voice_file)
+                desc = f"🔥 👉 ऐसे ही खूंखार रहस्यों और जानकारी के लिए लिंक चैनल के Bio में है!\n\n{script}"
+                title = f"🤯 Secret They Hid From You! #shorts"
+                upload_video(token, video_file, title, desc, ["shorts", "mystery", "creepy", "facts"], "28")
                 
-                general_link = "https://www.amazon.in/?tag=girishbhut07-21"
-                desc = f"🔥 👉 रहस्यमयी किताबें और गैजेट्स यहाँ देखें: {general_link}\n\n{script}"
-                
-                upload_video(TOKEN_MYSTIC, "final_mystic.mp4", f"🤯 Secret They Hid From You! #shorts", desc, ["shorts", "mystery", "creepy", "facts"], "28")
-                print("✅ MYSTIC Video Live with Link!")
-                return True 
+            print(f"✅ {channel_name} Video Live!")
+            return True 
                 
         except Exception as e: 
-            print(f"🛑 Error: {e}. Machine dobara koshish kar rahi hai...")
+            print(f"🛑 Error on {channel_name}: {e}. Machine dobara koshish kar rahi hai...")
             time.sleep(10) 
-    sys.exit(1)
+            
+    print(f"❌ {channel_name} fail ho gaya.")
+    return False
 
 if __name__ == "__main__":
-    run_channel_safely("GADGETS")
-    time.sleep(30)
-    run_channel_safely("MYSTIC")
+    # 5 चैनल की लिस्ट (नाम, टोकन, हुक्स, क्या ये गैजेट चैनल है?)
+    channels = [
+        ("GIRISH AI GADGET", TOKEN_GADGET, GADGET_HOOKS, True),
+        ("MYSTERY CHANNEL", TOKEN_MYSTIC, MYSTIC_HOOKS, False),
+        ("AI AUTO PILOT EMPIRE", TOKEN_EMPIRE, EMPIRE_HOOKS, False),
+        ("HEALTH AND AYURVEDA", TOKEN_HEALTH, HEALTH_HOOKS, False),
+        ("ZEROTOUCH AI CREATOR", TOKEN_ZEROTOUCH, ZEROTOUCH_HOOKS, False)
+    ]
+    
+    # एक-एक करके 5 चैनल चलेंगे
+    for name, token, hooks, is_gadget in channels:
+        run_channel_safely(name, token, hooks, is_gadget)
+        time.sleep(15) # हर चैनल के बीच 15 सेकंड का रेस्ट ताकि कोई API ब्लॉक न हो
+        
+    print("\n✅ सभी 5 चैनलों का काम खत्म हो गया है बॉस!")
