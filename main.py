@@ -31,7 +31,6 @@ RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY")
 CLIENT_ID = "768932543756-ndfvqmbb0p7ffa1r1cg6bmmuimim98n6.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("YT_CLIENT_SECRET_JSON") or os.environ.get("GOOGLE_CLIENT_SECRET")
 
-# 🔑 आपकी तिजोरी के टोकन
 TOKEN_GADGET = os.environ.get("YOUTUBE_TOKEN_GADGET")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 TOKEN_EMPIRE = os.environ.get("YOUTUBE_TOKEN_EMPIRE")
@@ -42,8 +41,7 @@ if not GROQ_KEY:
     print("❌ Error: GROQ_API_KEY nahi mili!")
     sys.exit(1)
 
-# हुक्स (Hooks)
-GADGET_HOOKS = ["Weird Amazon Tech", "Spy Gadgets Under 500", "Smart Home Magic", "Genius Survival Tools", "Car Gadgets You Need", "Hidden Kitchen Tech", "Future Tech 2026"]
+GADGET_HOOKS = ["Hidden Amazon Tech", "Must-Have Smart Gadgets", "Genius Kitchen Tools", "Car Gadgets You Need", "Cool Room Tech"]
 MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Ghost Towns of India", "Time Travel Proof", "Dark Web Secrets", "Creepy Historical Events"]
 AI_SELL_HOOKS = ["Escape the Matrix", "Faceless YouTube Empire", "Make Money While Sleeping", "AI Replaced My Job", "Zero Touch Income", "Secret of the 1%"]
 
@@ -54,48 +52,44 @@ def extract_json_safely(raw_text):
 def get_script_and_prompts(hook_theme, category):
     print(f"\n✅ AI Engine 40+ second ki dumdaar script likh raha hai: {hook_theme}")
     
-    base_rules = "CRITICAL: Pick a highly obscure, UNIQUE, and rarely talked about topic. DO NOT repeat common examples. Create massive suspense."
-    
     if category == "GADGET":
         prompt = f"""You are a top Amazon affiliate marketer. THEME: "{hook_theme}".
         WRITE A 90-100 WORD HINDI SCRIPT.
-        {base_rules}
+        CRITICAL RULE: The product MUST BE a very common, highly popular real-world item easily found on Amazon India (e.g., Mini Projector, Smartwatch, Portable Blender, Wireless Earbuds, Dashcam). DO NOT use sci-fi or fake gadgets.
         RULES:
         1. NO INTRODUCTIONS. START WITH A SHOCKING HOOK!
-        2. Describe a frustrating problem.
-        3. Reveal the product as the ultimate solution.
+        2. Describe a real daily problem.
+        3. Reveal the real product as the solution.
         4. END EXACTLY WITH: 'यह शानदार गैजेट अभी आउट ऑफ़ स्टॉक होने से पहले डिस्क्रिप्शन में दिए गए लिंक से खरीदें।'
         
         CAPTIONS: 8 short English captions.
         PROMPTS: 8 simple image generation prompts.
-        AMAZON SEARCH TERM: Simple 2-3 word real English product name.
+        AMAZON SEARCH TERM: Simple 2-3 word real English product name (e.g., "Mini Projector").
         """
     elif category == "AI_SELL":
         prompt = f"""You are an expert selling a YouTube Automation Code on Gumroad. THEME: "{hook_theme}".
         WRITE A 90-100 WORD HINDI SCRIPT.
-        {base_rules}
         RULES:
-        1. START DIRECTLY WITH A MIND-BLOWING HOOK about freedom or smart work!
-        2. CRITICAL: DO NOT use the boring "I make 10 lakhs a month" story. VARY YOUR ANGLE. Talk about escaping the 9-to-5, or passive income while traveling, or how bots work 24/7 without a face.
-        3. Explain how AI is running a faceless empire automatically.
-        4. END EXACTLY WITH: 'मेरा यह पूरा यूट्यूब ऑटोमेशन सेटअप खरीदने के लिए डिस्क्रिप्शन में दिए गए गमरोड लिंक पर क्लिक करें।'
+        1. START DIRECTLY WITH A MIND-BLOWING HOOK about freedom, passive income, or smart work!
+        2. DO NOT use the boring "I make 10 lakhs a month" story. Talk about escaping the 9-to-5, or traveling the world while AI works.
+        3. END EXACTLY WITH: 'मेरा यह पूरा यूट्यूब ऑटोमेशन सेटअप खरीदने के लिए डिस्क्रिप्शन में दिए गए गमरोड लिंक पर क्लिक करें।'
         
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 highly cinematic image prompts. RULE: DO NOT INCLUDE HUMAN FACES OR HANDS. Focus on glowing server rooms, neon tech, luxury cars, aesthetic offices, or robot arms typing.
+        PROMPTS: 8 highly detailed, VISUALLY DISTINCT image prompts. IMPORTANT: The image prompts MUST perfectly match the exact sentence being spoken (e.g., if talking about traveling, show a beach. If talking about bots, show a server). DO NOT repeat the same image.
         AMAZON SEARCH TERM: Leave empty ("").
         """
     else: 
         prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
         WRITE A 90-100 WORD HINDI SCRIPT.
-        {base_rules}
+        CRITICAL RULE: Do NOT cut the story short. Build extreme suspense, give a satisfying climax or a mind-blowing cliffhanger, and ONLY THEN say the ending hook.
         RULES:
-        1. NO INTRODUCTIONS. START DIRECTLY WITH A CREEPY/SHOCKING HOOK!
-        2. Build extreme suspense throughout.
+        1. NO INTRODUCTIONS. START DIRECTLY WITH A CREEPY HOOK!
+        2. Build extreme suspense with a complete story arc.
         3. DO NOT TALK ABOUT BUYING OR SELLING.
         4. END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को सब्सक्राइब करें।'
         
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 dark/creepy image prompts without complex human faces.
+        PROMPTS: 8 distinct dark/creepy image prompts matching the exact storyline.
         AMAZON SEARCH TERM: Leave empty ("").
         """
 
@@ -149,12 +143,14 @@ def fetch_amazon_images_strict(query):
     except Exception as e: raise Exception(f"Amazon Fail: {e}")
 
 def fetch_ai_images(prompts):
-    image_files, seed = [], random.randint(1000, 99999)
+    image_files = []
     headers = {"User-Agent": "Mozilla/5.0"}
-    style_modifier = ", cinematic photography, luxury, hyperrealistic, 8k, no humans, no deformed faces"
+    style_modifier = ", cinematic photography, highly detailed, 8k, hyperrealistic"
     
     for i, p in enumerate(prompts):
-        url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + style_modifier)}?width=1080&height=1920&nologo=true&seed={seed+i}"
+        # 🟢 हर एक तस्वीर के लिए 100% नया रैंडम सीड, ताकि कोई भी फोटो रिपीट न हो!
+        seed = random.randint(100000, 999999) 
+        url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + style_modifier)}?width=1080&height=1920&nologo=true&seed={seed}"
         fname = f"ai_scene_{i}.jpg"
         for _ in range(3): 
             try:
