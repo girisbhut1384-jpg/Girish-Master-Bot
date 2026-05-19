@@ -31,7 +31,7 @@ RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY")
 CLIENT_ID = "768932543756-ndfvqmbb0p7ffa1r1cg6bmmuimim98n6.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("YT_CLIENT_SECRET_JSON") or os.environ.get("GOOGLE_CLIENT_SECRET")
 
-# 🔑 आपकी तिजोरी के टोकन
+# 🔑 Aapki tijori ke tokens
 TOKEN_GADGET = os.environ.get("YOUTUBE_TOKEN_GADGET")
 TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 TOKEN_EMPIRE = os.environ.get("YOUTUBE_TOKEN_EMPIRE")
@@ -42,47 +42,48 @@ if not GROQ_KEY:
     print("❌ Error: GROQ_API_KEY nahi mili!")
     sys.exit(1)
 
-# हुक्स (Hooks)
-GADGET_HOOKS = ["Weird Amazon Tech", "Spy Gadgets Under 500", "Smart Home Magic", "Genius Survival Tools", "Car Gadgets You Need", "Hidden Kitchen Tech", "Future Tech 2026"]
-MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Ghost Towns of India", "Time Travel Proof", "Dark Web Secrets", "Creepy Historical Events"]
-# 🟢 AI Sell हुक्स को और डायनामिक कर दिया गया है
-AI_SELL_HOOKS = ["Escape the Matrix", "Faceless YouTube Empire", "Make Money While Sleeping", "AI Replaced My Job", "Zero Touch Income", "Secret of the 1%"]
+# 🧠 Hooks ko aur jyada dark, psychological aur clickbaity kar diya hai
+GADGET_HOOKS = ["Amazon Mistakes that save you money", "Illegal looking gadgets on Amazon", "Smart Home tricks 2026", "Survival tools you need tomorrow", "Secret Car Hacks mechanics hide"]
+MYSTIC_HOOKS = ["Terrifying deep sea discoveries", "Unsolved glitches in reality", "Files the government deleted", "Time Travel proof 2026", "Dark Web secrets exposed"]
+# 🟢 Gumroad Sales Hooks - Ab log darr aur excitement se dekhenge
+AI_SELL_HOOKS = ["AI will replace your job in 2026", "Escape the 9 to 5 Matrix today", "How robots are printing money", "The dark secret of YouTube automation", "Why your degree is useless now", "Clone yourself using AI"]
 
 def extract_json_safely(raw_text):
     match = re.search(r'\{[\s\S]*\}', str(raw_text).strip())
     return match.group(0) if match else "{}"
 
 def get_script_and_prompts(hook_theme, category):
-    print(f"\n✅ AI Engine 40+ second ki dumdaar script likh raha hai: {hook_theme}")
+    print(f"\n✅ AI Engine 40-45 second ki dumdaar script likh raha hai: {hook_theme}")
     
-    base_rules = "CRITICAL: Pick a highly obscure, UNIQUE, and rarely talked about topic. DO NOT repeat common examples. Create massive suspense."
+    base_rules = "CRITICAL: Pick a highly obscure, UNIQUE, and rarely talked about angle. NEVER REPEAT OLD STORIES. Ensure the script takes exactly 40-45 seconds to read (around 95 words)."
     
     if category == "GADGET":
         prompt = f"""You are a top Amazon affiliate marketer. THEME: "{hook_theme}".
         WRITE A 90-100 WORD HINDI SCRIPT.
         {base_rules}
         RULES:
-        1. NO INTRODUCTIONS. START WITH A SHOCKING HOOK!
-        2. Describe a frustrating problem.
-        3. Reveal the product as the ultimate solution.
+        1. START WITH A SHOCKING HOOK! (e.g., "Stop wasting your money on X...")
+        2. Describe a frustrating daily problem.
+        3. Reveal the product as the ultimate mind-blowing solution.
         4. END EXACTLY WITH: 'यह शानदार गैजेट अभी आउट ऑफ़ स्टॉक होने से पहले डिस्क्रिप्शन में दिए गए लिंक से खरीदें।'
         
-        CAPTIONS: 8 short English captions.
-        PROMPTS: 8 simple image generation prompts.
+        CAPTIONS: 8 short punchy English captions.
+        PROMPTS: 8 HIGHLY DESCRIPTIVE image generation prompts matching the product.
         AMAZON SEARCH TERM: Simple 2-3 word real English product name.
         """
     elif category == "AI_SELL":
-        prompt = f"""You are an expert selling a YouTube Automation Code on Gumroad. THEME: "{hook_theme}".
+        prompt = f"""You are an elite psychological copywriter selling a YouTube Automation Code on Gumroad. THEME: "{hook_theme}".
         WRITE A 90-100 WORD HINDI SCRIPT.
         {base_rules}
         RULES:
-        1. START DIRECTLY WITH A MIND-BLOWING HOOK about freedom or smart work!
-        2. CRITICAL: DO NOT use the boring "I make 10 lakhs a month" story. VARY YOUR ANGLE. Talk about escaping the 9-to-5, or passive income while traveling, or how bots work 24/7 without a face.
-        3. Explain how AI is running a faceless empire automatically.
-        4. END EXACTLY WITH: 'मेरा यह पूरा यूट्यूब ऑटोमेशन सेटअप खरीदने के लिए डिस्क्रिप्शन में दिए गए गमरोड लिंक पर क्लिक करें।'
+        1. START WITH A BRUTAL TRUTH OR FEAR HOOK (e.g., jobs disappearing, inflation, escaping the 9-to-5 matrix).
+        2. Tell a captivating micro-story. Make the viewer feel the pain of working hard while others use AI to work smart.
+        3. Introduce your "100% Automated Faceless YouTube Setup" as the ultimate secret weapon to escape the matrix.
+        4. CRITICAL: NO generic "I make 10 lakhs" lines. Focus on FREEDOM, REPLACING JOBS, and AI ROBOTS doing the work 24/7.
+        5. END EXACTLY WITH: 'मेरा यह पूरा यूट्यूब ऑटोमेशन सेटअप खरीदने के लिए डिस्क्रिप्शन में दिए गए गमरोड लिंक पर क्लिक करें।'
         
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 highly cinematic image prompts. RULE: DO NOT INCLUDE HUMAN FACES OR HANDS. Focus on glowing server rooms, neon tech, luxury cars, aesthetic offices, or robot arms typing.
+        PROMPTS: 8 HIGHLY CINEMATIC, UNIQUE image prompts. DO NOT use generic laptops. Use metaphors: Glowing red pill, matrix codes, a futuristic golden vault, a dark aesthetic neon office, flying money particles. NO HUMANS/FACES.
         AMAZON SEARCH TERM: Leave empty ("").
         """
     else: 
@@ -90,13 +91,13 @@ def get_script_and_prompts(hook_theme, category):
         WRITE A 90-100 WORD HINDI SCRIPT.
         {base_rules}
         RULES:
-        1. NO INTRODUCTIONS. START DIRECTLY WITH A CREEPY/SHOCKING HOOK!
-        2. Build extreme suspense throughout.
+        1. START DIRECTLY WITH A CREEPY/SHOCKING HOOK!
+        2. Build extreme suspense throughout. Keep them hooked till the last second.
         3. DO NOT TALK ABOUT BUYING OR SELLING.
         4. END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को सब्सक्राइब करें।'
         
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 dark/creepy image prompts without complex human faces.
+        PROMPTS: 8 dark, eerie, highly detailed cinematic image prompts.
         AMAZON SEARCH TERM: Leave empty ("").
         """
 
@@ -113,7 +114,8 @@ def get_script_and_prompts(hook_theme, category):
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9} 
+    # 🟢 Temperature badha diya taaki LLM har baar naya soche aur copy-paste kahani na banaye
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.95} 
     
     for attempt in range(3):
         try:
@@ -152,8 +154,8 @@ def fetch_amazon_images_strict(query):
 def fetch_ai_images(prompts):
     image_files, seed = [], random.randint(1000, 99999)
     headers = {"User-Agent": "Mozilla/5.0"}
-    # 🟢 AI इमेज को फटने से बचाने के लिए 'सिनेमैटिक और नो ह्यूमन्स' का कमांड जोड़ा गया है
-    style_modifier = ", cinematic photography, luxury, hyperrealistic, 8k, no humans, no deformed faces"
+    # 🟢 High-End 8K Cinematic Modifier jo images ko fadu aur realistic banayega
+    style_modifier = ", 8k resolution, masterpiece, breathtaking, highly detailed, cinematic lighting, photorealistic, unreal engine 5 render, dark moody aesthetic, no humans, no deformed faces"
     
     for i, p in enumerate(prompts):
         url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + style_modifier)}?width=1080&height=1920&nologo=true&seed={seed+i}"
@@ -294,39 +296,8 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 gumroad_link = "https://girisbhut.gumroad.com/l/ajhzk"
                 desc = f"🚀 👉 मेरा यह पूरा 100% ऑटोमैटिक YouTube Setup अभी खरीदें!\n🔗 यहाँ क्लिक करें: {gumroad_link}\n\n{script}"
                 
-                upload_video(token, video_file, f"🤯 AI makes me Money while I sleep! #shorts", desc, ["shorts", "automation", "ai", "money"], "28")
+                upload_video(token, video_file, f"🤯 Escape the Matrix using AI! #shorts", desc, ["shorts", "automation", "ai", "money", "mindset"], "28")
                 print("✅ AI SELL Video Live with Gumroad Link!")
 
             else: 
-                image_files = fetch_ai_images(prompts)
-                create_human_voice(script, voice_file)
-                make_video(image_files, captions, video_file, voice_file)
-                
-                desc = f"🔥 👉 ऐसे ही खूंखार रहस्यों और जानकारी के लिए सब्सक्राइब करें!\n\n{script}"
-                upload_video(token, video_file, f"🤯 Secret They Hid From You! #shorts", desc, ["shorts", "mystery", "creepy", "facts"], "28")
-                print(f"✅ {channel_name} Video Live!")
-                
-            return True 
-                
-        except Exception as e: 
-            print(f"🛑 Error on {channel_name}: {e}. Machine dobara koshish kar rahi hai...")
-            time.sleep(10) 
-            
-    print(f"❌ {channel_name} fail ho gaya.")
-    return False
-
-if __name__ == "__main__":
-    channels = [
-        ("GIRISH AI GADGET", TOKEN_GADGET, GADGET_HOOKS, "GADGET"),
-        ("MYSTERY CHANNEL", TOKEN_MYSTIC, MYSTIC_HOOKS, "MYSTERY"),
-        # 🟢 अब वेल्थ चैनल को भी AI_SELL (गमरोड) की केटेगरी में डाल दिया गया है!
-        ("FACELESS AI WEALTH", TOKEN_WEALTH, AI_SELL_HOOKS, "AI_SELL"),             
-        ("AI AUTO PILOT EMPIRE", TOKEN_EMPIRE, AI_SELL_HOOKS, "AI_SELL"),         
-        ("ZEROTOUCH AI CREATOR", TOKEN_ZEROTOUCH, AI_SELL_HOOKS, "AI_SELL")       
-    ]
-    
-    for name, token, hooks, cat in channels:
-        run_channel_safely(name, token, hooks, cat)
-        time.sleep(15)
-        
-    print("\n✅ सभी 5 चैनलों का काम खत्म हो गया है बॉस!")
+                image_files = fetch
