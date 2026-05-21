@@ -64,18 +64,19 @@ def get_script_and_prompts(hook_theme, category):
         
         CAPTIONS: 8 short English captions.
         PROMPTS: 8 simple image generation prompts.
-        AMAZON SEARCH TERM: Simple 2-3 word real English product name (e.g., "Mini Projector").
+        AMAZON SEARCH TERM: Simple 2-3 word real English product name.
         """
     elif category == "AI_SELL":
         prompt = f"""You are an expert selling a YouTube Automation Code on Gumroad. THEME: "{hook_theme}".
         WRITE A 90-100 WORD HINDI SCRIPT.
+        CRITICAL RULE FOR VARIETY: YOU MUST BE HIGHLY CREATIVE. DO NOT repeat the "escape 9-to-5" or "travel the world" stories every time. Pick a COMPLETELY NEW ANGLE for every script (Examples: Digital Real Estate, How algorithms control humans, Passive income psychology, Smart work vs Hard work).
         RULES:
-        1. START DIRECTLY WITH A MIND-BLOWING HOOK about freedom, passive income, or smart work!
-        2. DO NOT use the boring "I make 10 lakhs a month" story. Talk about escaping the 9-to-5, or traveling the world while AI works.
+        1. START DIRECTLY WITH A MIND-BLOWING HOOK!
+        2. Deliver a highly unique, rarely talked about concept about AI/wealth.
         3. END EXACTLY WITH: 'मेरा यह पूरा यूट्यूब ऑटोमेशन सेटअप खरीदने के लिए डिस्क्रिप्शन में दिए गए गमरोड लिंक पर क्लिक करें।'
         
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 highly detailed, VISUALLY DISTINCT image prompts. IMPORTANT: The image prompts MUST perfectly match the exact sentence being spoken (e.g., if talking about traveling, show a beach. If talking about bots, show a server). DO NOT repeat the same image.
+        PROMPTS: 8 highly detailed, VISUALLY DISTINCT image prompts matching the exact concept. NO HUMANS.
         AMAZON SEARCH TERM: Leave empty ("").
         """
     else: 
@@ -106,7 +107,7 @@ def get_script_and_prompts(hook_theme, category):
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9} 
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.95} 
     
     for attempt in range(3):
         try:
@@ -148,7 +149,6 @@ def fetch_ai_images(prompts):
     style_modifier = ", cinematic photography, highly detailed, 8k, hyperrealistic"
     
     for i, p in enumerate(prompts):
-        # 🟢 हर एक तस्वीर के लिए 100% नया रैंडम सीड, ताकि कोई भी फोटो रिपीट न हो!
         seed = random.randint(100000, 999999) 
         url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + style_modifier)}?width=1080&height=1920&nologo=true&seed={seed}"
         fname = f"ai_scene_{i}.jpg"
