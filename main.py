@@ -50,16 +50,17 @@ def extract_json_safely(raw_text):
     return match.group(0) if match else "{}"
 
 def get_script_and_prompts(hook_theme, category):
-    print(f"\n✅ AI Engine 40+ second ki dumdaar script likh raha hai: {hook_theme}")
+    print(f"\n✅ AI Engine dumdaar aur LAMBI script likh raha hai: {hook_theme}")
     
     if category == "GADGET":
         prompt = f"""You are a top Amazon affiliate marketer. THEME: "{hook_theme}".
-        WRITE A 90-100 WORD HINDI SCRIPT.
-        CRITICAL RULE: The product MUST BE a very common, highly popular real-world item easily found on Amazon India (e.g., Mini Projector, Smartwatch, Portable Blender, Wireless Earbuds, Dashcam). DO NOT use sci-fi or fake gadgets.
+        WRITE A 100-120 WORD HINDI SCRIPT.
+        CRITICAL BANS: DO NOT use the phrase "क्या आप जानते हैं".
+        CRITICAL RULE: The product MUST BE a very common, highly popular real-world item easily found on Amazon India. DO NOT use sci-fi or fake gadgets.
         RULES:
         1. NO INTRODUCTIONS. START WITH A SHOCKING HOOK!
-        2. Describe a real daily problem.
-        3. Reveal the real product as the solution.
+        2. BODY: Write 4 to 5 lines explaining a massive daily problem and how this specific gadget solves it perfectly. Take your time to build value. DO NOT rush to the ending.
+        3. Reveal the real product as the ultimate solution.
         4. END EXACTLY WITH: 'यह शानदार गैजेट अभी आउट ऑफ़ स्टॉक होने से पहले डिस्क्रिप्शन में दिए गए लिंक से खरीदें।'
         
         CAPTIONS: 8 short English captions.
@@ -68,11 +69,11 @@ def get_script_and_prompts(hook_theme, category):
         """
     elif category == "AI_SELL":
         prompt = f"""You are an expert selling a YouTube Automation Code on Gumroad. THEME: "{hook_theme}".
-        WRITE A 90-100 WORD HINDI SCRIPT.
-        CRITICAL RULE FOR VARIETY: YOU MUST BE HIGHLY CREATIVE. DO NOT repeat the "escape 9-to-5" or "travel the world" stories every time. Pick a COMPLETELY NEW ANGLE for every script (Examples: Digital Real Estate, How algorithms control humans, Passive income psychology, Smart work vs Hard work).
+        WRITE A 120-140 WORD HINDI SCRIPT.
+        CRITICAL BANS: DO NOT use the words "क्या आप जानते हैं" or "एल्गोरिदम" (Algorithm) anywhere. DO NOT use the boring "I make 10 lakhs a month" story.
         RULES:
         1. START DIRECTLY WITH A MIND-BLOWING HOOK!
-        2. Deliver a highly unique, rarely talked about concept about AI/wealth.
+        2. BODY: You MUST write 5 to 6 lines explaining a highly unique concept deeply (Examples: Digital Real Estate, Passive income psychology, Smart work vs Hard work, or Bots replacing human jobs). Create a mini-story. DO NOT cut the story short.
         3. END EXACTLY WITH: 'मेरा यह पूरा यूट्यूब ऑटोमेशन सेटअप खरीदने के लिए डिस्क्रिप्शन में दिए गए गमरोड लिंक पर क्लिक करें।'
         
         CAPTIONS: 8 short English captions.
@@ -81,11 +82,12 @@ def get_script_and_prompts(hook_theme, category):
         """
     else: 
         prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
-        WRITE A 90-100 WORD HINDI SCRIPT.
+        WRITE A 120-140 WORD HINDI SCRIPT.
+        CRITICAL BANS: DO NOT use the phrase "क्या आप जानते हैं".
         CRITICAL RULE: Do NOT cut the story short. Build extreme suspense, give a satisfying climax or a mind-blowing cliffhanger, and ONLY THEN say the ending hook.
         RULES:
         1. NO INTRODUCTIONS. START DIRECTLY WITH A CREEPY HOOK!
-        2. Build extreme suspense with a complete story arc.
+        2. BODY: Write 5 to 6 lines building extreme suspense with a complete story arc. Give creepy details, strange dates, or dark facts.
         3. DO NOT TALK ABOUT BUYING OR SELLING.
         4. END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को सब्सक्राइब करें।'
         
@@ -107,6 +109,7 @@ def get_script_and_prompts(hook_theme, category):
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
+    # Temperature 0.95 rakha hai taaki AI hamesha kuch naya aur creative soche
     data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.95} 
     
     for attempt in range(3):
