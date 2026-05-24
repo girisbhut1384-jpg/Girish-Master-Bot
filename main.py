@@ -43,53 +43,51 @@ if not GROQ_KEY:
 
 GADGET_HOOKS = ["Hidden Amazon Tech", "Must-Have Smart Gadgets", "Genius Kitchen Tools", "Car Gadgets You Need", "Cool Room Tech"]
 MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Ghost Towns of India", "Time Travel Proof", "Dark Web Secrets", "Creepy Historical Events"]
-AI_SELL_HOOKS = ["Escape the Matrix", "Faceless YouTube Empire", "Make Money While Sleeping", "AI Replaced My Job", "Zero Touch Income", "Secret of the 1%"]
+AI_SELL_HOOKS = ["Escape the Matrix", "Smart Work Secrets", "Future Tech Tools", "AI Automation Power", "Time Saving Tech", "Secret of the 1%"]
 
 def extract_json_safely(raw_text):
     match = re.search(r'\{[\s\S]*\}', str(raw_text).strip())
     return match.group(0) if match else "{}"
 
 def get_script_and_prompts(hook_theme, category):
-    print(f"\n✅ AI Engine dumdaar aur LAMBI script likh raha hai: {hook_theme}")
+    print(f"\n✅ AI Engine dumdaar, fast-paced script aur viral Title likh raha hai: {hook_theme}")
+    
+    # 🟢 आपके दिए गए सख्त नियम (Strict Rules)
+    base_rules = """
+    STRICT RULES TO FOLLOW:
+    1. Title Generation: Create a unique, highly clickable title (under 50 characters). DO NOT use the "🤯" emoji at the start. Use 1 different, relevant emoji at the END of the title.
+    2. Avoid Spam Words: Do NOT use 'Passive Income', 'Get Rich Quick', 'Make Money While Sleeping', 'Digital Real Estate', or '10 Lakh'.
+    3. Use Safe Words: 'Smart Work', 'Future Tech', 'AI Automation', 'Time Saving'.
+    4. SCRIPT STRUCTURE (Hindi):
+       - Hook (0-3s): Pattern-interrupt. Ask a shocking question or state a mind-blowing fact. No boring intros. DO NOT use "क्या आप जानते हैं".
+       - Body (3-40s): Fast-paced, high-value information. Keep sentences short and punchy (3-4 sentences).
+    """
     
     if category == "GADGET":
-        prompt = f"""You are a top Amazon affiliate marketer. THEME: "{hook_theme}".
-        WRITE A 100-120 WORD HINDI SCRIPT.
-        CRITICAL BANS: DO NOT use the phrase "क्या आप जानते हैं".
-        CRITICAL RULE: The product MUST BE a very common, highly popular real-world item easily found on Amazon India. DO NOT use sci-fi or fake gadgets.
-        RULES:
-        1. NO INTRODUCTIONS. START WITH A SHOCKING HOOK!
-        2. BODY: Write 4 to 5 lines explaining a massive daily problem and how this specific gadget solves it perfectly. Take your time to build value. DO NOT rush to the ending.
-        3. Reveal the real product as the ultimate solution.
-        4. END EXACTLY WITH: 'यह शानदार गैजेट अभी आउट ऑफ़ स्टॉक होने से पहले डिस्क्रिप्शन में दिए गए लिंक से खरीदें।'
+        prompt = f"""You are an expert YouTube Shorts Scriptwriter. THEME: "{hook_theme}".
+        {base_rules}
+        CRITICAL: The product MUST BE a common real-world item easily found on Amazon India.
+        CTA (Call to Action): DO NOT say 'Link in description'. END EXACTLY WITH: 'ऐसे ही और शानदार गैजेट्स के लिए चैनल को अभी सब्सक्राइब करें।'
         
         CAPTIONS: 8 short English captions.
         PROMPTS: 8 simple image generation prompts.
         AMAZON SEARCH TERM: Simple 2-3 word real English product name.
         """
     elif category == "AI_SELL":
-        prompt = f"""You are an expert selling a YouTube Automation Code on Gumroad. THEME: "{hook_theme}".
-        WRITE A 120-140 WORD HINDI SCRIPT.
-        CRITICAL BANS: DO NOT use the words "क्या आप जानते हैं" or "एल्गोरिदम" (Algorithm) anywhere. DO NOT use the boring "I make 10 lakhs a month" story.
-        RULES:
-        1. START DIRECTLY WITH A MIND-BLOWING HOOK!
-        2. BODY: You MUST write 5 to 6 lines explaining a highly unique concept deeply (Examples: Digital Real Estate, Passive income psychology, Smart work vs Hard work, or Bots replacing human jobs). Create a mini-story. DO NOT cut the story short.
-        3. END EXACTLY WITH: 'मेरा यह पूरा यूट्यूब ऑटोमेशन सेटअप खरीदने के लिए डिस्क्रिप्शन में दिए गए गमरोड लिंक पर क्लिक करें।'
+        prompt = f"""You are an expert YouTube Shorts Scriptwriter. THEME: "{hook_theme}".
+        {base_rules}
+        CRITICAL: Deliver a highly unique, futuristic concept about AI/Smart Work.
+        CTA (Call to Action): DO NOT say 'Link in description'. END EXACTLY WITH: 'ऐसे ही और शानदार टूल्स के लिए चैनल को अभी सब्सक्राइब करें।'
         
         CAPTIONS: 8 short English captions.
         PROMPTS: 8 highly detailed, VISUALLY DISTINCT image prompts matching the exact concept. NO HUMANS.
         AMAZON SEARCH TERM: Leave empty ("").
         """
     else: 
-        prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
-        WRITE A 120-140 WORD HINDI SCRIPT.
-        CRITICAL BANS: DO NOT use the phrase "क्या आप जानते हैं".
-        CRITICAL RULE: Do NOT cut the story short. Build extreme suspense, give a satisfying climax or a mind-blowing cliffhanger, and ONLY THEN say the ending hook.
-        RULES:
-        1. NO INTRODUCTIONS. START DIRECTLY WITH A CREEPY HOOK!
-        2. BODY: Write 5 to 6 lines building extreme suspense with a complete story arc. Give creepy details, strange dates, or dark facts.
-        3. DO NOT TALK ABOUT BUYING OR SELLING.
-        4. END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को सब्सक्राइब करें।'
+        prompt = f"""You are an expert YouTube Shorts Scriptwriter. THEME: "{hook_theme}".
+        {base_rules}
+        CRITICAL: Build extreme suspense with a complete mini-story arc.
+        CTA (Call to Action): DO NOT say 'Link in description'. END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को अभी सब्सक्राइब करें।'
         
         CAPTIONS: 8 short English captions.
         PROMPTS: 8 distinct dark/creepy image prompts matching the exact storyline.
@@ -97,11 +95,12 @@ def get_script_and_prompts(hook_theme, category):
         """
 
     prompt += """
-    Return ONLY valid JSON:
+    Return ONLY valid JSON in this exact format:
     {
-      "topic": "viral topic name",
-      "script": "Hindi script here...",
-      "captions": ["SHOCKING", "DAILY PROBLEM", "THE SOLUTION", "WAIT FOR IT", "AMAZING TECH", "MIND BLOWN", "STOCK ENDING", "LINK IN BIO"],
+      "title": "Unique Title Here 🔥",
+      "tags": ["shorts", "tech", "smartwork"],
+      "script": "Complete Hindi script here (Hook + Body + CTA)",
+      "captions": ["SHOCKING", "DAILY PROBLEM", "THE SOLUTION", "WAIT FOR IT", "AMAZING TECH", "MIND BLOWN", "STOCK ENDING", "SUBSCRIBE NOW"],
       "prompts": ["Image 1", "Image 2", "Image 3", "Image 4", "Image 5", "Image 6", "Image 7", "Image 8"],
       "amazon_search_term": "Product name"
     }
@@ -109,7 +108,6 @@ def get_script_and_prompts(hook_theme, category):
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    # Temperature 0.95 rakha hai taaki AI hamesha kuch naya aur creative soche
     data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.95} 
     
     for attempt in range(3):
@@ -117,9 +115,9 @@ def get_script_and_prompts(hook_theme, category):
             response = requests.post(url, headers=headers, json=data, timeout=60)
             if response.status_code == 200:
                 parsed = json.loads(extract_json_safely(response.json()['choices'][0]['message']['content']))
-                if parsed.get('script'):
-                    print("🎯 Script Ready!")
-                    return parsed['script'].replace("*", ""), parsed['prompts'][:8], parsed['captions'][:8], parsed.get('amazon_search_term', 'Gadget')
+                if parsed.get('script') and parsed.get('title'):
+                    print("🎯 Script, Title & Tags Ready!")
+                    return parsed['script'].replace("*", ""), parsed['prompts'][:8], parsed['captions'][:8], parsed.get('amazon_search_term', ''), parsed['title'], parsed.get('tags', ['shorts', 'viral', 'trending'])[:3]
         except: time.sleep(2)
     raise Exception("🚨 AI Model Failed!")
 
@@ -265,7 +263,8 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
     for attempt in range(5):
         try:
             hook = random.choice(hook_list)
-            script, prompts, captions, amazon_term = get_script_and_prompts(hook, category)
+            # 🟢 अब मशीन टाइटल और टैग्स भी डायनामिक निकाल रही है!
+            script, prompts, captions, amazon_term, dyn_title, dyn_tags = get_script_and_prompts(hook, category)
             
             prefix = channel_name.replace(" ", "_").lower()
             voice_file = f"voice_{prefix}.mp3"
@@ -278,10 +277,10 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 
                 clean_term = re.sub(r'[^a-zA-Z0-9 ]', '', str(amazon_term)).strip()
                 amz_link = f"https://www.amazon.in/s?k={urllib.parse.quote(clean_term)}&tag=girishbhut07-21"
-                desc = f"🔥 👉 यह शानदार गैजेट आउट ऑफ़ स्टॉक होने से पहले यहाँ से खरीदें!\n🔗 लिंक: {amz_link}\n\n{script}"
+                desc = f"🔗 प्रोडक्ट यहाँ से खरीदें: {amz_link}\n\n{script}"
                 
-                upload_video(token, video_file, f"🤯 Best {amazon_term}! #shorts", desc, ["shorts", "gadgets", "amazon finds", "tech"], "28")
-                print("✅ GADGETS Video Live with Direct Amazon Link!")
+                upload_video(token, video_file, dyn_title, desc, dyn_tags, "28")
+                print(f"✅ GADGETS Video Live! Title: {dyn_title}")
                 
             elif category == "AI_SELL":
                 image_files = fetch_ai_images(prompts)
@@ -289,19 +288,19 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 make_video(image_files, captions, video_file, voice_file)
                 
                 gumroad_link = "https://girisbhut.gumroad.com/l/ajhzk"
-                desc = f"🚀 👉 मेरा यह पूरा 100% ऑटोमैटिक YouTube Setup अभी खरीदें!\n🔗 यहाँ क्लिक करें: {gumroad_link}\n\n{script}"
+                desc = f"🔗 पूरा AI YouTube Setup खरीदें: {gumroad_link}\n\n{script}"
                 
-                upload_video(token, video_file, f"🤯 AI makes me Money while I sleep! #shorts", desc, ["shorts", "automation", "ai", "money"], "28")
-                print("✅ AI SELL Video Live with Gumroad Link!")
+                upload_video(token, video_file, dyn_title, desc, dyn_tags, "28")
+                print(f"✅ AI SELL Video Live! Title: {dyn_title}")
 
             else: 
                 image_files = fetch_ai_images(prompts)
                 create_human_voice(script, voice_file)
                 make_video(image_files, captions, video_file, voice_file)
                 
-                desc = f"🔥 👉 ऐसे ही खूंखार रहस्यों और जानकारी के लिए सब्सक्राइब करें!\n\n{script}"
-                upload_video(token, video_file, f"🤯 Secret They Hid From You! #shorts", desc, ["shorts", "mystery", "creepy", "facts"], "28")
-                print(f"✅ {channel_name} Video Live!")
+                desc = f"🔥 ऐसे ही रहस्यों के लिए सब्सक्राइब करें!\n\n{script}"
+                upload_video(token, video_file, dyn_title, desc, dyn_tags, "28")
+                print(f"✅ {channel_name} Video Live! Title: {dyn_title}")
                 
             return True 
                 
