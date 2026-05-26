@@ -50,50 +50,51 @@ def extract_json_safely(raw_text):
     match = re.search(r'\{[\s\S]*\}', str(raw_text).strip())
     return match.group(0) if match else "{}"
 
-def get_script_and_prompts(hook_theme, category):
-    print(f"\n✅ AI Engine Master Prompt ke sath Content likh raha hai: {hook_theme}")
+def get_script_and_prompts(hook_theme, category, channel_name):
+    print(f"\n✅ AI Engine Content likh raha hai for '{channel_name}' | Theme: {hook_theme}")
     
-    # 🟢 बॉस का दिया हुआ 'Master System Prompt' यहाँ 100% फिट कर दिया गया है
-    master_system_rules = """
+    master_system_rules = f"""
     STRICT RULES TO FOLLOW:
     1. Title Generation: Create a unique, highly clickable title (under 50 characters). DO NOT use the "🤯" emoji at the start. Use a different, relevant emoji at the END of the title. Never repeat previous titles.
-    2. Avoid Spam Words: DO NOT use words like 'Passive Income', 'Get Rich Quick', 'Make Money While Sleeping', or 'Digital Real Estate'. Instead, use safe words like 'Smart Work', 'Future Tech', 'AI Automation', or 'Time Saving'.
-    3. The Hook (0-3 Seconds): The first sentence MUST be a pattern-interrupt. Ask a shocking question or state a mind-blowing fact to stop the user from scrolling. No boring introductions. Do NOT use "क्या आप जानते हैं".
-    4. The Value (3-40 Seconds): Provide fast-paced, high-value information. Keep sentences short and punchy. Write exactly enough words (around 100-110 words) for a 45-50 second Hindi voiceover.
-    5. Call to Action (CTA): DO NOT say 'Link in description' in the voiceover script.
+    2. Avoid Spam Words: DO NOT use words like 'Passive Income', 'Get Rich Quick', or 'Make Money While Sleeping'. Use safe words like 'Smart Work', 'Future Tech', or 'AI Automation'.
+    3. The Hook (0-3 Seconds): The first sentence MUST be a pattern-interrupt. Ask a shocking question or state a mind-blowing fact. Do NOT use "क्या आप जानते हैं".
+    4. The Value (Length): Write EXACTLY around 200-250 words in pure Hindi to ensure a full 45-50 second voiceover. 
+    5. Brand Identity: You are creating this specifically for the YouTube channel "{channel_name}". Make it unique to this brand's style.
+    6. Call to Action (CTA): DO NOT say 'Link in description' in the script.
     """
     
     if category == "GADGET":
-        prompt = f"""You are an expert YouTube Shorts Scriptwriter and Viral Content Strategist. THEME: "{hook_theme}".
+        prompt = f"""You are an expert Tech Scriptwriter. THEME: "{hook_theme}".
         {master_system_rules}
         NICHE: Tech Gadgets.
-        CRITICAL RULE: The product MUST BE a common real-world item easily found on Amazon India.
+        CRITICAL RULE: Pick ONE specific, highly useful real-world gadget found on Amazon India (e.g., Mini Vacuum, Smart Plug, Magnetic Cable). Explain EXACTLY what problem it solves. Name the gadget clearly.
         VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही और शानदार गैजेट्स के लिए चैनल को अभी सब्सक्राइब करें।'
         
-        Generate a UNIQUE 2-line SEO DESCRIPTION about the video.
+        Generate a UNIQUE 2-line SEO DESCRIPTION.
         Generate 3 UNIQUE TAGS.
         CAPTIONS: 8 short English captions.
         PROMPTS: 8 simple image generation prompts.
         AMAZON SEARCH TERM: Simple 2-3 word real English product name.
         """
     elif category == "AI_SELL":
-        prompt = f"""You are an expert YouTube Shorts Scriptwriter and Viral Content Strategist. THEME: "{hook_theme}".
+        prompt = f"""You are an expert AI & Tech Scriptwriter. THEME: "{hook_theme}".
         {master_system_rules}
         NICHE: AI Tools & Automation Value.
-        CRITICAL RULES: DO NOT SELL ANYTHING IN THE SCRIPT. DO NOT mention Gumroad or setups. Only provide high-value information.
-        VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही और शानदार टूल्स के लिए चैनल को अभी सब्सक्राइब करें।'
+        CRITICAL RULE: Do not talk generically. You MUST pick ONE real, specific AI tool (e.g., ChatGPT, Midjourney, ElevenLabs, Notion AI, RunwayML, etc.) and explain EXACTLY how it saves time or money. Mention the tool's real name clearly in the Hindi script.
+        DO NOT SELL ANYTHING. DO NOT mention Gumroad. Only provide high-value, actionable information to help the user.
+        VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही शानदार टूल्स के लिए चैनल को अभी सब्सक्राइब करें।'
         
-        Generate a UNIQUE 2-line SEO DESCRIPTION about the video value.
+        Generate a UNIQUE 2-line SEO DESCRIPTION about the tool.
         Generate 3 UNIQUE TAGS.
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 highly detailed image prompts matching the concept.
+        PROMPTS: 8 highly detailed image prompts matching the AI tool's function.
         AMAZON SEARCH TERM: Leave empty ("").
         """
     else: 
         prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
         {master_system_rules}
         NICHE: Creepy Mysteries.
-        CRITICAL RULE: Build extreme suspense with a complete story arc. Give creepy details.
+        CRITICAL RULE: Do not use generic filler words. Tell a specific, fast-paced story about a REAL unsolved mystery or creepy historical event. Give specific, dark details to build extreme suspense.
         VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को अभी सब्सक्राइब करें।'
         
         Generate a UNIQUE 2-line SEO DESCRIPTION about the mystery.
@@ -118,7 +119,8 @@ def get_script_and_prompts(hook_theme, category):
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9} 
+    # 🟢 MAX_TOKENS 1500 SET KAR DIYA GAYA HAI (Error 5124 bytes solved)
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9, "max_tokens": 1500} 
     
     for attempt in range(3):
         try:
@@ -281,8 +283,9 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
     for attempt in range(5):
         try:
             hook = random.choice(hook_list)
-            # 🟢 मशीन अब मास्टर प्रॉम्प्ट से बिल्कुल परफेक्ट डेटा ला रही है
-            script, prompts, captions, amazon_term, dyn_title, dyn_desc, dyn_tags = get_script_and_prompts(hook, category)
+            
+            # 🟢 Channel name pass kiya gaya hai taki har channel unique bane
+            script, prompts, captions, amazon_term, dyn_title, dyn_desc, dyn_tags = get_script_and_prompts(hook, category, channel_name)
             
             prefix = channel_name.replace(" ", "_").lower()
             voice_file = f"voice_{prefix}.mp3"
@@ -307,12 +310,11 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 create_human_voice(script, voice_file)
                 make_video(image_files, captions, video_file, voice_file)
                 
-                gumroad_link = "https://girisbhut.gumroad.com/l/ajhzk"
-                
-                final_desc = f"{dyn_desc}\n\n🚀 👉 मेरा यह पूरा 100% ऑटोमैटिक YouTube Setup अभी खरीदें:\n🔗 यहाँ क्लिक करें: {gumroad_link}\n\n📝 Script:\n{script}"
+                # 🟢 Gumroad link ko puri tarah hata diya gaya hai taaki channel safe rahe
+                final_desc = f"{dyn_desc}\n\n📝 Script:\n{script}"
                 
                 upload_video(token, video_file, dyn_title, final_desc, dyn_tags, "28")
-                print(f"✅ AI SELL Video Live (Passive Marketing)! Title: {dyn_title}")
+                print(f"✅ AI Video Live (High Value Knowledge)! Title: {dyn_title}")
                 return True 
 
             else: 
@@ -320,18 +322,16 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 create_human_voice(script, voice_file)
                 make_video(image_files, captions, video_file, voice_file)
                 
-                final_desc = f"{dyn_desc}\n\n🔥 👉 ऐसे ही खूंखार रहस्यों के लिए सब्सक्राइब करें!\n\n📝 Script:\n{script}"
+                final_desc = f"{dyn_desc}\n\n📝 Script:\n{script}"
                 
                 upload_video(token, video_file, dyn_title, final_desc, dyn_tags, "28")
                 print(f"✅ {channel_name} Video Live! Title: {dyn_title}")
                 return True 
                 
-        # 🟢 4 घंटे की बर्बादी रोकने वाला 'स्मार्ट ब्रेक'
         except HttpError as e:
             error_content = str(e).lower()
             if "quota" in error_content or "ratelimit" in error_content or "429" in error_content:
                 print(f"🚨 YOUTUBE QUOTA FULL for {channel_name}! यूट्यूब की अपलोड लिमिट खत्म हो चुकी है।")
-                print("🚫 मशीन समझदार है, इसलिए 4 घंटे बर्बाद नहीं करेगी। इस चैनल को आज के लिए रोक रहे हैं।")
                 break 
             else:
                 print(f"🛑 YouTube API Error on {channel_name}: {e}. Dobara koshish kar rahe hain...")
