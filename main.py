@@ -18,7 +18,6 @@ if not hasattr(Image, 'Resampling'):
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip
-from googleapiclient.errors import HttpError 
 
 print("🔓 Security aur Premium Setup chalu ho raha hai...")
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
@@ -44,83 +43,70 @@ if not GROQ_KEY:
 
 GADGET_HOOKS = ["Hidden Amazon Tech", "Must-Have Smart Gadgets", "Genius Kitchen Tools", "Car Gadgets You Need", "Cool Room Tech"]
 MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Ghost Towns of India", "Time Travel Proof", "Dark Web Secrets", "Creepy Historical Events"]
-AI_SELL_HOOKS = ["Free AI Tools 2026", "AI Video Editing Hacks", "Secret Websites Nobody Knows", "Smart Work vs Hard Work", "AI Tools for Students", "Time Saving Tech"]
+AI_SELL_HOOKS = ["Escape the Matrix", "Faceless YouTube Empire", "Make Money While Sleeping", "AI Replaced My Job", "Zero Touch Income", "Secret of the 1%"]
 
 def extract_json_safely(raw_text):
     match = re.search(r'\{[\s\S]*\}', str(raw_text).strip())
     return match.group(0) if match else "{}"
 
-def get_script_and_prompts(hook_theme, category, channel_name):
-    print(f"\n✅ AI Engine Content likh raha hai for '{channel_name}' | Theme: {hook_theme}")
-    
-    master_system_rules = f"""
-    STRICT RULES TO FOLLOW:
-    1. Title Generation: Create a unique, highly clickable title (under 50 characters). DO NOT use the "🤯" emoji at the start. Use a different, relevant emoji at the END of the title. Never repeat previous titles.
-    2. Avoid Spam Words: DO NOT use words like 'Passive Income', 'Get Rich Quick', or 'Make Money While Sleeping'. Use safe words like 'Smart Work', 'Future Tech', or 'AI Automation'.
-    3. The Hook (0-3 Seconds): The first sentence MUST be a pattern-interrupt. Ask a shocking question or state a mind-blowing fact. Do NOT use "क्या आप जानते हैं".
-    4. The Value (Length): Write EXACTLY around 200-250 words in pure Hindi to ensure a full 45-50 second voiceover. 
-    5. Brand Identity: You are creating this specifically for the YouTube channel "{channel_name}". Make it unique to this brand's style.
-    6. Call to Action (CTA): DO NOT say 'Link in description' in the script.
-    """
+def get_script_and_prompts(hook_theme, category):
+    print(f"\n✅ AI Engine 40+ second ki dumdaar script likh raha hai: {hook_theme}")
     
     if category == "GADGET":
-        prompt = f"""You are an expert Tech Scriptwriter. THEME: "{hook_theme}".
-        {master_system_rules}
-        NICHE: Tech Gadgets.
-        CRITICAL RULE: Pick ONE specific, highly useful real-world gadget found on Amazon India (e.g., Mini Vacuum, Smart Plug, Magnetic Cable). Explain EXACTLY what problem it solves. Name the gadget clearly.
-        VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही और शानदार गैजेट्स के लिए चैनल को अभी सब्सक्राइब करें।'
+        prompt = f"""You are a top Amazon affiliate marketer. THEME: "{hook_theme}".
+        WRITE A 90-100 WORD HINDI SCRIPT.
+        CRITICAL RULE: The product MUST BE a very common, highly popular real-world item easily found on Amazon India (e.g., Mini Projector, Smartwatch, Portable Blender, Wireless Earbuds, Dashcam). DO NOT use sci-fi or fake gadgets.
+        RULES:
+        1. NO INTRODUCTIONS. START WITH A SHOCKING HOOK!
+        2. Describe a real daily problem.
+        3. Reveal the real product as the solution.
+        4. END EXACTLY WITH: 'यह शानदार गैजेट अभी आउट ऑफ़ स्टॉक होने से पहले डिस्क्रिप्शन में दिए गए लिंक से खरीदें।'
         
-        Generate a UNIQUE 2-line SEO DESCRIPTION.
-        Generate 3 UNIQUE TAGS.
         CAPTIONS: 8 short English captions.
         PROMPTS: 8 simple image generation prompts.
-        AMAZON SEARCH TERM: Simple 2-3 word real English product name.
+        AMAZON SEARCH TERM: Simple 2-3 word real English product name (e.g., "Mini Projector").
         """
     elif category == "AI_SELL":
-        prompt = f"""You are an expert AI & Tech Scriptwriter. THEME: "{hook_theme}".
-        {master_system_rules}
-        NICHE: AI Tools & Automation Value.
-        CRITICAL RULE: Do not talk generically. You MUST pick ONE real, specific AI tool (e.g., ChatGPT, Midjourney, ElevenLabs, Notion AI, RunwayML, etc.) and explain EXACTLY how it saves time or money. Mention the tool's real name clearly in the Hindi script.
-        DO NOT SELL ANYTHING. DO NOT mention Gumroad. Only provide high-value, actionable information to help the user.
-        VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही शानदार टूल्स के लिए चैनल को अभी सब्सक्राइब करें।'
+        prompt = f"""You are an expert selling a YouTube Automation Code on Gumroad. THEME: "{hook_theme}".
+        WRITE A 90-100 WORD HINDI SCRIPT.
+        RULES:
+        1. START DIRECTLY WITH A MIND-BLOWING HOOK about freedom, passive income, or smart work!
+        2. DO NOT use the boring "I make 10 lakhs a month" story. Talk about escaping the 9-to-5, or traveling the world while AI works.
+        3. END EXACTLY WITH: 'मेरा यह पूरा यूट्यूब ऑटोमेशन सेटअप खरीदने के लिए डिस्क्रिप्शन में दिए गए गमरोड लिंक पर क्लिक करें।'
         
-        Generate a UNIQUE 2-line SEO DESCRIPTION about the tool.
-        Generate 3 UNIQUE TAGS.
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 highly detailed image prompts matching the AI tool's function.
+        PROMPTS: 8 highly detailed, VISUALLY DISTINCT image prompts. IMPORTANT: The image prompts MUST perfectly match the exact sentence being spoken (e.g., if talking about traveling, show a beach. If talking about bots, show a server). DO NOT repeat the same image.
         AMAZON SEARCH TERM: Leave empty ("").
         """
     else: 
         prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
-        {master_system_rules}
-        NICHE: Creepy Mysteries.
-        CRITICAL RULE: Do not use generic filler words. Tell a specific, fast-paced story about a REAL unsolved mystery or creepy historical event. Give specific, dark details to build extreme suspense.
-        VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को अभी सब्सक्राइब करें।'
+        WRITE A 90-100 WORD HINDI SCRIPT.
+        CRITICAL RULE: Do NOT cut the story short. Build extreme suspense, give a satisfying climax or a mind-blowing cliffhanger, and ONLY THEN say the ending hook.
+        RULES:
+        1. NO INTRODUCTIONS. START DIRECTLY WITH A CREEPY HOOK!
+        2. Build extreme suspense with a complete story arc.
+        3. DO NOT TALK ABOUT BUYING OR SELLING.
+        4. END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को सब्सक्राइब करें।'
         
-        Generate a UNIQUE 2-line SEO DESCRIPTION about the mystery.
-        Generate 3 UNIQUE TAGS.
         CAPTIONS: 8 short English captions.
-        PROMPTS: 8 distinct dark/creepy image prompts.
+        PROMPTS: 8 distinct dark/creepy image prompts matching the exact storyline.
         AMAZON SEARCH TERM: Leave empty ("").
         """
 
     prompt += """
-    Return ONLY valid JSON in this exact format:
+    Return ONLY valid JSON:
     {
-      "title": "Unique Viral Title Here 🔥",
-      "description": "Unique 2-3 lines description here...",
-      "tags": ["tag1", "tag2", "tag3"],
-      "script": "Hindi script here (Hook + Value + CTA)...",
-      "captions": ["CAPTION1", "CAPTION2", "CAPTION3", "CAPTION4", "CAPTION5", "CAPTION6", "CAPTION7", "CAPTION8"],
-      "prompts": ["Prompt1", "Prompt2", "Prompt3", "Prompt4", "Prompt5", "Prompt6", "Prompt7", "Prompt8"],
+      "topic": "viral topic name",
+      "script": "Hindi script here...",
+      "captions": ["SHOCKING", "DAILY PROBLEM", "THE SOLUTION", "WAIT FOR IT", "AMAZING TECH", "MIND BLOWN", "STOCK ENDING", "LINK IN BIO"],
+      "prompts": ["Image 1", "Image 2", "Image 3", "Image 4", "Image 5", "Image 6", "Image 7", "Image 8"],
       "amazon_search_term": "Product name"
     }
     """
     
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    # 🟢 MAX_TOKENS 1500 SET KAR DIYA GAYA HAI (Error 5124 bytes solved)
-    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9, "max_tokens": 1500} 
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9} 
     
     for attempt in range(3):
         try:
@@ -128,16 +114,8 @@ def get_script_and_prompts(hook_theme, category, channel_name):
             if response.status_code == 200:
                 parsed = json.loads(extract_json_safely(response.json()['choices'][0]['message']['content']))
                 if parsed.get('script'):
-                    print("🎯 Script, Title, Description aur Tags Ready!")
-                    return (
-                        parsed['script'].replace("*", ""), 
-                        parsed['prompts'][:8], 
-                        parsed['captions'][:8], 
-                        parsed.get('amazon_search_term', 'Gadget'), 
-                        parsed.get('title', 'Viral Shorts 🔥'),
-                        parsed.get('description', 'Watch this amazing video!'),
-                        parsed.get('tags', ['shorts', 'viral', 'trending'])
-                    )
+                    print("🎯 Script Ready!")
+                    return parsed['script'].replace("*", ""), parsed['prompts'][:8], parsed['captions'][:8], parsed.get('amazon_search_term', 'Gadget')
         except: time.sleep(2)
     raise Exception("🚨 AI Model Failed!")
 
@@ -170,6 +148,7 @@ def fetch_ai_images(prompts):
     style_modifier = ", cinematic photography, highly detailed, 8k, hyperrealistic"
     
     for i, p in enumerate(prompts):
+        # 🟢 हर एक तस्वीर के लिए 100% नया रैंडम सीड, ताकि कोई भी फोटो रिपीट न हो!
         seed = random.randint(100000, 999999) 
         url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + style_modifier)}?width=1080&height=1920&nologo=true&seed={seed}"
         fname = f"ai_scene_{i}.jpg"
@@ -283,9 +262,7 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
     for attempt in range(5):
         try:
             hook = random.choice(hook_list)
-            
-            # 🟢 Channel name pass kiya gaya hai taki har channel unique bane
-            script, prompts, captions, amazon_term, dyn_title, dyn_desc, dyn_tags = get_script_and_prompts(hook, category, channel_name)
+            script, prompts, captions, amazon_term = get_script_and_prompts(hook, category)
             
             prefix = channel_name.replace(" ", "_").lower()
             voice_file = f"voice_{prefix}.mp3"
@@ -298,44 +275,32 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 
                 clean_term = re.sub(r'[^a-zA-Z0-9 ]', '', str(amazon_term)).strip()
                 amz_link = f"https://www.amazon.in/s?k={urllib.parse.quote(clean_term)}&tag=girishbhut07-21"
+                desc = f"🔥 👉 यह शानदार गैजेट आउट ऑफ़ स्टॉक होने से पहले यहाँ से खरीदें!\n🔗 लिंक: {amz_link}\n\n{script}"
                 
-                final_desc = f"{dyn_desc}\n\n🔥 👉 यह शानदार गैजेट यहाँ से खरीदें:\n🔗 लिंक: {amz_link}\n\n📝 Script:\n{script}"
-                
-                upload_video(token, video_file, dyn_title, final_desc, dyn_tags, "28")
-                print(f"✅ GADGETS Video Live! Title: {dyn_title}")
-                return True 
+                upload_video(token, video_file, f"🤯 Best {amazon_term}! #shorts", desc, ["shorts", "gadgets", "amazon finds", "tech"], "28")
+                print("✅ GADGETS Video Live with Direct Amazon Link!")
                 
             elif category == "AI_SELL":
                 image_files = fetch_ai_images(prompts)
                 create_human_voice(script, voice_file)
                 make_video(image_files, captions, video_file, voice_file)
                 
-                # 🟢 Gumroad link ko puri tarah hata diya gaya hai taaki channel safe rahe
-                final_desc = f"{dyn_desc}\n\n📝 Script:\n{script}"
+                gumroad_link = "https://girisbhut.gumroad.com/l/ajhzk"
+                desc = f"🚀 👉 मेरा यह पूरा 100% ऑटोमैटिक YouTube Setup अभी खरीदें!\n🔗 यहाँ क्लिक करें: {gumroad_link}\n\n{script}"
                 
-                upload_video(token, video_file, dyn_title, final_desc, dyn_tags, "28")
-                print(f"✅ AI Video Live (High Value Knowledge)! Title: {dyn_title}")
-                return True 
+                upload_video(token, video_file, f"🤯 AI makes me Money while I sleep! #shorts", desc, ["shorts", "automation", "ai", "money"], "28")
+                print("✅ AI SELL Video Live with Gumroad Link!")
 
             else: 
                 image_files = fetch_ai_images(prompts)
                 create_human_voice(script, voice_file)
                 make_video(image_files, captions, video_file, voice_file)
                 
-                final_desc = f"{dyn_desc}\n\n📝 Script:\n{script}"
+                desc = f"🔥 👉 ऐसे ही खूंखार रहस्यों और जानकारी के लिए सब्सक्राइब करें!\n\n{script}"
+                upload_video(token, video_file, f"🤯 Secret They Hid From You! #shorts", desc, ["shorts", "mystery", "creepy", "facts"], "28")
+                print(f"✅ {channel_name} Video Live!")
                 
-                upload_video(token, video_file, dyn_title, final_desc, dyn_tags, "28")
-                print(f"✅ {channel_name} Video Live! Title: {dyn_title}")
-                return True 
-                
-        except HttpError as e:
-            error_content = str(e).lower()
-            if "quota" in error_content or "ratelimit" in error_content or "429" in error_content:
-                print(f"🚨 YOUTUBE QUOTA FULL for {channel_name}! यूट्यूब की अपलोड लिमिट खत्म हो चुकी है।")
-                break 
-            else:
-                print(f"🛑 YouTube API Error on {channel_name}: {e}. Dobara koshish kar rahe hain...")
-                time.sleep(10)
+            return True 
                 
         except Exception as e: 
             print(f"🛑 Error on {channel_name}: {e}. Machine dobara koshish kar rahi hai...")
