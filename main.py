@@ -53,13 +53,13 @@ def extract_json_safely(raw_text):
 def get_script_and_prompts(hook_theme, category):
     print(f"\n✅ AI Engine Master Prompt ke sath Content likh raha hai: {hook_theme}")
     
-    # 🟢 बॉस का दिया हुआ 'Master System Prompt' यहाँ 100% फिट कर दिया गया है
+    # 🟢 बॉस के नए अपडेट के साथ Master System Prompt
     master_system_rules = """
     STRICT RULES TO FOLLOW:
     1. Title Generation: Create a unique, highly clickable title (under 50 characters). DO NOT use the "🤯" emoji at the start. Use a different, relevant emoji at the END of the title. Never repeat previous titles.
     2. Avoid Spam Words: DO NOT use words like 'Passive Income', 'Get Rich Quick', 'Make Money While Sleeping', or 'Digital Real Estate'. Instead, use safe words like 'Smart Work', 'Future Tech', 'AI Automation', or 'Time Saving'.
     3. The Hook (0-3 Seconds): The first sentence MUST be a pattern-interrupt. Ask a shocking question or state a mind-blowing fact to stop the user from scrolling. No boring introductions. Do NOT use "क्या आप जानते हैं".
-    4. The Value (3-40 Seconds): Provide fast-paced, high-value information. Keep sentences short and punchy. Write exactly enough words (around 100-110 words) for a 45-50 second Hindi voiceover.
+    4. The Value (Length & Detail): You MUST write EXACTLY 8 to 10 LONG sentences. DO NOT write a short script. Explain the tool, gadget, or mystery in deep detail so the Hindi voiceover takes a full 50 seconds.
     5. Call to Action (CTA): DO NOT say 'Link in description' in the voiceover script.
     """
     
@@ -185,7 +185,8 @@ def create_human_voice(text, filename):
     async def _generate():
         for _ in range(3):
             try:
-                communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+10%") 
+                # 🟢 बॉस के अपडेट के अनुसार स्पीड को -5% कर दिया गया है
+                communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="-5%") 
                 await communicate.save(filename)
                 return True
             except: await asyncio.sleep(5)
