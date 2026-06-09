@@ -50,7 +50,6 @@ def extract_json_safely(raw_text):
     match = re.search(r'\{[\s\S]*\}', str(raw_text).strip())
     return match.group(0) if match else "{}"
 
-# 🟢 4-LAYER AI TEXT ENGINE (Fail-Safe)
 def fetch_script_with_fallback(prompt):
     models = ["llama-3.3-70b-versatile", "mixtral-8x7b-32768", "gemma2-9b-it", "llama3-8b-8192"]
     url = "https://api.groq.com/openai/v1/chat/completions"
@@ -65,16 +64,16 @@ def fetch_script_with_fallback(prompt):
                 if parsed.get('script'):
                     return parsed
         except:
-            continue # Try next model if one fails
+            continue
     raise Exception("🚨 All 4 AI Text Models Failed!")
 
 def get_script_and_prompts(hook_theme, category):
     print(f"\n✅ AI Engine Master Prompt ke sath Content likh raha hai: {hook_theme}")
     
-    # 🟢 बॉस के नए वायरल शॉर्ट्स नियम (Under 60 Sec)
+    # 🟢 वायरल शॉर्ट्स के लिए एकदम परफेक्ट टाइमिंग (50-55s) और स्ट्रिक्ट नियम
     master_system_rules = """
     STRICT RULES TO FOLLOW FOR VIRAL SHORTS:
-    1. Length & Format: CRITICAL RULE: Write EXACTLY 5 to 6 SHORT sentences in Hindi. The total word count MUST be strictly under 80 words. The video MUST finish in 50 seconds. DO NOT write long paragraphs.
+    1. Length & Format: CRITICAL RULE: Write EXACTLY 10 to 12 SHORT sentences in Hindi. The total word count MUST be exactly between 120 and 130 words. This ensures the voiceover spans exactly 50 to 55 seconds. DO NOT write short scripts under 100 words.
     2. The Hook (FATAL RULE): NEVER start with "क्या आप जानते हैं" or "क्या आपको पता है". Start directly with a bold, shocking claim like "99% लोग यह सीक्रेट नहीं जानते..." or "यह टूल आपकी जिंदगी बदल देगा...".
     3. Title Generation: Create a unique, highly clickable title (under 50 characters). DO NOT use the "🤯" emoji at the start. Use an emoji at the END.
     4. Call to Action (CTA): END EXACTLY WITH: 'चैनल को अभी सब्सक्राइब करें।' DO NOT say 'Link in description'.
@@ -104,7 +103,7 @@ def get_script_and_prompts(hook_theme, category):
     else: 
         prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
         {master_system_rules}
-        NICHE: Creepy Mysteries. Build extreme suspense with a complete story arc. Give creepy details in under 80 words.
+        NICHE: Creepy Mysteries. Build extreme suspense with a complete story arc. Give creepy details. Remember word count must be 120-130 words.
         
         Generate a UNIQUE 2-line SEO DESCRIPTION. Generate 3 UNIQUE TAGS.
         CAPTIONS: 6 short English captions. PROMPTS: 6 distinct dark/creepy image prompts.
@@ -125,7 +124,7 @@ def get_script_and_prompts(hook_theme, category):
     """
     
     parsed = fetch_script_with_fallback(prompt)
-    print("🎯 Script, Title, Description aur Tags Ready (Under 60 Sec)!")
+    print("🎯 Script, Title, Description aur Tags Ready (120-130 words for 55 sec)!")
     return (
         parsed['script'].replace("*", ""), 
         parsed['prompts'][:6], 
@@ -159,21 +158,17 @@ def fetch_amazon_images_strict(query):
         if len(image_files) >= 3: return image_files
     except: pass
     
-    # 🟢 AMAZON FAIL-SAFE: If Amazon fails, fall back to AI generation so video still renders!
     print("⚠️ Amazon API failed or zero images. Fallback to AI generation...")
     return fetch_ai_images_with_fallback([f"High quality product photo of {clean_query}, studio lighting, 4k, realistic"] * 6)
 
-# 🟢 4-LAYER IMAGE ENGINE (Fail-Safe: Will NEVER return 0 images)
 def fetch_ai_images_with_fallback(prompts):
     image_files = []
     headers = {"User-Agent": "Mozilla/5.0"}
     
     for i, p in enumerate(prompts):
-        success = False
         seed = random.randint(100000, 999999) 
         encoded_p = urllib.parse.quote(p + ", highly detailed, 8k, cinematic")
         
-        # 3 Different server endpoints to try
         urls = [
             f"https://image.pollinations.ai/prompt/{encoded_p}?seed={seed}&model=flux&width=1080&height=1920&nologo=true",
             f"https://image.pollinations.ai/prompt/{encoded_p}?seed={seed}&model=turbo&width=1080&height=1920&nologo=true",
@@ -183,22 +178,18 @@ def fetch_ai_images_with_fallback(prompts):
         for url in urls:
             try:
                 res = requests.get(url, headers=headers, timeout=15) 
-                if res.status_code == 200 and len(res.content) > 10000: # Ensure valid file
+                if res.status_code == 200 and len(res.content) > 10000:
                     fname = f"ai_scene_{i}.jpg"
                     with open(fname, "wb") as f: f.write(res.content)
                     image_files.append(fname)
-                    success = True
                     break
             except:
                 continue
                 
-        # 🟢 ULTIMATE FAIL-SAFE: If all servers are down, generate a local fallback background
-        if not success:
-            fname = f"ai_scene_{i}.jpg"
-            img = Image.new('RGB', (1080, 1920), color=(15, 15, 20)) # Dark cinematic blue-black
-            img.save(fname)
-            image_files.append(fname)
-            
+    # 🟢 QUALITY CONTROL: NO DARK SCREENS ALLOWED
+    if len(image_files) < 3:
+        raise Exception("🚨 APIs ne photo nahi di. Kachra video nahi banayenge! Channel skipped.")
+        
     return image_files
 
 def create_human_voice(text, filename):
@@ -251,7 +242,8 @@ def process_image_for_video(img_path, output_path):
 
 def make_video(image_files, captions, final_vid, audio_file):
     print("✅ Professional Video Render ho raha hai...")
-    if not image_files: raise Exception("System Error: No images available.") # Double-check safety
+    if not image_files or len(image_files) < 3: 
+        raise Exception("System Error: Not enough images available. Stopping render.") 
     
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
@@ -303,7 +295,7 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
     print(f"🚀 STARTING CHANNEL: {channel_name}")
     print(f"==============================================")
     
-    for attempt in range(5):
+    for attempt in range(3):
         try:
             hook = random.choice(hook_list)
             script, prompts, captions, amazon_term, dyn_title, dyn_desc, dyn_tags = get_script_and_prompts(hook, category)
@@ -359,7 +351,7 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
             print(f"🛑 Error on {channel_name}: {e}. Retrying with fallback systems...")
             time.sleep(10) 
             
-    print(f"❌ {channel_name} fail ho gaya.")
+    print(f"❌ {channel_name} fail ho gaya. Garbage upload nahi kiya gaya.")
     return False
 
 if __name__ == "__main__":
