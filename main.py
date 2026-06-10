@@ -70,7 +70,7 @@ def fetch_script_with_fallback(prompt):
 def get_script_and_prompts(hook_theme, category):
     print(f"\n✅ AI Engine Master Prompt ke sath Content likh raha hai: {hook_theme}")
     
-    # 🟢 वायरल शॉर्ट्स के लिए एकदम परफेक्ट टाइमिंग (50-55s) और स्ट्रिक्ट नियम
+    # 🟢 55 सेकंड के वायरल शॉर्ट्स के लिए परफेक्ट नियम
     master_system_rules = """
     STRICT RULES TO FOLLOW FOR VIRAL SHORTS:
     1. Length & Format: CRITICAL RULE: Write EXACTLY 10 to 12 SHORT sentences in Hindi. The total word count MUST be exactly between 120 and 130 words. This ensures the voiceover spans exactly 50 to 55 seconds. DO NOT write short scripts under 100 words.
@@ -186,7 +186,7 @@ def fetch_ai_images_with_fallback(prompts):
             except:
                 continue
                 
-    # 🟢 QUALITY CONTROL: NO DARK SCREENS ALLOWED
+    # 🟢 QUALITY CONTROL: NO ZERO IMAGE CRASH
     if len(image_files) < 3:
         raise Exception("🚨 APIs ne photo nahi di. Kachra video nahi banayenge! Channel skipped.")
         
@@ -196,6 +196,7 @@ def create_human_voice(text, filename):
     async def _generate():
         for _ in range(3):
             try:
+                # आवाज़ की स्पीड एकदम परफ़ेक्ट कर दी गई है
                 communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="-5%") 
                 await communicate.save(filename)
                 return True
@@ -242,6 +243,7 @@ def process_image_for_video(img_path, output_path):
 
 def make_video(image_files, captions, final_vid, audio_file):
     print("✅ Professional Video Render ho raha hai...")
+    # 🟢 एरर फ्री बनाने का मेन लॉक: यहाँ 0 से भाग (division) का एरर कभी नहीं आएगा
     if not image_files or len(image_files) < 3: 
         raise Exception("System Error: Not enough images available. Stopping render.") 
     
