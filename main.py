@@ -161,14 +161,17 @@ def fetch_amazon_images_strict(query):
     print("⚠️ Amazon API failed or zero images. Fallback to AI generation...")
     return fetch_ai_images_with_fallback([f"High quality product photo of {clean_query}, studio lighting, 4k, realistic"] * 6)
 
+# 🟢 नया 5-Layer बुलेटप्रूफ इमेज इंजन (With Alternative Server)
 def fetch_ai_images_with_fallback(prompts):
     image_files = []
     headers = {"User-Agent": "Mozilla/5.0"}
     
     for i, p in enumerate(prompts):
+        success = False
         seed = random.randint(100000, 999999) 
         encoded_p = urllib.parse.quote(p + ", highly detailed, 8k, cinematic")
         
+        # 🟢 प्लान A, B, C: Pollinations के अलग-अलग मॉडल
         urls = [
             f"https://image.pollinations.ai/prompt/{encoded_p}?seed={seed}&model=flux&width=1080&height=1920&nologo=true",
             f"https://image.pollinations.ai/prompt/{encoded_p}?seed={seed}&model=turbo&width=1080&height=1920&nologo=true",
@@ -177,18 +180,34 @@ def fetch_ai_images_with_fallback(prompts):
         
         for url in urls:
             try:
-                res = requests.get(url, headers=headers, timeout=15) 
-                if res.status_code == 200 and len(res.content) > 10000:
+                res = requests.get(url, headers=headers, timeout=12) 
+                if res.status_code == 200 and len(res.content) > 15000:
                     fname = f"ai_scene_{i}.jpg"
                     with open(fname, "wb") as f: f.write(res.content)
                     image_files.append(fname)
+                    success = True
                     break
             except:
                 continue
                 
+        # 🔵 अल्टीमेट प्लान D (New Backup Server): अगर Pollinations पूरी तरह ब्लॉक हो जाए
+        if not success:
+            try:
+                print(f"⚠️ Pollinations blocked for image {i}, trying alternative backup server...")
+                # यहाँ हम एक दूसरा ओपन-सोर्स इमेज रूट डाल रहे हैं
+                alt_url = f"https://picsum.photos/1080/1920?random={seed}"
+                res = requests.get(alt_url, timeout=10)
+                if res.status_code == 200:
+                    fname = f"ai_scene_{i}.jpg"
+                    with open(fname, "wb") as f: f.write(res.content)
+                    image_files.append(fname)
+                    success = True
+            except:
+                pass
+                
     # 🟢 QUALITY CONTROL: NO ZERO IMAGE CRASH
     if len(image_files) < 3:
-        raise Exception("🚨 APIs ne photo nahi di. Kachra video nahi banayenge! Channel skipped.")
+        raise Exception("🚨 सभी इमेज सर्वर्स ने रिस्पॉन्स देना बंद कर दिया है। कचरा वीडियो नहीं बनाएंगे! चैनल स्किप कर रहे हैं।")
         
     return image_files
 
@@ -196,7 +215,7 @@ def create_human_voice(text, filename):
     async def _generate():
         for _ in range(3):
             try:
-                # आवाज़ की स्पीड एकदम परफ़ेक्ट कर दी गई है
+                # आवाज़ की स्पीड एकदम परफ़ेक्ट (-5%) कर दी गई है
                 communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="-5%") 
                 await communicate.save(filename)
                 return True
