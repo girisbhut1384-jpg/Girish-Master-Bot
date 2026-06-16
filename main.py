@@ -20,7 +20,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip
 from googleapiclient.errors import HttpError 
 
-print("🔓 Security aur Premium Multi-Engine Setup chalu ho raha hai...")
+print("🔓 Security aur Premium Setup chalu ho raha hai...")
 os.system("sudo rm -f /etc/ImageMagick-6/policy.xml")
 os.system("sudo rm -f /etc/ImageMagick-7/policy.xml")
 
@@ -50,63 +50,56 @@ def extract_json_safely(raw_text):
     match = re.search(r'\{[\s\S]*\}', str(raw_text).strip())
     return match.group(0) if match else "{}"
 
-def fetch_script_with_fallback(prompt):
-    models = ["llama-3.3-70b-versatile", "mixtral-8x7b-32768", "gemma2-9b-it", "llama3-8b-8192"]
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
-    
-    for model in models:
-        try:
-            data = {"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.9}
-            response = requests.post(url, headers=headers, json=data, timeout=30)
-            if response.status_code == 200:
-                parsed = json.loads(extract_json_safely(response.json()['choices'][0]['message']['content']))
-                if parsed.get('script'):
-                    return parsed
-        except:
-            continue
-    raise Exception("🚨 All 4 AI Text Models Failed!")
-
 def get_script_and_prompts(hook_theme, category):
     print(f"\n✅ AI Engine Master Prompt ke sath Content likh raha hai: {hook_theme}")
     
-    # 🟢 55 सेकंड के वायरल शॉर्ट्स के लिए परफेक्ट नियम
+    # 🟢 बॉस का दिया हुआ 'Master System Prompt' यहाँ 100% फिट कर दिया गया है
     master_system_rules = """
-    STRICT RULES TO FOLLOW FOR VIRAL SHORTS:
-    1. Length & Format: CRITICAL RULE: Write EXACTLY 10 to 12 SHORT sentences in Hindi. The total word count MUST be exactly between 120 and 130 words. This ensures the voiceover spans exactly 50 to 55 seconds. DO NOT write short scripts under 100 words.
-    2. The Hook (FATAL RULE): NEVER start with "क्या आप जानते हैं" or "क्या आपको पता है". Start directly with a bold, shocking claim like "99% लोग यह सीक्रेट नहीं जानते..." or "यह टूल आपकी जिंदगी बदल देगा...".
-    3. Title Generation: Create a unique, highly clickable title (under 50 characters). DO NOT use the "🤯" emoji at the start. Use an emoji at the END.
-    4. Call to Action (CTA): END EXACTLY WITH: 'चैनल को अभी सब्सक्राइब करें।' DO NOT say 'Link in description'.
+    STRICT RULES TO FOLLOW:
+    1. Title Generation: Create a unique, highly clickable title (under 50 characters). DO NOT use the "🤯" emoji at the start. Use a different, relevant emoji at the END of the title. Never repeat previous titles.
+    2. Avoid Spam Words: DO NOT use words like 'Passive Income', 'Get Rich Quick', 'Make Money While Sleeping', or 'Digital Real Estate'. Instead, use safe words like 'Smart Work', 'Future Tech', 'AI Automation', or 'Time Saving'.
+    3. The Hook (0-3 Seconds): The first sentence MUST be a pattern-interrupt. Ask a shocking question or state a mind-blowing fact to stop the user from scrolling. No boring introductions. Do NOT use "क्या आप जानते हैं".
+    4. The Value (3-40 Seconds): Provide fast-paced, high-value information. Keep sentences short and punchy. Write exactly enough words (around 100-110 words) for a 45-50 second Hindi voiceover.
+    5. Call to Action (CTA): DO NOT say 'Link in description' in the voiceover script.
     """
     
     if category == "GADGET":
-        prompt = f"""You are an expert YouTube Shorts Scriptwriter. THEME: "{hook_theme}".
+        prompt = f"""You are an expert YouTube Shorts Scriptwriter and Viral Content Strategist. THEME: "{hook_theme}".
         {master_system_rules}
         NICHE: Tech Gadgets.
         CRITICAL RULE: The product MUST BE a common real-world item easily found on Amazon India.
+        VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही और शानदार गैजेट्स के लिए चैनल को अभी सब्सक्राइब करें।'
         
-        Generate a UNIQUE 2-line SEO DESCRIPTION. Generate 3 UNIQUE TAGS.
-        CAPTIONS: 6 short English captions. PROMPTS: 6 simple image generation prompts.
+        Generate a UNIQUE 2-line SEO DESCRIPTION about the video.
+        Generate 3 UNIQUE TAGS.
+        CAPTIONS: 8 short English captions.
+        PROMPTS: 8 simple image generation prompts.
         AMAZON SEARCH TERM: Simple 2-3 word real English product name.
         """
     elif category == "AI_SELL":
-        prompt = f"""You are an expert YouTube Shorts Scriptwriter. THEME: "{hook_theme}".
+        prompt = f"""You are an expert YouTube Shorts Scriptwriter and Viral Content Strategist. THEME: "{hook_theme}".
         {master_system_rules}
         NICHE: AI Tools & Automation Value.
-        CRITICAL RULE FOR AI: You MUST say the REAL NAME of a specific tool (e.g., ChatGPT, Midjourney, Canva, 11Labs) in the very first sentence. Stop talking generically about "AI Tools".
-        DO NOT SELL ANYTHING IN THE SCRIPT. Provide pure value.
+        CRITICAL RULES: DO NOT SELL ANYTHING IN THE SCRIPT. DO NOT mention Gumroad or setups. Only provide high-value information.
+        VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही और शानदार टूल्स के लिए चैनल को अभी सब्सक्राइब करें।'
         
-        Generate a UNIQUE 2-line SEO DESCRIPTION. Generate 3 UNIQUE TAGS.
-        CAPTIONS: 6 short English captions. PROMPTS: 6 highly detailed image prompts.
+        Generate a UNIQUE 2-line SEO DESCRIPTION about the video value.
+        Generate 3 UNIQUE TAGS.
+        CAPTIONS: 8 short English captions.
+        PROMPTS: 8 highly detailed image prompts matching the concept.
         AMAZON SEARCH TERM: Leave empty ("").
         """
     else: 
         prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
         {master_system_rules}
-        NICHE: Creepy Mysteries. Build extreme suspense with a complete story arc. Give creepy details. Remember word count must be 120-130 words.
+        NICHE: Creepy Mysteries.
+        CRITICAL RULE: Build extreme suspense with a complete story arc. Give creepy details.
+        VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को अभी सब्सक्राइब करें।'
         
-        Generate a UNIQUE 2-line SEO DESCRIPTION. Generate 3 UNIQUE TAGS.
-        CAPTIONS: 6 short English captions. PROMPTS: 6 distinct dark/creepy image prompts.
+        Generate a UNIQUE 2-line SEO DESCRIPTION about the mystery.
+        Generate 3 UNIQUE TAGS.
+        CAPTIONS: 8 short English captions.
+        PROMPTS: 8 distinct dark/creepy image prompts.
         AMAZON SEARCH TERM: Leave empty ("").
         """
 
@@ -116,24 +109,35 @@ def get_script_and_prompts(hook_theme, category):
       "title": "Unique Viral Title Here 🔥",
       "description": "Unique 2-3 lines description here...",
       "tags": ["tag1", "tag2", "tag3"],
-      "script": "Hindi script here...",
-      "captions": ["CAP1", "CAP2", "CAP3", "CAP4", "CAP5", "CAP6"],
-      "prompts": ["Prompt1", "Prompt2", "Prompt3", "Prompt4", "Prompt5", "Prompt6"],
+      "script": "Hindi script here (Hook + Value + CTA)...",
+      "captions": ["CAPTION1", "CAPTION2", "CAPTION3", "CAPTION4", "CAPTION5", "CAPTION6", "CAPTION7", "CAPTION8"],
+      "prompts": ["Prompt1", "Prompt2", "Prompt3", "Prompt4", "Prompt5", "Prompt6", "Prompt7", "Prompt8"],
       "amazon_search_term": "Product name"
     }
     """
     
-    parsed = fetch_script_with_fallback(prompt)
-    print("🎯 Script, Title, Description aur Tags Ready (120-130 words for 55 sec)!")
-    return (
-        parsed['script'].replace("*", ""), 
-        parsed['prompts'][:6], 
-        parsed['captions'][:6], 
-        parsed.get('amazon_search_term', 'Gadget'), 
-        parsed.get('title', 'Viral Shorts 🔥'),
-        parsed.get('description', 'Watch this amazing video!'),
-        parsed.get('tags', ['shorts', 'viral', 'trending'])
-    )
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
+    data = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9} 
+    
+    for attempt in range(3):
+        try:
+            response = requests.post(url, headers=headers, json=data, timeout=60)
+            if response.status_code == 200:
+                parsed = json.loads(extract_json_safely(response.json()['choices'][0]['message']['content']))
+                if parsed.get('script'):
+                    print("🎯 Script, Title, Description aur Tags Ready!")
+                    return (
+                        parsed['script'].replace("*", ""), 
+                        parsed['prompts'][:8], 
+                        parsed['captions'][:8], 
+                        parsed.get('amazon_search_term', 'Gadget'), 
+                        parsed.get('title', 'Viral Shorts 🔥'),
+                        parsed.get('description', 'Watch this amazing video!'),
+                        parsed.get('tags', ['shorts', 'viral', 'trending'])
+                    )
+        except: time.sleep(2)
+    raise Exception("🚨 AI Model Failed!")
 
 def fetch_amazon_images_strict(query):
     clean_query = re.sub(r'[^a-zA-Z0-9 ]', '', str(query)).strip()
@@ -145,78 +149,43 @@ def fetch_amazon_images_strict(query):
         response = requests.get(url, headers=headers, params={"query": clean_query, "page": "1", "country": "IN", "sort_by": "RELEVANCE"}, timeout=40)
         if response.status_code == 200:
             for i, prod in enumerate(response.json().get("data", {}).get("products", [])):
-                if len(image_files) >= 6: break
+                if len(image_files) >= 8: break
                 photo_url = prod.get("product_photo")
                 if photo_url:
-                    try:
-                        img_res = requests.get(photo_url, timeout=10)
-                        if img_res.status_code == 200:
-                            fname = f"amazon_img_{i}.jpg"
-                            with open(fname, "wb") as f: f.write(img_res.content)
-                            image_files.append(fname)
-                    except: continue
-        if len(image_files) >= 3: return image_files
-    except: pass
-    
-    print("⚠️ Amazon API failed or zero images. Fallback to AI generation...")
-    return fetch_ai_images_with_fallback([f"High quality product photo of {clean_query}, studio lighting, 4k, realistic"] * 6)
+                    img_res = requests.get(photo_url, timeout=15)
+                    if img_res.status_code == 200:
+                        fname = f"amazon_img_{i}.jpg"
+                        with open(fname, "wb") as f: f.write(img_res.content)
+                        image_files.append(fname)
+            if len(image_files) >= 4: return image_files
+            raise Exception("⚠️ Photos kam hain.")
+        raise Exception("⚠️ API Error")
+    except Exception as e: raise Exception(f"Amazon Fail: {e}")
 
-# 🟢 नया 5-Layer बुलेटप्रूफ इमेज इंजन (With Alternative Server)
-def fetch_ai_images_with_fallback(prompts):
+def fetch_ai_images(prompts):
     image_files = []
     headers = {"User-Agent": "Mozilla/5.0"}
+    style_modifier = ", cinematic photography, highly detailed, 8k, hyperrealistic"
     
     for i, p in enumerate(prompts):
-        success = False
         seed = random.randint(100000, 999999) 
-        encoded_p = urllib.parse.quote(p + ", highly detailed, 8k, cinematic")
-        
-        # 🟢 प्लान A, B, C: Pollinations के अलग-अलग मॉडल
-        urls = [
-            f"https://image.pollinations.ai/prompt/{encoded_p}?seed={seed}&model=flux&width=1080&height=1920&nologo=true",
-            f"https://image.pollinations.ai/prompt/{encoded_p}?seed={seed}&model=turbo&width=1080&height=1920&nologo=true",
-            f"https://image.pollinations.ai/prompt/{encoded_p}?seed={seed}&width=1080&height=1920&nologo=true"
-        ]
-        
-        for url in urls:
+        url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(p + style_modifier)}?width=1080&height=1920&nologo=true&seed={seed}"
+        fname = f"ai_scene_{i}.jpg"
+        for _ in range(3): 
             try:
-                res = requests.get(url, headers=headers, timeout=12) 
-                if res.status_code == 200 and len(res.content) > 15000:
-                    fname = f"ai_scene_{i}.jpg"
+                res = requests.get(url, headers=headers, timeout=30) 
+                if res.status_code == 200: 
                     with open(fname, "wb") as f: f.write(res.content)
                     image_files.append(fname)
-                    success = True
                     break
-            except:
-                continue
-                
-        # 🔵 अल्टीमेट प्लान D (New Backup Server): अगर Pollinations पूरी तरह ब्लॉक हो जाए
-        if not success:
-            try:
-                print(f"⚠️ Pollinations blocked for image {i}, trying alternative backup server...")
-                # यहाँ हम एक दूसरा ओपन-सोर्स इमेज रूट डाल रहे हैं
-                alt_url = f"https://picsum.photos/1080/1920?random={seed}"
-                res = requests.get(alt_url, timeout=10)
-                if res.status_code == 200:
-                    fname = f"ai_scene_{i}.jpg"
-                    with open(fname, "wb") as f: f.write(res.content)
-                    image_files.append(fname)
-                    success = True
-            except:
-                pass
-                
-    # 🟢 QUALITY CONTROL: NO ZERO IMAGE CRASH
-    if len(image_files) < 3:
-        raise Exception("🚨 सभी इमेज सर्वर्स ने रिस्पॉन्स देना बंद कर दिया है। कचरा वीडियो नहीं बनाएंगे! चैनल स्किप कर रहे हैं।")
-        
+            except: time.sleep(3)
     return image_files
 
 def create_human_voice(text, filename):
     async def _generate():
         for _ in range(3):
             try:
-                # आवाज़ की स्पीड एकदम परफ़ेक्ट (-5%) कर दी गई है
-                communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="-5%") 
+                communicate = edge_tts.Communicate(text, "hi-IN-MadhurNeural", rate="+10%") 
                 await communicate.save(filename)
                 return True
             except: await asyncio.sleep(5)
@@ -262,21 +231,15 @@ def process_image_for_video(img_path, output_path):
 
 def make_video(image_files, captions, final_vid, audio_file):
     print("✅ Professional Video Render ho raha hai...")
-    # 🟢 एरर फ्री बनाने का मेन लॉक: यहाँ 0 से भाग (division) का एरर कभी नहीं आएगा
-    if not image_files or len(image_files) < 3: 
-        raise Exception("System Error: Not enough images available. Stopping render.") 
-    
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
     time_per_image = audio_duration / len(image_files)
     clips = []
-    
     for i, img_path in enumerate(image_files):
         fixed_img_path = f"fixed_{i}.jpg"
         process_image_for_video(img_path, fixed_img_path)
         base_clip = ImageClip(fixed_img_path)
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.04 * (t / time_per_image)).set_duration(time_per_image)
-        
         cap_text = captions[i] if i < len(captions) else ""
         if cap_text.strip():
             try:
@@ -286,7 +249,6 @@ def make_video(image_files, captions, final_vid, audio_file):
             except: final_clip = zoomed_clip
         else: final_clip = zoomed_clip
         clips.append(final_clip)
-        
     video = concatenate_videoclips(clips, method="compose")
     final = video.set_audio(main_audio).subclip(0, audio_duration)
     final.write_videofile(final_vid, fps=30, codec="libx264", audio_codec="aac", preset="ultrafast", logger=None)
@@ -316,9 +278,10 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
     print(f"🚀 STARTING CHANNEL: {channel_name}")
     print(f"==============================================")
     
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             hook = random.choice(hook_list)
+            # 🟢 मशीन अब मास्टर प्रॉम्प्ट से बिल्कुल परफेक्ट डेटा ला रही है
             script, prompts, captions, amazon_term, dyn_title, dyn_desc, dyn_tags = get_script_and_prompts(hook, category)
             
             prefix = channel_name.replace(" ", "_").lower()
@@ -332,6 +295,7 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 
                 clean_term = re.sub(r'[^a-zA-Z0-9 ]', '', str(amazon_term)).strip()
                 amz_link = f"https://www.amazon.in/s?k={urllib.parse.quote(clean_term)}&tag=girishbhut07-21"
+                
                 final_desc = f"{dyn_desc}\n\n🔥 👉 यह शानदार गैजेट यहाँ से खरीदें:\n🔗 लिंक: {amz_link}\n\n📝 Script:\n{script}"
                 
                 upload_video(token, video_file, dyn_title, final_desc, dyn_tags, "28")
@@ -339,11 +303,12 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 return True 
                 
             elif category == "AI_SELL":
-                image_files = fetch_ai_images_with_fallback(prompts)
+                image_files = fetch_ai_images(prompts)
                 create_human_voice(script, voice_file)
                 make_video(image_files, captions, video_file, voice_file)
                 
                 gumroad_link = "https://girisbhut.gumroad.com/l/ajhzk"
+                
                 final_desc = f"{dyn_desc}\n\n🚀 👉 मेरा यह पूरा 100% ऑटोमैटिक YouTube Setup अभी खरीदें:\n🔗 यहाँ क्लिक करें: {gumroad_link}\n\n📝 Script:\n{script}"
                 
                 upload_video(token, video_file, dyn_title, final_desc, dyn_tags, "28")
@@ -351,7 +316,7 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 return True 
 
             else: 
-                image_files = fetch_ai_images_with_fallback(prompts)
+                image_files = fetch_ai_images(prompts)
                 create_human_voice(script, voice_file)
                 make_video(image_files, captions, video_file, voice_file)
                 
@@ -361,18 +326,22 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 print(f"✅ {channel_name} Video Live! Title: {dyn_title}")
                 return True 
                 
+        # 🟢 4 घंटे की बर्बादी रोकने वाला 'स्मार्ट ब्रेक'
         except HttpError as e:
             error_content = str(e).lower()
             if "quota" in error_content or "ratelimit" in error_content or "429" in error_content:
-                print(f"🚨 YOUTUBE QUOTA FULL for {channel_name}!")
+                print(f"🚨 YOUTUBE QUOTA FULL for {channel_name}! यूट्यूब की अपलोड लिमिट खत्म हो चुकी है।")
+                print("🚫 मशीन समझदार है, इसलिए 4 घंटे बर्बाद नहीं करेगी। इस चैनल को आज के लिए रोक रहे हैं।")
                 break 
             else:
+                print(f"🛑 YouTube API Error on {channel_name}: {e}. Dobara koshish kar rahe hain...")
                 time.sleep(10)
+                
         except Exception as e: 
-            print(f"🛑 Error on {channel_name}: {e}. Retrying with fallback systems...")
+            print(f"🛑 Error on {channel_name}: {e}. Machine dobara koshish kar rahi hai...")
             time.sleep(10) 
             
-    print(f"❌ {channel_name} fail ho gaya. Garbage upload nahi kiya gaya.")
+    print(f"❌ {channel_name} fail ho gaya.")
     return False
 
 if __name__ == "__main__":
@@ -388,4 +357,5 @@ if __name__ == "__main__":
         run_channel_safely(name, token, hooks, cat)
         time.sleep(15)
         
-    print("\n✅ सभी 5 चैनलों का काम बिना क्रैश हुए खत्म हो गया है बॉस!")
+    print("\n✅ सभी 5 चैनलों का काम खत्म हो गया है बॉस!")
+
