@@ -1,7 +1,3 @@
-# ==============================================================================
-# 👑 TITAN EMPIRE ENGINE: HIGH-RETENTION AUTOMATION SYSTEM (ULTIMATE VERSION)
-# ==============================================================================
-
 import os
 import sys
 import requests
@@ -16,12 +12,8 @@ import textwrap
 import io 
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-
-# 🛠️ PIL ANTIALIAS BUG PATCH: वीडियो एडिटर को क्रैश होने से बचाने के लिए बाईपास
 if not hasattr(Image, 'Resampling'):
     Image.Resampling = getattr(Image, 'LANCZOS', 1)
-if not hasattr(Image, 'ANTIALIAS'):
-    Image.ANTIALIAS = Image.Resampling.LANCZOS
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
@@ -61,6 +53,7 @@ def extract_json_safely(raw_text):
 def get_script_and_prompts(hook_theme, category):
     print(f"\n✅ AI Engine Master Prompt ke sath Content likh raha hai: {hook_theme}")
     
+    # 🟢 बॉस का दिया हुआ 'Master System Prompt' यहाँ 100% फिट कर दिया गया है
     master_system_rules = """
     STRICT RULES TO FOLLOW:
     1. Title Generation: Create a unique, highly clickable title (under 50 characters). DO NOT use the "🤯" emoji at the start. Use a different, relevant emoji at the END of the title. Never repeat previous titles.
@@ -172,7 +165,7 @@ def fetch_amazon_images_strict(query):
 def fetch_ai_images(prompts):
     image_files = []
     headers = {"User-Agent": "Mozilla/5.0"}
-    style_modifier = ", cinematic photography, highly detailed, 8k, hyperrealistic, strictly still life, no faces"
+    style_modifier = ", cinematic photography, highly detailed, 8k, hyperrealistic"
     
     for i, p in enumerate(prompts):
         seed = random.randint(100000, 999999) 
@@ -201,34 +194,22 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
-# 🟢 री-रिटेन फ़ंक्शन 1: वायरल कैप्शन डिज़ाइन (Alex Hormozi स्टाइल)
 def create_centered_text_clip(text, duration):
-    canvas_w, canvas_h = 1080, 400
+    canvas_w, canvas_h = 1080, 800
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    
-    try: 
-        font = ImageFont.truetype("Roboto-Black.ttf", 110) # साफ़ और क्रिस्प दिखने के लिए फॉन्ट साइज़
-    except: 
-        font = ImageFont.load_default()
-        
-    # शब्दों को पंची रखने के लिए टेक्स्ट रैपिंग लिमिट
-    wrapped_text = textwrap.fill(text.upper(), width=16) 
-    
+    try: font = ImageFont.truetype("Roboto-Black.ttf", 150) 
+    except: font = ImageFont.load_default()
+    wrapped_text = textwrap.fill(text.upper(), width=12) 
     try:
         bbox = draw.multiline_textbbox((0, 0), wrapped_text, font=font, align='center')
         text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
     except:
         text_w, text_h = draw.textsize(wrapped_text, font=font)
-        
     x, y = (canvas_w - text_w) // 2, (canvas_h - text_h) // 2
-    
-    # 🎨 चमकदार पीला रंग (#FFE81F) और बाहरी भारी काला आउटलाइन स्ट्रोक (Outline) जोड़ना
-    draw.multiline_text((x, y), wrapped_text, font=font, fill="#FFE81F", stroke_width=14, stroke_fill="black", align='center')
-    
+    draw.multiline_text((x, y), wrapped_text, font=font, fill="#FFE81F", stroke_width=10, stroke_fill="black", align='center')
     temp_filename = f"temp_caption_{random.randint(10000, 99999)}.png"
     img.save(temp_filename)
-    
     return ImageClip(temp_filename).set_duration(duration)
 
 def process_image_for_video(img_path, output_path):
@@ -248,64 +229,29 @@ def process_image_for_video(img_path, output_path):
     bg.save(output_path)
     return output_path
 
-# 🟢 री-रिटेन फ़ंक्शन 2: हाई-रिटेंशन रेंडरिंग इंजन (तेज़ रफ़्तार, लूपिंग और स्मूथ कट्स)
 def make_video(image_files, captions, final_vid, audio_file):
-    print("🎬 Alex Hormozi स्टाइल में तेज़ पेसिंग और क्रॉसफ़ेड के साथ रेंडर हो रहा है...")
+    print("✅ Professional Video Render ho raha hai...")
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
-    
-    # ⏱️ रफ़्तार नियम: हर तस्वीर स्क्रीन पर अधिकतम 2.0 सेकंड ही टिकेगी
-    img_duration = 2.0 
+    time_per_image = audio_duration / len(image_files)
     clips = []
-    current_time = 0.0
-    idx = 0
-    
-    # 🔄 लूपिंग लॉजिक: जब तक ऑडियो ख़त्म नहीं होता, इमेज कम होने पर भी रोटेशन में चलती रहेंगी
-    while current_time < audio_duration:
-        img_path = image_files[idx % len(image_files)]
-        fixed_img_path = f"fixed_{idx}.jpg"
+    for i, img_path in enumerate(image_files):
+        fixed_img_path = f"fixed_{i}.jpg"
         process_image_for_video(img_path, fixed_img_path)
-        
-        # बची हुई अवधि निकालकर आख़िरी क्लिप को एडजस्ट करना
-        remaining_time = audio_duration - current_time
-        current_clip_duration = min(img_duration, remaining_time)
-        
-        base_clip = ImageClip(fixed_img_path).set_duration(current_clip_duration)
-        
-        # 📈 डायनामिक मोशन: स्क्रीन पर लाइव मूवमेंट फील देने के लिए निरंतर हल्का ज़ूम
-        zoomed_clip = base_clip.resize(lambda t: 1 + 0.06 * t)
-        
-        cap_text = captions[idx % len(captions)] if captions else ""
+        base_clip = ImageClip(fixed_img_path)
+        zoomed_clip = base_clip.resize(lambda t: 1 + 0.04 * (t / time_per_image)).set_duration(time_per_image)
+        cap_text = captions[i] if i < len(captions) else ""
         if cap_text.strip():
             try:
-                txt_clip = create_centered_text_clip(cap_text, current_clip_duration)
-                # 📍 पोजीशन नियम: सबटाइटल्स को स्क्रीन के नीचे के हिस्से (Bottom 20% या 'center', 0.8) पर अलाइन करना
-                txt_clip = txt_clip.set_position(('center', 0.8), relative=True) 
-                
-                final_clip = CompositeVideoClip(
-                    [zoomed_clip.set_position(('center', 'center')), txt_clip], 
-                    size=(1080, 1920)
-                ).set_duration(current_clip_duration)
-            except:
-                final_clip = zoomed_clip
-        else:
-            final_clip = zoomed_clip
-            
-        # ✨ ट्रांज़िशन नियम: कट्स को मखमली स्मूथ बनाने के लिए हर क्लिप पर क्रॉसफ़ेड-इन लगाना
-        if idx > 0:
-            final_clip = final_clip.crossfadein(0.3)
-            
+                txt_clip = create_centered_text_clip(cap_text, time_per_image)
+                txt_clip = txt_clip.set_position(('center', 0.65), relative=True) 
+                final_clip = CompositeVideoClip([zoomed_clip.set_position(('center', 'center')), txt_clip], size=(1080, 1920)).set_duration(time_per_image)
+            except: final_clip = zoomed_clip
+        else: final_clip = zoomed_clip
         clips.append(final_clip)
-        current_time += current_clip_duration
-        idx += 1
-        
-    # ओवरलैप पैडिंग देकर क्लिप्स को आपस में जोड़ना ताकि क्रॉसफ़ेड बिना ग्लिच के काम करे
-    video = concatenate_videoclips(clips, padding=-0.3, method="compose")
+    video = concatenate_videoclips(clips, method="compose")
     final = video.set_audio(main_audio).subclip(0, audio_duration)
-    
-    # 30 FPS पर हाई-क्वालिटी एक्सपोर्ट ताकि शॉर्ट्स फीड में वीडियो एकदम मक्खन की तरह स्क्रॉल हो
     final.write_videofile(final_vid, fps=30, codec="libx264", audio_codec="aac", preset="ultrafast", logger=None)
-    
     main_audio.close()
     video.close()
     final.close()
@@ -335,6 +281,7 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
     for attempt in range(5):
         try:
             hook = random.choice(hook_list)
+            # 🟢 मशीन अब मास्टर प्रॉम्प्ट से बिल्कुल परफेक्ट डेटा ला रही है
             script, prompts, captions, amazon_term, dyn_title, dyn_desc, dyn_tags = get_script_and_prompts(hook, category)
             
             prefix = channel_name.replace(" ", "_").lower()
@@ -379,6 +326,7 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 print(f"✅ {channel_name} Video Live! Title: {dyn_title}")
                 return True 
                 
+        # 🟢 4 घंटे की बर्बादी रोकने वाला 'स्मार्ट ब्रेक'
         except HttpError as e:
             error_content = str(e).lower()
             if "quota" in error_content or "ratelimit" in error_content or "429" in error_content:
@@ -410,3 +358,4 @@ if __name__ == "__main__":
         time.sleep(15)
         
     print("\n✅ सभी 5 चैनलों का काम खत्म हो गया है बॉस!")
+
