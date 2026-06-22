@@ -2,7 +2,7 @@ name: Auto YouTube Shorts Generator
 
 on:
   schedule:
-    # ⏱️ हर 6 घंटे में (00:00, 06:00, 12:00, 18:00 UTC) अपने आप चलने के लिए शेड्यूल
+    # ⏱️ हर 6 घंटे में (00:00, 06:00, 12:00, 18:00 UTC) अपने आप चलने के लिए
     - cron: '0 */6 * * *'
   workflow_dispatch: # बटन दबाकर तुरंत मैन्युअल रूप से चलाने के लिए
 
@@ -23,16 +23,25 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y imagemagick ffmpeg fonts-noto-core
-        # इमेजमैजिक की सुरक्षा पाबंदी हटाना ताकि वीडियो रेंडरिंग न रुके
         sudo rm -f /etc/ImageMagick-6/policy.xml
         sudo rm -f /etc/ImageMagick-7/policy.xml
 
     - name: Install Python Libraries
       run: |
         python -m pip install --upgrade pip
-        # स्टेबल लाइब्रेरी वर्ज़न ताकि भविष्य में कोई एरर न आए
         pip install requests moviepy==1.0.3 pillow edge-tts google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 
     - name: Run Video Generator Script
+      # 🟢 यहाँ हमने गिटहब को बताया है कि सेटिंग्स में रखी चाबियां (Secrets) पाइथन को दे दो
+      env:
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
+        YOUTUBE_TOKEN_GADGET: ${{ secrets.YOUTUBE_TOKEN_GADGET }}
+        YOUTUBE_REFRESH_TOKEN_MYSTIC: ${{ secrets.YOUTUBE_REFRESH_TOKEN_MYSTIC }}
+        YOUTUBE_TOKEN_EMPIRE: ${{ secrets.YOUTUBE_TOKEN_EMPIRE }}
+        YOUTUBE_TOKEN_WEALTH: ${{ secrets.YOUTUBE_TOKEN_WEALTH }}
+        YOUTUBE_TOKEN_ZEROTOUCH: ${{ secrets.YOUTUBE_TOKEN_ZEROTOUCH }}
       run: |
         python main.py
