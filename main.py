@@ -14,6 +14,7 @@ import random
 import re
 import textwrap
 import io 
+from datetime import datetime
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
@@ -41,7 +42,6 @@ CLIENT_ID = "768932543756-ndfvqmbb0p7ffa1r1cg6bmmuimim98n6.apps.googleuserconten
 CLIENT_SECRET = os.environ.get("YT_CLIENT_SECRET_JSON") or os.environ.get("GOOGLE_CLIENT_SECRET")
 
 TOKEN_GADGET = os.environ.get("YOUTUBE_TOKEN_GADGET")
-TOKEN_MYSTIC = os.environ.get("YOUTUBE_REFRESH_TOKEN_MYSTIC")
 TOKEN_EMPIRE = os.environ.get("YOUTUBE_TOKEN_EMPIRE")
 TOKEN_WEALTH = os.environ.get("YOUTUBE_TOKEN_WEALTH")
 TOKEN_ZEROTOUCH = os.environ.get("YOUTUBE_TOKEN_ZEROTOUCH")
@@ -51,7 +51,6 @@ if not GROQ_KEY:
     sys.exit(1)
 
 GADGET_HOOKS = ["Hidden Amazon Tech", "Must-Have Smart Gadgets", "Genius Kitchen Tools", "Car Gadgets You Need", "Cool Room Tech"]
-MYSTIC_HOOKS = ["Terrifying Space Facts", "Unsolved Psychological Mysteries", "Ghost Towns of India", "Time Travel Proof", "Dark Web Secrets", "Creepy Historical Events"]
 AI_SELL_HOOKS = ["Free AI Tools 2026", "AI Video Editing Hacks", "Secret Websites Nobody Knows", "Smart Work vs Hard Work", "AI Tools for Students", "Time Saving Tech"]
 
 def extract_json_safely(raw_text):
@@ -83,7 +82,7 @@ def get_script_and_prompts(hook_theme, category):
         PROMPTS: 8 simple image generation prompts.
         AMAZON SEARCH TERM: Simple 2-3 word real English product name.
         """
-    elif category == "AI_SELL":
+    else:
         prompt = f"""You are an expert YouTube Shorts Scriptwriter and Viral Content Strategist. THEME: "{hook_theme}".
         {master_system_rules}
         NICHE: AI Tools & Automation Value.
@@ -94,19 +93,6 @@ def get_script_and_prompts(hook_theme, category):
         Generate 3 UNIQUE TAGS.
         CAPTIONS: 8 short English captions.
         PROMPTS: 8 highly detailed image prompts matching the concept.
-        AMAZON SEARCH TERM: Leave empty ("").
-        """
-    else: 
-        prompt = f"""You are a dark, mysterious storyteller. THEME: "{hook_theme}".
-        {master_system_rules}
-        NICHE: Creepy Mysteries.
-        CRITICAL RULE: Build extreme suspense with a complete story arc. Give creepy details.
-        VOICEOVER CTA: END EXACTLY WITH: 'ऐसे ही खूंखार और गुप्त रहस्यों के लिए चैनल को अभी सब्सक्राइब करें।'
-        
-        Generate a UNIQUE 2-line SEO DESCRIPTION about the mystery.
-        Generate 3 UNIQUE TAGS.
-        CAPTIONS: 8 short English captions.
-        PROMPTS: 8 distinct dark/creepy image prompts.
         AMAZON SEARCH TERM: Leave empty ("").
         """
 
@@ -201,18 +187,16 @@ def create_human_voice(text, filename):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_generate())
 
-# 🟢 री-रिटेन फ़ंक्शन 1: वायरल कैप्शन डिज़ाइन (Alex Hormozi स्टाइल)
 def create_centered_text_clip(text, duration):
     canvas_w, canvas_h = 1080, 400
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     
     try: 
-        font = ImageFont.truetype("Roboto-Black.ttf", 110) # साफ़ और क्रिस्प दिखने के लिए फॉन्ट साइज़
+        font = ImageFont.truetype("Roboto-Black.ttf", 110)
     except: 
         font = ImageFont.load_default()
         
-    # शब्दों को पंची रखने के लिए टेक्स्ट रैपिंग लिमिट
     wrapped_text = textwrap.fill(text.upper(), width=16) 
     
     try:
@@ -222,8 +206,6 @@ def create_centered_text_clip(text, duration):
         text_w, text_h = draw.textsize(wrapped_text, font=font)
         
     x, y = (canvas_w - text_w) // 2, (canvas_h - text_h) // 2
-    
-    # 🎨 चमकदार पीला रंग (#FFE81F) और बाहरी भारी काला आउटलाइन स्ट्रोक (Outline) जोड़ना
     draw.multiline_text((x, y), wrapped_text, font=font, fill="#FFE81F", stroke_width=14, stroke_fill="black", align='center')
     
     temp_filename = f"temp_caption_{random.randint(10000, 99999)}.png"
@@ -248,38 +230,30 @@ def process_image_for_video(img_path, output_path):
     bg.save(output_path)
     return output_path
 
-# 🟢 री-रिटेन फ़ंक्शन 2: हाई-रिटेंशन रेंडरिंग इंजन (तेज़ रफ़्तार, लूपिंग और स्मूथ कट्स)
 def make_video(image_files, captions, final_vid, audio_file):
     print("🎬 Alex Hormozi स्टाइल में तेज़ पेसिंग और क्रॉसफ़ेड के साथ रेंडर हो रहा है...")
     main_audio = AudioFileClip(audio_file)
     audio_duration = main_audio.duration
-    
-    # ⏱️ रफ़्तार नियम: हर तस्वीर स्क्रीन पर अधिकतम 2.0 सेकंड ही टिकेगी
     img_duration = 2.0 
     clips = []
     current_time = 0.0
     idx = 0
     
-    # 🔄 लूपिंग लॉजिक: जब तक ऑडियो ख़त्म नहीं होता, इमेज कम होने पर भी रोटेशन में चलती रहेंगी
     while current_time < audio_duration:
         img_path = image_files[idx % len(image_files)]
         fixed_img_path = f"fixed_{idx}.jpg"
         process_image_for_video(img_path, fixed_img_path)
         
-        # बची हुई अवधि निकालकर आख़िरी क्लिप को एडजस्ट करना
         remaining_time = audio_duration - current_time
         current_clip_duration = min(img_duration, remaining_time)
         
         base_clip = ImageClip(fixed_img_path).set_duration(current_clip_duration)
-        
-        # 📈 डायनामिक मोशन: स्क्रीन पर लाइव मूवमेंट फील देने के लिए निरंतर हल्का ज़ूम
         zoomed_clip = base_clip.resize(lambda t: 1 + 0.06 * t)
         
         cap_text = captions[idx % len(captions)] if captions else ""
         if cap_text.strip():
             try:
                 txt_clip = create_centered_text_clip(cap_text, current_clip_duration)
-                # 📍 पोजीशन नियम: सबटाइटल्स को स्क्रीन के नीचे के हिस्से (Bottom 20% या 'center', 0.8) पर अलाइन करना
                 txt_clip = txt_clip.set_position(('center', 0.8), relative=True) 
                 
                 final_clip = CompositeVideoClip(
@@ -291,7 +265,6 @@ def make_video(image_files, captions, final_vid, audio_file):
         else:
             final_clip = zoomed_clip
             
-        # ✨ ट्रांज़िशन नियम: कट्स को मखमली स्मूथ बनाने के लिए हर क्लिप पर क्रॉसफ़ेड-इन लगाना
         if idx > 0:
             final_clip = final_clip.crossfadein(0.3)
             
@@ -299,16 +272,69 @@ def make_video(image_files, captions, final_vid, audio_file):
         current_time += current_clip_duration
         idx += 1
         
-    # ओवरलैप पैडिंग देकर क्लिप्स को आपस में जोड़ना ताकि क्रॉसफ़ेड बिना ग्लिच के काम करे
     video = concatenate_videoclips(clips, padding=-0.3, method="compose")
     final = video.set_audio(main_audio).subclip(0, audio_duration)
-    
-    # 30 FPS पर हाई-क्वालिटी एक्सपोर्ट ताकि शॉर्ट्स फीड में वीडियो एकदम मक्खन की तरह स्क्रॉल हो
     final.write_videofile(final_vid, fps=30, codec="libx264", audio_codec="aac", preset="ultrafast", logger=None)
     
     main_audio.close()
     video.close()
     final.close()
+
+# 🧹 नया फंक्शन: फ्लॉप/लो-व्यूज वीडियो को डिलीट करने वाला क्लीनर
+def cleanup_low_view_videos(token, channel_name):
+    print(f"\n🧹 {channel_name} की ऑटो-सफाई शुरू: 7 दिन पुराने और <100 व्यूज वाले वीडियो ढूँढ रहे हैं...")
+    from google.oauth2.credentials import Credentials
+    from googleapiclient.discovery import build
+    
+    try:
+        credentials = Credentials(token=None, refresh_token=token, client_id=CLIENT_ID, client_secret=CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token")
+        youtube = build("youtube", "v3", credentials=credentials)
+        
+        # चैनल की 'Uploads' प्लेलिस्ट का ID निकालना
+        channel_res = youtube.channels().list(mine=True, part="contentDetails").execute()
+        if not channel_res.get("items"):
+            return
+        uploads_playlist_id = channel_res["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+        
+        # पिछले 50 अपलोड्स निकालना
+        playlist_res = youtube.playlistItems().list(playlistId=uploads_playlist_id, part="snippet", maxResults=50).execute()
+        video_ids = [item["snippet"]["resourceId"]["videoId"] for item in playlist_res.get("items", [])]
+        
+        if not video_ids:
+            print("🤷‍♂️ कोई वीडियो नहीं मिला।")
+            return
+            
+        # वीडियो के आंकड़े (Views और Date) निकालना
+        videos_res = youtube.videos().list(id=",".join(video_ids), part="snippet,statistics").execute()
+        
+        now = datetime.utcnow()
+        deleted_count = 0
+        
+        for video in videos_res.get("items", []):
+            vid_id = video["id"]
+            title = video["snippet"]["title"]
+            published_at_str = video["snippet"]["publishedAt"]
+            
+            # तारीख को कैलकुलेट करना
+            published_at = datetime.strptime(published_at_str, "%Y-%m-%dT%H:%M:%SZ")
+            views = int(video["statistics"].get("viewCount", 0))
+            days_old = (now - published_at).days
+            
+            # शर्त: अगर 7 दिन पुराना है और 100 से कम व्यूज हैं
+            if days_old >= 7 and views < 100:
+                print(f"🗑️ कबाड़ हटा रहे हैं: '{title}' (पुराना: {days_old} दिन, व्यूज: {views})")
+                youtube.videos().delete(id=vid_id).execute()
+                deleted_count += 1
+                
+        print(f"✅ {channel_name} की सफाई पूरी! कुल {deleted_count} फ्लॉप वीडियो डिलीट किए गए।")
+        
+    except HttpError as e:
+        if "quota" in str(e).lower():
+            print(f"🚨 {channel_name} का सफाई कोटा खत्म, आगे बढ़ रहे हैं।")
+        else:
+            print(f"⚠️ सफाई में यूट्यूब API एरर: {e}")
+    except Exception as e:
+        print(f"⚠️ सफाई में एरर: {e}")
 
 def upload_video(token, filename, title, description, tags, category):
     from google.oauth2.credentials import Credentials
@@ -323,7 +349,7 @@ def upload_video(token, filename, title, description, tags, category):
     )
     request.execute()
 
-def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
+def run_channel_safely(channel_name, token, hook_list, category="AI_SELL"):
     if not token:
         print(f"⚠️ {channel_name} ka token nahi mila. Isko skip kar rahe hain.")
         return False
@@ -331,6 +357,9 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
     print(f"\n==============================================")
     print(f"🚀 STARTING CHANNEL: {channel_name}")
     print(f"==============================================")
+    
+    # सबसे पहले फ्लॉप वीडियो की सफाई करना
+    cleanup_low_view_videos(token, channel_name)
     
     for attempt in range(5):
         try:
@@ -367,17 +396,6 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
                 upload_video(token, video_file, dyn_title, final_desc, dyn_tags, "28")
                 print(f"✅ AI SELL Video Live (Passive Marketing)! Title: {dyn_title}")
                 return True 
-
-            else: 
-                image_files = fetch_ai_images(prompts)
-                create_human_voice(script, voice_file)
-                make_video(image_files, captions, video_file, voice_file)
-                
-                final_desc = f"{dyn_desc}\n\n🔥 👉 ऐसे ही खूंखार रहस्यों के लिए सब्सक्राइब करें!\n\n📝 Script:\n{script}"
-                
-                upload_video(token, video_file, dyn_title, final_desc, dyn_tags, "28")
-                print(f"✅ {channel_name} Video Live! Title: {dyn_title}")
-                return True 
                 
         except HttpError as e:
             error_content = str(e).lower()
@@ -397,9 +415,9 @@ def run_channel_safely(channel_name, token, hook_list, category="MYSTERY"):
     return False
 
 if __name__ == "__main__":
+    # ✅ MYSTERY CHANNEL को यहाँ से पूरी तरह हटा दिया गया है
     channels = [
         ("GIRISH AI GADGET", TOKEN_GADGET, GADGET_HOOKS, "GADGET"),
-        ("MYSTERY CHANNEL", TOKEN_MYSTIC, MYSTIC_HOOKS, "MYSTERY"),
         ("FACELESS AI WEALTH", TOKEN_WEALTH, AI_SELL_HOOKS, "AI_SELL"),             
         ("AI AUTO PILOT EMPIRE", TOKEN_EMPIRE, AI_SELL_HOOKS, "AI_SELL"),         
         ("ZEROTOUCH AI CREATOR", TOKEN_ZEROTOUCH, AI_SELL_HOOKS, "AI_SELL")       
@@ -409,4 +427,4 @@ if __name__ == "__main__":
         run_channel_safely(name, token, hooks, cat)
         time.sleep(15)
         
-    print("\n✅ सभी 5 चैनलों का काम खत्म हो गया है बॉस!")
+    print("\n✅ सभी 4 चैनलों का काम खत्म हो गया है बॉस!")
